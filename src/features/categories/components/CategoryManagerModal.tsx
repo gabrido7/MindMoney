@@ -1,0 +1,134 @@
+import { useState } from "react";
+import Modal from "../../../components/ui/Modal";
+import Input from "../../../components/ui/Input";
+import Select from "../../../components/ui/Select";
+import Button from "../../../components/ui/Button";
+import Icon from "../../../components/ui/Icon";
+import type { Category, TransactionType } from "../../../types";
+
+export default function CategoryManagerModal({
+  categories,
+  onAddCategory,
+  onRemoveCategory,
+  onAddSubcategory,
+  onRemoveSubcategory,
+  onClose,
+}: {
+  categories: Category[];
+  onAddCategory: (name: string, type: Category["type"]) => void;
+  onRemoveCategory: (name: string) => void;
+  onAddSubcategory: (categoryName: string, subName: string) => void;
+  onRemoveSubcategory: (categoryName: string, subName: string) => void;
+  onClose: () => void;
+}) {
+  const [newCategory, setNewCategory] = useState("");
+  const [newCategoryType, setNewCategoryType] = useState<TransactionType | "ambos">(
+    "saida"
+  );
+  const [subInputs, setSubInputs] = useState<Record<string, string>>({});
+
+  return (
+    <Modal title="Gerenciar Categorias" onClose={onClose} size="lg">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap gap-3 items-end border-b border-gray-100 dark:border-gray-700 pb-4">
+          <Input
+            label="Nova categoria"
+            placeholder="Ex: Pets"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            className="flex-1 min-w-[160px]"
+          />
+          <Select
+            label="Tipo"
+            value={newCategoryType}
+            onChange={(e) =>
+              setNewCategoryType(e.target.value as TransactionType | "ambos")
+            }
+          >
+            <option value="saida">Saída</option>
+            <option value="entrada">Entrada</option>
+            <option value="ambos">Ambos</option>
+          </Select>
+          <Button
+            onClick={() => {
+              if (!newCategory.trim()) return;
+              onAddCategory(newCategory, newCategoryType);
+              setNewCategory("");
+            }}
+          >
+            <Icon name="plus" size={16} />
+            Adicionar
+          </Button>
+        </div>
+
+        <div className="flex flex-col gap-4 max-h-96 overflow-y-auto">
+          {categories.map((category) => (
+            <div
+              key={category.name}
+              className="rounded-xl border border-gray-100 dark:border-gray-700 p-4"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  {category.name}
+                </span>
+                {!category.builtin && (
+                  <button
+                    onClick={() => onRemoveCategory(category.name)}
+                    aria-label={`Remover categoria ${category.name}`}
+                    className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950 p-1.5 rounded-lg"
+                  >
+                    <Icon name="trash" size={16} />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-3">
+                {category.subcategories.map((sub) => (
+                  <span
+                    key={sub.name}
+                    className="flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs text-gray-700 dark:text-gray-200"
+                  >
+                    {sub.name}
+                    <button
+                      onClick={() => onRemoveSubcategory(category.name, sub.name)}
+                      aria-label={`Remover subcategoria ${sub.name}`}
+                    >
+                      <Icon name="close" size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nova subcategoria"
+                  value={subInputs[category.name] ?? ""}
+                  onChange={(e) =>
+                    setSubInputs((prev) => ({ ...prev, [category.name]: e.target.value }))
+                  }
+                  className="flex-1 p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    const value = subInputs[category.name]?.trim();
+                    if (!value) return;
+                    onAddSubcategory(category.name, value);
+                    setSubInputs((prev) => ({ ...prev, [category.name]: "" }));
+                  }}
+                >
+                  <Icon name="plus" size={14} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Modal>
+  );
+}
