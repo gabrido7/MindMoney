@@ -1,7 +1,40 @@
-import Dashboard from "./pages/Dashboard"
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+
+import AuthLayout from "./layouts/AuthLayout";
+import AppLayout from "./layouts/AppLayout";
+import ProtectedRoute from "./layouts/ProtectedRoute";
+
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Goals from "./pages/Goals";
+import Reports from "./pages/Reports";
+import FinancialEducation from "./pages/FinancialEducation";
 
 function App() {
-  return <Dashboard />
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/cadastro" element={<Register />} />
+        </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/perfil" element={<Profile />} />
+            <Route path="/metas" element={<Goals />} />
+            <Route path="/relatorios" element={<Reports />} />
+            <Route path="/educacao-financeira" element={<FinancialEducation />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
