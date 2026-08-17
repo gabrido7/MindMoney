@@ -1,0 +1,35 @@
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import { env } from "./config/env";
+import { errorHandler } from "./middlewares/errorHandler";
+import { notFoundHandler } from "./middlewares/notFound";
+
+import { authRouter } from "./modules/auth/auth.routes";
+import { usersRouter } from "./modules/users/users.routes";
+import { transactionsRouter } from "./modules/transactions/transactions.routes";
+import { categoriesRouter } from "./modules/categories/categories.routes";
+import { goalsRouter } from "./modules/goals/goals.routes";
+import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
+import { scoreRouter } from "./modules/score/score.routes";
+import { notificationsRouter } from "./modules/notifications/notifications.routes";
+
+export const app = express();
+
+app.use(helmet());
+app.use(cors({ origin: env.CORS_ORIGIN }));
+app.use(express.json());
+
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+app.use("/api/auth", authRouter);
+app.use("/api/users", usersRouter);
+app.use("/api/transactions", transactionsRouter);
+app.use("/api/categories", categoriesRouter);
+app.use("/api/goals", goalsRouter);
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/score", scoreRouter);
+app.use("/api/notifications", notificationsRouter);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
