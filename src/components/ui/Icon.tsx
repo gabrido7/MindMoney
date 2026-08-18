@@ -26,7 +26,9 @@ export type IconName =
   | "send"
   | "chevronDown"
   | "arrowRight"
-  | "shield";
+  | "shield"
+  | "eye"
+  | "eyeOff";
 
 const PATHS: Record<IconName, string> = {
   sun: "M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-6.66 1.42-1.42M4.92 19.08l1.42-1.42M19.08 19.08l-1.42-1.42M4.92 4.92 6.34 6.34M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z",
@@ -57,6 +59,9 @@ const PATHS: Record<IconName, string> = {
   chevronDown: "m6 9 6 6 6-6",
   arrowRight: "M5 12h14M12 5l7 7-7 7",
   shield: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z",
+  eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+  eyeOff:
+    "M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a17.4 17.4 0 0 1-3.15 4.31M6.5 6.5C3.6 8.3 1 12 1 12s4 8 11 8a9.26 9.26 0 0 0 4.15-.94M9.9 9.9a3 3 0 1 0 4.2 4.2M2 2l20 20",
 };
 
 export default function Icon({

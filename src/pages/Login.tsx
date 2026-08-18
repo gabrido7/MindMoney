@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Card from "../components/ui/Card";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
+import Icon from "../components/ui/Icon";
+import AuthField from "../features/auth/components/AuthField";
+import AuthPasswordField from "../features/auth/components/AuthPasswordField";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
 
@@ -33,45 +33,54 @@ export default function Login() {
   };
 
   return (
-    <Card title="Entrar">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <div className="w-full max-w-sm">
+      <h1 className="text-2xl font-bold text-white">Entrar</h1>
+      <p className="mt-2 text-sm text-neutral-400">Acesse sua conta para continuar.</p>
+
+      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
         {error && (
-          <p role="alert" className="text-red-500 text-sm font-medium">
+          <p role="alert" className="text-sm font-medium text-red-400">
             {error}
           </p>
         )}
 
-        <Input
+        <AuthField
           id="email"
           label="E-mail"
           type="email"
+          placeholder="Digite seu e-mail"
           autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <Input
+        <AuthPasswordField
           id="password"
           label="Senha"
-          type="password"
+          placeholder="Digite sua senha"
           autoComplete="current-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <Button type="submit" disabled={loading} className="w-full">
+        <button
+          type="submit"
+          disabled={loading}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-colors hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-50"
+        >
           {loading ? "Entrando..." : "Entrar"}
-        </Button>
+          {!loading && <Icon name="arrowRight" size={16} />}
+        </button>
       </form>
 
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
-        Não tem conta?{" "}
-        <Link to="/cadastro" className="text-green-600 hover:underline">
-          Cadastre-se
+      <p className="mt-6 text-center text-sm text-neutral-400">
+        Não tenho conta.{" "}
+        <Link to="/cadastro" className="font-medium text-green-400 hover:underline">
+          Criar conta
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }

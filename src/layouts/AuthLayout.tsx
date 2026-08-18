@@ -1,18 +1,27 @@
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import Icon from "../components/ui/Icon";
+import AuthShowcase from "../features/auth/components/AuthShowcase";
 
 export default function AuthLayout() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-8 bg-gray-50 dark:bg-gray-900 p-4">
-      <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-600 text-white">
-          <Icon name="wallet" size={20} />
+    <div className="flex min-h-screen bg-neutral-950">
+      <div className="flex w-full flex-col px-6 py-10 sm:px-12 lg:w-[480px] lg:shrink-0 lg:px-16 lg:py-14">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500 text-neutral-950">
+            <Icon name="wallet" size={20} />
+          </div>
+          <span className="text-lg font-bold text-white">Mind Money</span>
+        </Link>
+
+        <div className="flex flex-1 items-center">
+          <div className="w-full">
+            <Outlet />
+          </div>
         </div>
-        <span className="text-lg font-bold text-gray-900 dark:text-white">Mind Money</span>
       </div>
 
-      <div className="w-full max-w-sm">
-        <Outlet />
+      <div className="flex-1">
+        <AuthShowcase />
       </div>
     </div>
   );

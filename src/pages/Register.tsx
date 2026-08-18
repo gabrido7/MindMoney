@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Card from "../components/ui/Card";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
+import Icon from "../components/ui/Icon";
+import AuthField from "../features/auth/components/AuthField";
+import AuthPasswordField from "../features/auth/components/AuthPasswordField";
 import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../services/api";
 
@@ -46,57 +46,75 @@ export default function Register() {
   };
 
   return (
-    <Card title="Criar conta">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <div className="w-full max-w-sm">
+      <h1 className="text-2xl font-bold text-white">Criar conta</h1>
+      <p className="mt-2 text-sm text-neutral-400">
+        Insira seus dados para começar a organizar sua vida financeira.
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
         {error && (
-          <p role="alert" className="text-red-500 text-sm font-medium">
+          <p role="alert" className="text-sm font-medium text-red-400">
             {error}
           </p>
         )}
 
-        <Input id="name" label="Nome" required value={name} onChange={(e) => setName(e.target.value)} />
+        <AuthField
+          id="name"
+          label="Nome completo"
+          placeholder="Nome completo"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-        <Input
+        <AuthField
           id="email"
           label="E-mail"
           type="email"
+          placeholder="usuario@exemplo.com.br"
           autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <Input
+        <AuthPasswordField
           id="password"
           label="Senha"
-          type="password"
+          placeholder="Mínimo de 8 caracteres"
           autoComplete="new-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <Input
+        <AuthPasswordField
           id="confirmPassword"
           label="Confirmar senha"
-          type="password"
+          placeholder="Repita a senha"
           autoComplete="new-password"
           required
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
 
-        <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Criando conta..." : "Criar conta"}
-        </Button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-colors hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? "Criando conta..." : "Continuar"}
+          {!loading && <Icon name="arrowRight" size={16} />}
+        </button>
       </form>
 
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
-        Já tem conta?{" "}
-        <Link to="/login" className="text-green-600 hover:underline">
+      <p className="mt-6 text-center text-sm text-neutral-400">
+        Já tenho conta.{" "}
+        <Link to="/login" className="font-medium text-green-400 hover:underline">
           Entrar
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }
