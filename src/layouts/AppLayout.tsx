@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import Icon from "../components/ui/Icon";
 import { useAuth } from "../hooks/useAuth";
+import NotificationBell from "../features/notifications/components/NotificationBell";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard" },
@@ -41,6 +42,7 @@ export default function AppLayout() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <NotificationBell />
           <NavLink
             to="/perfil"
             className={({ isActive }) =>
