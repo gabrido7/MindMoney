@@ -147,7 +147,7 @@ export default function Goals() {
                           setIsFormOpen(true);
                         }}
                         aria-label={`Editar meta de ${formatMonthBR(goal.reference_month)}`}
-                        className="p-2 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
+                        className="p-2 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                       >
                         <Icon name="edit" size={16} />
                       </button>

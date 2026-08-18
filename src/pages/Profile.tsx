@@ -20,7 +20,7 @@ export default function Profile() {
         {data && (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-300">
                 <Icon name="user" size={22} />
               </div>
               <div>

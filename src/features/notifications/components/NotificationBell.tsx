@@ -103,7 +103,7 @@ export default function NotificationBell() {
               <li
                 key={n.id}
                 className={`px-4 py-3 border-b border-gray-50 dark:border-gray-700 last:border-0 flex gap-3 ${
-                  n.read_at ? "" : "bg-blue-50/50 dark:bg-blue-950/30"
+                  n.read_at ? "" : "bg-green-50/50 dark:bg-green-950/30"
                 }`}
               >
                 <span className="shrink-0 mt-0.5" style={{ color: TYPE_COLOR[n.type] }}>
@@ -117,7 +117,7 @@ export default function NotificationBell() {
                     {!n.read_at && (
                       <button
                         onClick={() => handleMarkRead(n.id)}
-                        className="text-[11px] text-blue-600 hover:underline"
+                        className="text-[11px] text-green-600 hover:underline"
                       >
                         Marcar como lida
                       </button>

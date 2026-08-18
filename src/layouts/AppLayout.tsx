@@ -17,7 +17,7 @@ export default function AppLayout() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 md:px-8 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white">
             <Icon name="wallet" size={18} />
           </div>
           <span className="font-bold text-gray-900 dark:text-white">Mind Money</span>
@@ -31,7 +31,7 @@ export default function AppLayout() {
               className={({ isActive }) =>
                 `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                    ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
                     : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                 }`
               }
@@ -47,7 +47,7 @@ export default function AppLayout() {
             to="/perfil"
             className={({ isActive }) =>
               `text-sm font-medium ${
-                isActive ? "text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-300"
+                isActive ? "text-green-700 dark:text-green-300" : "text-gray-600 dark:text-gray-300"
               }`
             }
           >

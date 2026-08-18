@@ -89,7 +89,7 @@ export default function ScoreCard({ month }: { month: string }) {
                 formatter={(value: unknown) => [Number(value) || 0, "Score"]}
                 labelFormatter={(label) => (typeof label === "string" ? formatMonthBR(label) : "")}
               />
-              <Line type="monotone" dataKey="score" stroke="#2a78d6" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="score" stroke="#16a34a" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         ) : (

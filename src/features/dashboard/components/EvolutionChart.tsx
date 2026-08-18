@@ -41,7 +41,7 @@ export default function EvolutionChart({
               type="monotone"
               dataKey="saldo"
               name="Saldo"
-              stroke="#2a78d6"
+              stroke="#16a34a"
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}
