@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { transactionsService } from "../../../services/transactionsService";
-import { ApiError } from "../../../services/api";
+import { errorMessage } from "../../../services/api";
+import { invalidateFinancialData } from "../../../lib/invalidateFinancialData";
 import { toLocalTransaction } from "../utils/mapApiTransaction";
 import type { Category, Transaction } from "../../../types";
-import type { Pagination } from "../../../types/api";
 
 export type TransactionInput = Omit<Transaction, "id">;
 
@@ -12,105 +13,75 @@ const PAGE_SIZE = 50;
 /**
  * Transações vêm da API/MySQL, paginadas e restritas ao mês pedido — antes
  * este hook buscava o histórico inteiro do usuário de uma vez (sem limite
- * nenhum), a cada carregamento do Dashboard. Agora cada chamada busca no
- * máximo PAGE_SIZE transações daquele mês; "carregar mais" busca a
- * próxima página sem re-buscar o que já foi carregado.
+ * nenhum), a cada carregamento do Dashboard. useInfiniteQuery modela
+ * exatamente o padrão "carregar mais": cada página vira uma entrada no
+ * cache, acumuladas em uma lista só.
  */
 export function useTransactions(categories: Category[], month: string) {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchPage = useCallback(
-    async (targetPage: number, append: boolean) => {
-      if (append) setLoadingMore(true);
-      else setLoading(true);
-      setError(null);
+  const query = useInfiniteQuery({
+    queryKey: ["transactions", month],
+    queryFn: ({ pageParam }) => transactionsService.list({ month, page: pageParam, limit: PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.page < lastPage.pagination.totalPages ? lastPage.pagination.page + 1 : undefined,
+  });
 
-      try {
-        const result = await transactionsService.list({ month, page: targetPage, limit: PAGE_SIZE });
-        const mapped = result.transactions.map(toLocalTransaction);
-        setTransactions((prev) => (append ? [...prev, ...mapped] : mapped));
-        setPagination(result.pagination);
-        setPage(targetPage);
-      } catch (err) {
-        setError(err instanceof ApiError ? err.message : "Erro ao carregar transações.");
-      } finally {
-        if (append) setLoadingMore(false);
-        else setLoading(false);
-      }
-    },
-    [month]
+  const transactions = useMemo(
+    () => (query.data?.pages ?? []).flatMap((page) => page.transactions.map(toLocalTransaction)),
+    [query.data]
   );
+  const pagination = query.data?.pages.at(-1)?.pagination ?? null;
 
-  useEffect(() => {
-    (async () => {
-      await fetchPage(1, false);
-    })();
-  }, [fetchPage]);
+  const resolveInput = (input: TransactionInput) => {
+    const category = categories.find((c) => c.name === input.category);
+    if (!category?.id) throw new Error(`Categoria "${input.category}" não encontrada.`);
+    const subcategory = input.subcategory
+      ? category.subcategories.find((s) => s.name === input.subcategory)
+      : undefined;
 
-  const loadMore = useCallback(() => {
-    if (pagination && page < pagination.totalPages && !loadingMore) {
-      fetchPage(page + 1, true);
-    }
-  }, [pagination, page, loadingMore, fetchPage]);
+    return {
+      categoryId: category.id,
+      subcategoryId: subcategory?.id,
+      description: input.description,
+      amount: input.amount,
+      type: input.type,
+      transactionDate: input.date,
+    };
+  };
 
-  const reload = useCallback(() => fetchPage(1, false), [fetchPage]);
+  // Mudar transações afeta o resumo do dashboard e o saldo das metas
+  // daquele mês, então toda mutação invalida os três (invalidateFinancialData),
+  // não só a própria lista de transações.
+  const createMutation = useMutation({
+    mutationFn: (input: TransactionInput) => transactionsService.create(resolveInput(input)),
+    onSuccess: () => invalidateFinancialData(queryClient),
+  });
 
-  const resolveInput = useCallback(
-    (input: TransactionInput) => {
-      const category = categories.find((c) => c.name === input.category);
-      if (!category?.id) throw new Error(`Categoria "${input.category}" não encontrada.`);
-      const subcategory = input.subcategory
-        ? category.subcategories.find((s) => s.name === input.subcategory)
-        : undefined;
+  const updateMutation = useMutation({
+    mutationFn: (input: { id: string; values: TransactionInput }) =>
+      transactionsService.update(Number(input.id), resolveInput(input.values)),
+    onSuccess: () => invalidateFinancialData(queryClient),
+  });
 
-      return {
-        categoryId: category.id,
-        subcategoryId: subcategory?.id,
-        description: input.description,
-        amount: input.amount,
-        type: input.type,
-        transactionDate: input.date,
-      };
-    },
-    [categories]
-  );
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => transactionsService.remove(Number(id)),
+    onSuccess: () => invalidateFinancialData(queryClient),
+  });
 
-  const addTransaction = useCallback(
-    async (input: TransactionInput) => {
-      await transactionsService.create(resolveInput(input));
-      await reload();
-    },
-    [resolveInput, reload]
-  );
-
-  const updateTransaction = useCallback(
-    async (id: string, input: TransactionInput) => {
-      await transactionsService.update(Number(id), resolveInput(input));
-      await reload();
-    },
-    [resolveInput, reload]
-  );
-
-  const deleteTransaction = useCallback(
-    async (id: string) => {
-      await transactionsService.remove(Number(id));
-      await reload();
-    },
-    [reload]
-  );
+  const addTransaction = (input: TransactionInput) => createMutation.mutateAsync(input);
+  const updateTransaction = (id: string, input: TransactionInput) =>
+    updateMutation.mutateAsync({ id, values: input });
+  const deleteTransaction = (id: string) => deleteMutation.mutateAsync(id);
 
   return {
     transactions,
     pagination,
-    loading,
-    loadingMore,
-    error,
-    loadMore,
+    loading: query.isLoading,
+    loadingMore: query.isFetchingNextPage,
+    error: errorMessage(query.error),
+    loadMore: () => query.fetchNextPage(),
     addTransaction,
     updateTransaction,
     deleteTransaction,

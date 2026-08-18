@@ -1,8 +1,9 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useQuery } from "@tanstack/react-query";
 import Card from "../../../components/ui/Card";
 import EmptyState from "../../../components/ui/EmptyState";
 import { scoreService } from "../../../services/scoreService";
-import { useApiRequest } from "../../../hooks/useApiRequest";
+import { errorMessage } from "../../../services/api";
 import { formatMonthBR } from "../../../utils/formatters";
 import type { ScoreData, ScoreLevel } from "../../../types/api";
 
@@ -22,10 +23,11 @@ const COMPONENT_LABELS: { key: keyof ScoreData["breakdown"]; label: string; max:
 ];
 
 export default function ScoreCard({ month }: { month: string }) {
-  const { data, loading, error } = useApiRequest(
-    () => Promise.all([scoreService.get(month), scoreService.history(6)]),
-    [month]
-  );
+  const { data, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["score", month],
+    queryFn: () => Promise.all([scoreService.get(month), scoreService.history(6)]),
+  });
+  const error = errorMessage(queryError);
 
   const score = data?.[0] ?? null;
   const history = data?.[1]?.history ?? [];

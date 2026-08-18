@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useDarkMode } from "../hooks/useDarkMode";
-import { useApiRequest } from "../hooks/useApiRequest";
 import { useTransactions } from "../features/transactions/hooks/useTransactions";
 import { useCategories } from "../features/categories/hooks/useCategories";
 import { useSavingGoals } from "../features/goals/hooks/useSavingGoals";
@@ -9,6 +9,7 @@ import { toLocalTransaction } from "../features/transactions/utils/mapApiTransac
 import { limitSuggestion } from "../features/dashboard/utils/insights";
 import { dashboardService } from "../services/dashboardService";
 import { transactionsService } from "../services/transactionsService";
+import { errorMessage } from "../services/api";
 
 import Sidebar from "../components/ui/Sidebar";
 import Button from "../components/ui/Button";
@@ -86,9 +87,13 @@ export default function Dashboard() {
    */
   const {
     data: rangeData,
-    loading: rangeLoading,
-    error: rangeError,
-  } = useApiRequest(() => dashboardService.range(2, selectedMonth), [selectedMonth]);
+    isLoading: rangeLoading,
+    error: rangeQueryError,
+  } = useQuery({
+    queryKey: ["dashboardRange", selectedMonth, 2],
+    queryFn: () => dashboardService.range(2, selectedMonth),
+  });
+  const rangeError = errorMessage(rangeQueryError);
 
   const currentSummary = rangeData?.months[rangeData.months.length - 1] ?? null;
   const previousSummary = rangeData?.months[rangeData.months.length - 2] ?? null;

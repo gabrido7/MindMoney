@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Icon from "../components/ui/Icon";
@@ -6,7 +7,9 @@ import ProgressBar from "../components/ui/ProgressBar";
 import EmptyState from "../components/ui/EmptyState";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { goalsService } from "../services/goalsService";
-import { ApiError } from "../services/api";
+import { errorMessage } from "../services/api";
+import { invalidateFinancialData } from "../lib/invalidateFinancialData";
+import { useGoalsQuery } from "../features/goals/hooks/useGoalsQuery";
 import { formatCurrency, formatMonthBR, currentMonth } from "../utils/formatters";
 import GoalFormModal, { type GoalFormValues } from "../features/goals/components/GoalFormModal";
 import type { ApiGoal } from "../types/api";
@@ -28,60 +31,55 @@ const STATUS_LABEL: Record<GoalStatus, { label: string; className: string }> = {
 };
 
 export default function Goals() {
-  const [goals, setGoals] = useState<ApiGoal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  // GET /api/goals já devolve saldo/progressPercent calculados pelo
+  // backend numa chamada só, cacheada e compartilhada com o GoalCard do
+  // Dashboard (mesma query key, via useSavingGoals).
+  const { data, isLoading: loading, error: queryError } = useGoalsQuery();
+  const error = errorMessage(queryError);
+  const goals = useMemo(
+    () => [...(data ?? [])].sort((a, b) => b.reference_month.localeCompare(a.reference_month)),
+    [data]
+  );
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<ApiGoal | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ApiGoal | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  /**
-   * Uma chamada só -- GET /api/goals já devolve saldo/progressPercent
-   * calculados pelo backend. Antes disso, cada meta disparava sua própria
-   * chamada de dashboard só para ler o saldo (1+N requisições).
-   */
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { goals: apiGoals } = await goalsService.list();
-      const sorted = [...apiGoals].sort((a, b) => b.reference_month.localeCompare(a.reference_month));
-      setGoals(sorted);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erro ao carregar metas.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const invalidate = () => invalidateFinancialData(queryClient);
 
-  useEffect(() => {
-    (async () => {
-      await load();
-    })();
-  }, [load]);
+  const createMutation = useMutation({
+    mutationFn: (values: GoalFormValues) => goalsService.create(values),
+    onSuccess: invalidate,
+  });
+  const updateMutation = useMutation({
+    mutationFn: (input: { id: number; targetAmount: number }) =>
+      goalsService.update(input.id, { targetAmount: input.targetAmount }),
+    onSuccess: invalidate,
+  });
+  const removeMutation = useMutation({
+    mutationFn: (id: number) => goalsService.remove(id),
+    onSuccess: invalidate,
+  });
 
   const handleCreate = async (values: GoalFormValues) => {
-    await goalsService.create(values);
-    await load();
+    await createMutation.mutateAsync(values);
   };
 
   const handleUpdate = async (values: GoalFormValues) => {
     if (!editingGoal) return;
-    await goalsService.update(editingGoal.id, { targetAmount: values.targetAmount });
-    await load();
+    await updateMutation.mutateAsync({ id: editingGoal.id, targetAmount: values.targetAmount });
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleteError(null);
     try {
-      await goalsService.remove(deleteTarget.id);
+      await removeMutation.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      await load();
     } catch (err) {
-      setDeleteError(err instanceof ApiError ? err.message : "Não foi possível excluir a meta.");
+      setDeleteError(errorMessage(err) ?? "Não foi possível excluir a meta.");
     }
   };
 

@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Icon from "../../../components/ui/Icon";
 import EmptyState from "../../../components/ui/EmptyState";
 import { insightsService, type Insight, type InsightSeverity } from "../../../services/insightsService";
-import { useApiRequest } from "../../../hooks/useApiRequest";
-import { ApiError } from "../../../services/api";
+import { ApiError, errorMessage } from "../../../services/api";
 
 const SEVERITY_COLOR: Record<InsightSeverity, string> = {
   success: "#0ca30c",
@@ -20,7 +20,11 @@ const SEVERITY_ICON: Record<InsightSeverity, "trophy" | "alert" | "chart"> = {
 };
 
 export default function AssistantCard({ month }: { month: string }) {
-  const { data, loading, error } = useApiRequest(() => insightsService.list(month), [month]);
+  const { data, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["insights", month],
+    queryFn: () => insightsService.list(month),
+  });
+  const error = errorMessage(queryError);
   const insights: Insight[] = data?.insights ?? [];
 
   const [question, setQuestion] = useState("");

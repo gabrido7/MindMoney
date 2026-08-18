@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -14,7 +15,7 @@ import Button from "../components/ui/Button";
 import Icon from "../components/ui/Icon";
 import EmptyState from "../components/ui/EmptyState";
 import { dashboardService } from "../services/dashboardService";
-import { useApiRequest } from "../hooks/useApiRequest";
+import { errorMessage } from "../services/api";
 import { formatCurrency, formatMonthBR, currentMonth } from "../utils/formatters";
 import { exportReportCSV, type MonthReport } from "../features/reports/utils/exportReport";
 
@@ -23,23 +24,28 @@ const MONTHS_IN_REPORT = 6;
 export default function Reports() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth());
 
-  const { data, loading, error } = useApiRequest(async () => {
-    const { months: summaries } = await dashboardService.range(MONTHS_IN_REPORT, selectedMonth);
+  const {
+    data: rangeData,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: ["dashboardRange", selectedMonth, MONTHS_IN_REPORT],
+    queryFn: () => dashboardService.range(MONTHS_IN_REPORT, selectedMonth),
+  });
+  const error = errorMessage(queryError);
 
-    const rows: MonthReport[] = summaries.map((d) => ({
-      month: d.month,
-      entradas: d.totals.entradas,
-      saidas: d.totals.saidas,
-      saldo: d.totals.saldo,
-      savingsRate: d.totals.entradas > 0 ? (d.totals.saldo / d.totals.entradas) * 100 : 0,
-    }));
-
-    const selected = summaries[summaries.length - 1];
-    return { rows, selected };
-  }, [selectedMonth]);
-
-  const rows = data?.rows ?? [];
-  const selected = data?.selected;
+  const rows: MonthReport[] = useMemo(
+    () =>
+      (rangeData?.months ?? []).map((d) => ({
+        month: d.month,
+        entradas: d.totals.entradas,
+        saidas: d.totals.saidas,
+        saldo: d.totals.saldo,
+        savingsRate: d.totals.entradas > 0 ? (d.totals.saldo / d.totals.entradas) * 100 : 0,
+      })),
+    [rangeData]
+  );
+  const selected = rangeData?.months.at(-1);
   const maiorCategoria = selected?.ranking[0];
 
   return (

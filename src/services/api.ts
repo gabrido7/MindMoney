@@ -14,6 +14,12 @@ export class ApiError extends Error {
   }
 }
 
+/** Extrai uma mensagem exibível de um erro de query/mutation do TanStack Query. */
+export const errorMessage = (error: unknown): string | null => {
+  if (!error) return null;
+  return error instanceof ApiError ? error.message : "Erro inesperado. Tente novamente.";
+};
+
 /**
  * Chamado quando a sessão realmente não pode mais continuar (refresh
  * token ausente/expirado/revogado — não só um access token vencido, que

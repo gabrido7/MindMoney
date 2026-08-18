@@ -1,45 +1,35 @@
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { goalsService } from "../../../services/goalsService";
-import { ApiError } from "../../../services/api";
+import { errorMessage } from "../../../services/api";
+import { invalidateFinancialData } from "../../../lib/invalidateFinancialData";
+import { useGoalsQuery } from "./useGoalsQuery";
 import type { SavingGoals } from "../../../types";
 
-/** Metas vêm da API/MySQL agora — localStorage não é mais a fonte dos dados financeiros. */
+/** Usado pelo GoalCard do Dashboard -- mesma query de useGoalsQuery, só reformatada como Record<mês, valor>. */
 export function useSavingGoals() {
-  const [goals, setGoals] = useState<SavingGoals>({});
-  const [goalIds, setGoalIds] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data, isLoading, error } = useGoalsQuery();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { goals: apiGoals } = await goalsService.list();
-      const values: SavingGoals = {};
-      const ids: Record<string, number> = {};
-      apiGoals.forEach((g) => {
-        values[g.reference_month] = g.target_amount;
-        ids[g.reference_month] = g.id;
-      });
-      setGoals(values);
-      setGoalIds(ids);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erro ao carregar metas.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const goals = useMemo(() => {
+    const map: SavingGoals = {};
+    (data ?? []).forEach((g) => {
+      map[g.reference_month] = g.target_amount;
+    });
+    return map;
+  }, [data]);
 
-  useEffect(() => {
-    (async () => {
-      await load();
-    })();
-  }, [load]);
+  const goalIds = useMemo(() => {
+    const map: Record<string, number> = {};
+    (data ?? []).forEach((g) => {
+      map[g.reference_month] = g.id;
+    });
+    return map;
+  }, [data]);
 
-  const setGoalForMonth = useCallback(
-    async (month: string, amount: number) => {
+  const mutation = useMutation({
+    mutationFn: async ({ month, amount }: { month: string; amount: number }) => {
       const existingId = goalIds[month];
-
       if (amount <= 0) {
         if (existingId) await goalsService.remove(existingId);
       } else if (existingId) {
@@ -47,13 +37,12 @@ export function useSavingGoals() {
       } else {
         await goalsService.create({ referenceMonth: month, targetAmount: amount });
       }
-
-      await load();
     },
-    [goalIds, load]
-  );
+    onSuccess: () => invalidateFinancialData(queryClient),
+  });
 
-  const getGoalForMonth = useCallback((month: string) => goals[month] ?? 0, [goals]);
+  const setGoalForMonth = (month: string, amount: number) => mutation.mutateAsync({ month, amount });
+  const getGoalForMonth = (month: string) => goals[month] ?? 0;
 
-  return { goals, loading, error, setGoalForMonth, getGoalForMonth };
+  return { goals, loading: isLoading, error: errorMessage(error), setGoalForMonth, getGoalForMonth };
 }
