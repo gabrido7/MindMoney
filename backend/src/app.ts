@@ -5,6 +5,7 @@ import { env } from "./config/env";
 import { errorHandler } from "./middlewares/errorHandler";
 import { notFoundHandler } from "./middlewares/notFound";
 import { apiRateLimit } from "./middlewares/rateLimit";
+import { requestLogger } from "./middlewares/requestLogger";
 
 import { authRouter } from "./modules/auth/auth.routes";
 import { usersRouter } from "./modules/users/users.routes";
@@ -19,6 +20,9 @@ import { newsletterRouter } from "./modules/newsletter/newsletter.routes";
 
 export const app = express();
 
+if (process.env.NODE_ENV !== "test") {
+  app.use(requestLogger);
+}
 app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN }));
 app.use(express.json());

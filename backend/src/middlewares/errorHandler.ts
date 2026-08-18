@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { AppError } from "../utils/AppError";
+import { logger } from "../utils/logger";
 
 interface MysqlError extends Error {
   code?: string;
@@ -14,7 +15,7 @@ const MYSQL_STATUS_BY_CODE: Record<string, { status: number; message: string }> 
   ER_CHECK_CONSTRAINT_VIOLATED: { status: 400, message: "Dados inválidos para um dos campos enviados." },
 };
 
-export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({ error: { message: err.message } });
   }
@@ -34,6 +35,6 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
     return res.status(mapped.status).json({ error: { message: mapped.message } });
   }
 
-  console.error("Erro não tratado:", err);
+  logger.error({ err, method: req.method, url: req.originalUrl }, "Erro não tratado");
   return res.status(500).json({ error: { message: "Erro interno do servidor." } });
 }
