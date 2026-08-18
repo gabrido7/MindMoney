@@ -47,18 +47,34 @@ const ALERT_PERCENT = 70;
 export default function Dashboard() {
   const [darkMode, setDarkMode] = useDarkMode();
 
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, replaceAll: replaceTransactions } =
-    useTransactions();
   const {
     categories,
+    loading: categoriesLoading,
+    error: categoriesError,
     addCategory,
     removeCategory,
     addSubcategory,
     removeSubcategory,
     getColor,
-    replaceAll: replaceCategories,
   } = useCategories();
-  const { goals, setGoalForMonth, getGoalForMonth, replaceAll: replaceGoals } = useSavingGoals();
+  const {
+    transactions,
+    loading: transactionsLoading,
+    error: transactionsError,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+  } = useTransactions(categories);
+  const {
+    goals,
+    loading: goalsLoading,
+    error: goalsError,
+    setGoalForMonth,
+    getGoalForMonth,
+  } = useSavingGoals();
+
+  const loading = categoriesLoading || transactionsLoading || goalsLoading;
+  const loadError = categoriesError || transactionsError || goalsError;
 
   const [selectedMonth, setSelectedMonth] = useState(
     new Date().toISOString().slice(0, 7)
@@ -187,18 +203,37 @@ export default function Dashboard() {
     setIsFormOpen(true);
   };
 
-  const handleSubmitTransaction = (input: Omit<Transaction, "id">) => {
+  const handleSubmitTransaction = async (input: Omit<Transaction, "id">) => {
     if (editingTransaction) {
-      updateTransaction(editingTransaction.id, input);
+      await updateTransaction(editingTransaction.id, input);
     } else {
-      addTransaction(input);
+      await addTransaction(input);
     }
   };
 
-  const confirmDelete = () => {
-    if (deleteTarget) deleteTransaction(deleteTarget.id);
+  const confirmDelete = async () => {
+    if (deleteTarget) await deleteTransaction(deleteTarget.id);
     setDeleteTarget(null);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <p className="text-gray-500 dark:text-gray-400">Carregando seus dados financeiros...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="max-w-md text-center">
+          <p className="text-red-500 font-medium mb-2">Não foi possível carregar o Dashboard.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{loadError}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 md:flex">
@@ -336,11 +371,6 @@ export default function Dashboard() {
           transactions={transactions}
           savingGoals={goals}
           categories={categories}
-          onImport={(backup) => {
-            replaceTransactions(backup.transactions);
-            replaceCategories(backup.categories);
-            replaceGoals(backup.savingGoals);
-          }}
           onClose={() => setIsImportExportOpen(false)}
         />
       )}

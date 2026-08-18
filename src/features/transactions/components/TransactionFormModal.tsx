@@ -14,7 +14,7 @@ export default function TransactionFormModal({
 }: {
   categories: Category[];
   initial?: Transaction;
-  onSubmit: (input: TransactionInput) => void;
+  onSubmit: (input: TransactionInput) => Promise<void>;
   onClose: () => void;
 }) {
   const firstCategory = categories[0]?.name ?? "";
@@ -26,6 +26,7 @@ export default function TransactionFormModal({
   const [date, setDate] = useState(initial?.date ?? "");
   const [type, setType] = useState<TransactionType>(initial?.type ?? "saida");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const selectedCategory = categories.find((c) => c.name === category);
   const typeIsEditable = selectedCategory?.type === "ambos";
@@ -38,7 +39,7 @@ export default function TransactionFormModal({
     if (found && found.type !== "ambos") setType(found.type);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!amount || !date || !category) {
       setError("Preencha todos os campos obrigatórios.");
       return;
@@ -51,17 +52,23 @@ export default function TransactionFormModal({
     }
 
     setError("");
+    setSubmitting(true);
 
-    onSubmit({
-      description: isOutros ? description || category : category,
-      amount: numericAmount,
-      type,
-      date,
-      category,
-      subcategory: subcategory || undefined,
-    });
-
-    onClose();
+    try {
+      await onSubmit({
+        description: isOutros ? description || category : category,
+        amount: numericAmount,
+        type,
+        date,
+        category,
+        subcategory: subcategory || undefined,
+      });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível salvar a transação.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -127,10 +134,12 @@ export default function TransactionFormModal({
         </Select>
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} disabled={submitting}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit}>{initial ? "Salvar" : "Adicionar"}</Button>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "Salvando..." : initial ? "Salvar" : "Adicionar"}
+          </Button>
         </div>
       </div>
     </Modal>

@@ -1,82 +1,85 @@
-import { useCallback, useMemo } from "react";
-import { useLocalStorageState } from "../../../hooks/useLocalStorageState";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { categoriesService } from "../../../services/categoriesService";
+import { ApiError } from "../../../services/api";
 import { colorForLabel } from "../../../utils/color";
 import type { Category } from "../../../types";
-import { defaultCategories } from "../data/defaultCategories";
 
-const isCategoryArray = (value: unknown): value is Category[] =>
-  Array.isArray(value) &&
-  value.every(
-    (c) =>
-      c &&
-      typeof c.name === "string" &&
-      typeof c.color === "string" &&
-      Array.isArray(c.subcategories)
-  );
-
+/** Categorias/subcategorias vêm da API (por usuário, seedadas no cadastro) — não mais do localStorage. */
 export function useCategories() {
-  const [categories, setCategories] = useLocalStorageState<Category[]>(
-    "categories",
-    defaultCategories,
-    isCategoryArray
-  );
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { categories: apiCategories } = await categoriesService.list();
+      const withSubcategories = await Promise.all(
+        apiCategories.map(async (c) => {
+          const { subcategories } = await categoriesService.subcategories(c.id);
+          return {
+            id: c.id,
+            name: c.name,
+            color: c.color,
+            type: c.type,
+            builtin: c.is_builtin === 1,
+            subcategories: subcategories.map((s) => ({ id: s.id, name: s.name, color: s.color })),
+          } satisfies Category;
+        })
+      );
+      setCategories(withSubcategories);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Erro ao carregar categorias.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const addCategory = useCallback(
-    (name: string, type: Category["type"]) => {
+    async (name: string, type: Category["type"]) => {
       const trimmed = name.trim();
       if (!trimmed) return;
-      setCategories((prev) => {
-        if (prev.some((c) => c.name.toLowerCase() === trimmed.toLowerCase()))
-          return prev;
-        return [
-          ...prev,
-          { name: trimmed, color: colorForLabel(trimmed), type, subcategories: [] },
-        ];
-      });
+      await categoriesService.create({ name: trimmed, type: type === "ambos" ? "ambos" : type });
+      await load();
     },
-    [setCategories]
+    [load]
   );
 
   const removeCategory = useCallback(
-    (name: string) => {
-      setCategories((prev) => prev.filter((c) => c.name !== name || c.builtin));
+    async (name: string) => {
+      const category = categories.find((c) => c.name === name);
+      if (!category?.id) return;
+      await categoriesService.remove(category.id);
+      await load();
     },
-    [setCategories]
+    [categories, load]
   );
 
   const addSubcategory = useCallback(
-    (categoryName: string, subName: string) => {
+    async (categoryName: string, subName: string) => {
       const trimmed = subName.trim();
-      if (!trimmed) return;
-      setCategories((prev) =>
-        prev.map((c) =>
-          c.name === categoryName &&
-          !c.subcategories.some((s) => s.name.toLowerCase() === trimmed.toLowerCase())
-            ? {
-                ...c,
-                subcategories: [
-                  ...c.subcategories,
-                  { name: trimmed, color: colorForLabel(trimmed) },
-                ],
-              }
-            : c
-        )
-      );
+      const category = categories.find((c) => c.name === categoryName);
+      if (!trimmed || !category?.id) return;
+      await categoriesService.createSubcategory(category.id, trimmed);
+      await load();
     },
-    [setCategories]
+    [categories, load]
   );
 
   const removeSubcategory = useCallback(
-    (categoryName: string, subName: string) => {
-      setCategories((prev) =>
-        prev.map((c) =>
-          c.name === categoryName
-            ? { ...c, subcategories: c.subcategories.filter((s) => s.name !== subName) }
-            : c
-        )
-      );
+    async (categoryName: string, subName: string) => {
+      const category = categories.find((c) => c.name === categoryName);
+      const subcategory = category?.subcategories.find((s) => s.name === subName);
+      if (!category?.id || !subcategory?.id) return;
+      await categoriesService.removeSubcategory(category.id, subcategory.id);
+      await load();
     },
-    [setCategories]
+    [categories, load]
   );
 
   const colorMap = useMemo(() => {
@@ -95,20 +98,14 @@ export function useCategories() {
     [colorMap]
   );
 
-  const replaceAll = useCallback(
-    (next: Category[]) => {
-      setCategories(next);
-    },
-    [setCategories]
-  );
-
   return {
     categories,
+    loading,
+    error,
     addCategory,
     removeCategory,
     addSubcategory,
     removeSubcategory,
     getColor,
-    replaceAll,
   };
 }

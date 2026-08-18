@@ -1,47 +1,57 @@
-import { useCallback } from "react";
-import { useLocalStorageState } from "../../../hooks/useLocalStorageState";
+import { useCallback, useEffect, useState } from "react";
+import { goalsService } from "../../../services/goalsService";
+import { ApiError } from "../../../services/api";
 import type { SavingGoals } from "../../../types";
 
-const isSavingGoals = (value: unknown): value is SavingGoals =>
-  typeof value === "object" &&
-  value !== null &&
-  !Array.isArray(value) &&
-  Object.values(value as Record<string, unknown>).every(
-    (v) => typeof v === "number"
-  );
-
+/** Metas vêm da API/MySQL agora — localStorage não é mais a fonte dos dados financeiros. */
 export function useSavingGoals() {
-  const [goals, setGoals] = useLocalStorageState<SavingGoals>(
-    "savingGoals",
-    {},
-    isSavingGoals
-  );
+  const [goals, setGoals] = useState<SavingGoals>({});
+  const [goalIds, setGoalIds] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { goals: apiGoals } = await goalsService.list();
+      const values: SavingGoals = {};
+      const ids: Record<string, number> = {};
+      apiGoals.forEach((g) => {
+        values[g.reference_month] = g.target_amount;
+        ids[g.reference_month] = g.id;
+      });
+      setGoals(values);
+      setGoalIds(ids);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Erro ao carregar metas.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const setGoalForMonth = useCallback(
-    (month: string, amount: number) => {
-      setGoals((prev) => {
-        if (amount <= 0) {
-          const rest = { ...prev };
-          delete rest[month];
-          return rest;
-        }
-        return { ...prev, [month]: amount };
-      });
+    async (month: string, amount: number) => {
+      const existingId = goalIds[month];
+
+      if (amount <= 0) {
+        if (existingId) await goalsService.remove(existingId);
+      } else if (existingId) {
+        await goalsService.update(existingId, { targetAmount: amount });
+      } else {
+        await goalsService.create({ referenceMonth: month, targetAmount: amount });
+      }
+
+      await load();
     },
-    [setGoals]
+    [goalIds, load]
   );
 
-  const getGoalForMonth = useCallback(
-    (month: string) => goals[month] ?? 0,
-    [goals]
-  );
+  const getGoalForMonth = useCallback((month: string) => goals[month] ?? 0, [goals]);
 
-  const replaceAll = useCallback(
-    (next: SavingGoals) => {
-      setGoals(next);
-    },
-    [setGoals]
-  );
-
-  return { goals, setGoalForMonth, getGoalForMonth, replaceAll };
+  return { goals, loading, error, setGoalForMonth, getGoalForMonth };
 }

@@ -11,11 +11,13 @@ export interface Transaction {
 }
 
 export interface Category {
+  /** id no banco — opcional porque as categorias padrão embutidas no front (fallback) não têm um */
+  id?: number;
   name: string;
   color: string;
   /** entrada = só receita, saida = só despesa, ambos = usuário escolhe na transação */
   type: TransactionType | "ambos";
-  subcategories: { name: string; color: string }[];
+  subcategories: { id?: number; name: string; color: string }[];
   /** categorias padrão (Salário/Outros) não podem ser removidas */
   builtin?: boolean;
 }
