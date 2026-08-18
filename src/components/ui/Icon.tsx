@@ -21,7 +21,9 @@ export type IconName =
   | "logout"
   | "user"
   | "book"
-  | "bell";
+  | "bell"
+  | "sparkles"
+  | "send";
 
 const PATHS: Record<IconName, string> = {
   sun: "M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-6.66 1.42-1.42M4.92 19.08l1.42-1.42M19.08 19.08l-1.42-1.42M4.92 4.92 6.34 6.34M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z",
@@ -47,6 +49,8 @@ const PATHS: Record<IconName, string> = {
   user: "M20 21a8 8 0 1 0-16 0M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
   book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15Z",
   bell: "M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9ZM13.73 21a2 2 0 0 1-3.46 0",
+  sparkles: "M12 3v4M12 17v4M3 12h4M17 12h4M6.5 6.5l2 2M15.5 15.5l2 2M6.5 17.5l2-2M15.5 8.5l2-2",
+  send: "m22 2-7 20-4-9-9-4Z M22 2 11 13",
 };
 
 export default function Icon({

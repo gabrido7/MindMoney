@@ -13,6 +13,7 @@ import { goalsRouter } from "./modules/goals/goals.routes";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { scoreRouter } from "./modules/score/score.routes";
 import { notificationsRouter } from "./modules/notifications/notifications.routes";
+import { insightsRouter } from "./modules/insights/insights.routes";
 
 export const app = express();
 
@@ -30,6 +31,7 @@ app.use("/api/goals", goalsRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/score", scoreRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/insights", insightsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -29,6 +29,7 @@ import RankingCard from "../features/dashboard/components/RankingCard";
 import MonthComparisonCard from "../features/dashboard/components/MonthComparisonCard";
 import InsightsCard from "../features/dashboard/components/InsightsCard";
 import ScoreCard from "../features/dashboard/components/ScoreCard";
+import AssistantCard from "../features/dashboard/components/AssistantCard";
 
 import GoalCard from "../features/goals/components/GoalCard";
 
@@ -327,6 +328,8 @@ export default function Dashboard() {
           biggestDecrease={biggestDecrease}
           top3Increases={top3Increases}
         />
+
+        <AssistantCard month={selectedMonth} />
 
         <div className="grid lg:grid-cols-2 gap-6">
           <EvolutionChart data={evolutionData} />
