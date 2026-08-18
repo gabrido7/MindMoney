@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  frontend:
+    name: Frontend (build, lint, test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: npm test
+
+  backend:
+    name: Backend (build, test against a real MySQL)
+    runs-on: ubuntu-latest
+
+    # Os testes do backend são de integração de verdade -- batem num MySQL
+    # real, nunca mockado (mesmo princípio do projeto inteiro). O serviço
+    # abaixo sobe um MySQL efêmero só para este job.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_ci_only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot_ci_only"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      PORT: 3001
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: mindmoney
+      DB_USER: mindmoney_app
+      DB_PASSWORD: ci_only_password
+      JWT_SECRET: ci_only_jwt_secret_not_for_prod_use
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:5173
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Aplica schema, seed e migrações no MySQL do job
+        # --default-character-set=utf8mb4 não é opcional aqui: sem ele, os
+        # nomes de categoria acentuados (Alimentação, Educação...) do
+        # seed.sql chegam corrompidos, o que quebra silenciosamente as
+        # comparações de unicidade (UNIQUE KEY) e faz parecer que
+        # categorias "diferentes" existem quando são a mesma categoria mal
+        # codificada. Mesmo problema documentado no CLAUDE.md para uso local.
+        run: |
+          mysql -h127.0.0.1 -uroot -proot_ci_only --default-character-set=utf8mb4 < database/schema.sql
+          mysql -h127.0.0.1 -uroot -proot_ci_only --default-character-set=utf8mb4 < database/seed.sql
+          for f in database/migrations/*.sql; do
+            echo "aplicando $f"
+            mysql -h127.0.0.1 -uroot -proot_ci_only --default-character-set=utf8mb4 < "$f"
+          done
+
+      - name: Cria o usuário de aplicação (privilégio mínimo, mesmo escopo de create_app_user.sql)
+        # Host '%' em vez de 'localhost': o backend conecta via TCP num
+        # contêiner de serviço separado do runner, nunca por socket Unix
+        # local -- create_app_user.sql (dev local) usa 'localhost' de
+        # propósito porque lá backend e MySQL rodam na mesma máquina.
+        run: |
+          mysql -h127.0.0.1 -uroot -proot_ci_only -e "
+            CREATE USER IF NOT EXISTS 'mindmoney_app'@'%' IDENTIFIED BY 'ci_only_password';
+            GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON mindmoney.* TO 'mindmoney_app'@'%';
+            FLUSH PRIVILEGES;
+          "
+
+      - working-directory: backend
+        run: npm ci
+      - working-directory: backend
+        run: npm run build
+      - working-directory: backend
+        run: npm test
