@@ -51,7 +51,8 @@ jobs:
       DB_USER: mindmoney_app
       DB_PASSWORD: ci_only_password
       JWT_SECRET: ci_only_jwt_secret_not_for_prod_use
-      JWT_EXPIRES_IN: 7d
+      JWT_EXPIRES_IN: 15m
+      REFRESH_TOKEN_DAYS: 30
       CORS_ORIGIN: http://localhost:5173
       NODE_ENV: test
 

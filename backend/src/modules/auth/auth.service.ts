@@ -2,19 +2,31 @@ import { AppError } from "../../utils/AppError";
 import { hashPassword, comparePassword } from "../../utils/password";
 import { signToken } from "../../utils/jwt";
 import { generateResetToken, hashResetToken } from "../../utils/passwordResetToken";
+import { generateRefreshToken, hashRefreshToken } from "../../utils/refreshToken";
 import { usersRepository } from "../users/users.repository";
 import { toPublicUser, type PublicUser } from "../users/users.service";
 import { passwordResetRepository } from "./passwordReset.repository";
+import { refreshTokenRepository } from "./refreshToken.repository";
 import type {
   LoginInput,
   RegisterInput,
   ForgotPasswordInput,
   ResetPasswordInput,
+  RefreshInput,
 } from "./auth.validation";
 
 export interface AuthResult {
   token: string;
+  refreshToken: string;
   user: PublicUser;
+}
+
+/** Emite o par de tokens e persiste o hash do refresh token -- usado em register/login/refresh. */
+async function issueTokens(userId: number): Promise<{ token: string; refreshToken: string }> {
+  const token = signToken({ userId });
+  const { token: refreshToken, tokenHash, expiresAt } = generateRefreshToken();
+  await refreshTokenRepository.create(userId, tokenHash, expiresAt);
+  return { token, refreshToken };
 }
 
 export const authService = {
@@ -34,9 +46,9 @@ export const authService = {
     await usersRepository.seedDefaultCategories(userId);
 
     const user = await usersRepository.findById(userId);
-    const token = signToken({ userId });
+    const { token, refreshToken } = await issueTokens(userId);
 
-    return { token, user: toPublicUser(user!) };
+    return { token, refreshToken, user: toPublicUser(user!) };
   },
 
   async login(input: LoginInput): Promise<AuthResult> {
@@ -46,8 +58,29 @@ export const authService = {
     const valid = await comparePassword(input.password, user.password_hash);
     if (!valid) throw AppError.unauthorized("E-mail ou senha inválidos.");
 
-    const token = signToken({ userId: user.id });
-    return { token, user: toPublicUser(user) };
+    const { token, refreshToken } = await issueTokens(user.id);
+    return { token, refreshToken, user: toPublicUser(user) };
+  },
+
+  /**
+   * Renova o access token a partir de um refresh token válido. Rotação:
+   * o token usado é revogado e um novo é emitido junto -- um refresh
+   * token roubado e reusado depois do dono já ter renovado fica
+   * imediatamente inválido (o dono já rotacionou pra outro hash).
+   */
+  async refresh(input: RefreshInput): Promise<{ token: string; refreshToken: string }> {
+    const tokenHash = hashRefreshToken(input.refreshToken);
+    const record = await refreshTokenRepository.findValidByHash(tokenHash);
+    if (!record) throw AppError.unauthorized("Sessão expirada. Faça login novamente.");
+
+    await refreshTokenRepository.revoke(record.id);
+    return issueTokens(record.user_id);
+  },
+
+  /** Revogação real no servidor -- limpar o token só no navegador não impede reuso se ele vazou. */
+  async logout(input: RefreshInput): Promise<void> {
+    const tokenHash = hashRefreshToken(input.refreshToken);
+    await refreshTokenRepository.revokeByHash(tokenHash);
   },
 
   /**
@@ -89,6 +122,9 @@ export const authService = {
     const passwordHash = await hashPassword(input.password);
     await usersRepository.updatePassword(record.user_id, passwordHash);
     await passwordResetRepository.markUsed(record.id);
+    // Sessões existentes não deveriam sobreviver a uma redefinição de senha
+    // (o cenário típico é justamente "perdi acesso, alguém pode ter a senha antiga").
+    await refreshTokenRepository.revokeAllForUser(record.user_id);
 
     return { message: "Senha redefinida com sucesso." };
   },

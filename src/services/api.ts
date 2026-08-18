@@ -1,4 +1,4 @@
-import { getToken, clearToken } from "../utils/token";
+import { getToken, setToken, clearToken, getRefreshToken, setRefreshToken, clearRefreshToken } from "../utils/token";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001/api";
 
@@ -15,10 +15,10 @@ export class ApiError extends Error {
 }
 
 /**
- * Chamado sempre que qualquer requisição recebe 401 — token ausente,
- * inválido ou expirado. AuthContext registra um handler aqui para limpar
- * o usuário da sessão e deixar o ProtectedRoute redirecionar para o
- * login, mesmo quando o 401 acontece no meio do uso (não só ao carregar).
+ * Chamado quando a sessão realmente não pode mais continuar (refresh
+ * token ausente/expirado/revogado — não só um access token vencido, que
+ * agora é renovado silenciosamente). AuthContext registra um handler
+ * aqui para limpar o usuário e deixar o ProtectedRoute redirecionar.
  */
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -44,8 +44,56 @@ function buildUrl(path: string, query?: QueryParams): string {
   return url.toString();
 }
 
-/** Serviço centralizado de API: base URL por env, token automático, erros normalizados em ApiError. */
-export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+// Rotas cujo 401 é uma resposta de negócio de verdade (credencial errada,
+// token de renovação inválido) -- nunca deve disparar uma tentativa de
+// renovação silenciosa nem o handler global de "sessão expirada".
+const AUTH_ENTRY_PATHS = ["/auth/login", "/auth/register", "/auth/refresh"];
+
+function endSession() {
+  clearToken();
+  clearRefreshToken();
+  unauthorizedHandler?.();
+}
+
+/**
+ * Renova o access token usando o refresh token guardado. Compartilhada
+ * entre chamadas simultâneas (uma única renovação em voo por vez) --
+ * sem isso, várias requisições expirando ao mesmo tempo disparariam
+ * várias renovações em paralelo e, como o refresh token rotaciona a
+ * cada uso, todas menos a última acabariam invalidadas.
+ */
+let refreshInFlight: Promise<void> | null = null;
+
+function refreshSession(): Promise<void> {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) throw new Error("Sem refresh token salvo.");
+
+      const response = await fetch(buildUrl("/auth/refresh"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) throw new Error("Falha ao renovar a sessão.");
+
+      const data = await response.json();
+      setToken(data.token);
+      setRefreshToken(data.refreshToken);
+    })().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+/** Serviço centralizado de API: base URL por env, token automático, renovação silenciosa em 401, erros normalizados em ApiError. */
+export async function apiRequest<T>(
+  path: string,
+  options: RequestOptions = {},
+  _isRetry = false
+): Promise<T> {
   const token = getToken();
 
   let response: Response;
@@ -69,10 +117,26 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    if (response.status === 401) {
-      clearToken();
-      unauthorizedHandler?.();
+    const isRetryable =
+      response.status === 401 &&
+      !_isRetry &&
+      !AUTH_ENTRY_PATHS.includes(path) &&
+      Boolean(getRefreshToken());
+
+    if (isRetryable) {
+      try {
+        await refreshSession();
+        return apiRequest<T>(path, options, true);
+      } catch {
+        endSession();
+        throw new ApiError("Sessão expirada. Faça login novamente.", 401);
+      }
     }
+
+    if (response.status === 401 && !AUTH_ENTRY_PATHS.includes(path)) {
+      endSession();
+    }
+
     const message = data?.error?.message ?? "Erro inesperado. Tente novamente.";
     throw new ApiError(message, response.status, data?.error?.details);
   }

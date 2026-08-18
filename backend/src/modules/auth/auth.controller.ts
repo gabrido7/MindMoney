@@ -21,4 +21,14 @@ export const authController = {
     const result = await authService.resetPassword(req.body);
     res.json(result);
   },
+
+  async refresh(req: Request, res: Response) {
+    const result = await authService.refresh(req.body);
+    res.json(result);
+  },
+
+  async logout(req: Request, res: Response) {
+    await authService.logout(req.body);
+    res.status(204).send();
+  },
 };

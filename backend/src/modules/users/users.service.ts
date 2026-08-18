@@ -1,6 +1,7 @@
 import { AppError } from "../../utils/AppError";
 import { hashPassword, comparePassword } from "../../utils/password";
 import { usersRepository, type UserRow } from "./users.repository";
+import { refreshTokenRepository } from "../auth/refreshToken.repository";
 import type { ChangePasswordInput, DeleteAccountInput, UpdateProfileInput } from "./users.validation";
 
 export interface PublicUser {
@@ -49,6 +50,10 @@ export const usersService = {
 
     const passwordHash = await hashPassword(input.newPassword);
     await usersRepository.updatePassword(userId, passwordHash);
+    // Mesmo raciocínio do reset de senha: trocar a senha encerra qualquer
+    // outra sessão ativa (o access token de 15min desta sessão continua
+    // valendo até expirar naturalmente, mas não renova mais depois disso).
+    await refreshTokenRepository.revokeAllForUser(userId);
   },
 
   async deleteAccount(userId: number, input: DeleteAccountInput): Promise<void> {

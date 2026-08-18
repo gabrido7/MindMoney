@@ -3,7 +3,13 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { validate } from "../../middlewares/validate";
 import { authRateLimit } from "../../middlewares/rateLimit";
 import { authController } from "./auth.controller";
-import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from "./auth.validation";
+import {
+  loginSchema,
+  registerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  refreshSchema,
+} from "./auth.validation";
 
 export const authRouter = Router();
 
@@ -20,3 +26,5 @@ authRouter.post(
   validate(resetPasswordSchema),
   asyncHandler(authController.resetPassword)
 );
+authRouter.post("/refresh", validate(refreshSchema), asyncHandler(authController.refresh));
+authRouter.post("/logout", validate(refreshSchema), asyncHandler(authController.logout));

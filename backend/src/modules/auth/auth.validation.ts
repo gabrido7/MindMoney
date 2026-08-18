@@ -20,7 +20,12 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8, "Senha deve ter pelo menos 8 caracteres").max(72),
 });
 
+export const refreshSchema = z.object({
+  refreshToken: z.string().length(64, "Token de renovação inválido"),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type RefreshInput = z.infer<typeof refreshSchema>;

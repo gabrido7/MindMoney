@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { authService } from "../services/authService";
-import { getToken, setToken, clearToken } from "../utils/token";
+import { getToken, setToken, clearToken, getRefreshToken, setRefreshToken, clearRefreshToken } from "../utils/token";
 import { setUnauthorizedHandler } from "../services/api";
 import type { PublicUser } from "../types/api";
 import { AuthContext } from "./auth-context";
@@ -12,8 +12,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(() => Boolean(getToken()));
 
   useEffect(() => {
-    // qualquer 401 (token ausente, inválido, expirado) em qualquer chamada
-    // da API derruba a sessão local — o ProtectedRoute cuida do redirect.
+    // Só dispara quando o refresh token também falhou (sessão de verdade
+    // encerrada) — um access token vencido sozinho é renovado
+    // silenciosamente por apiRequest, sem passar por aqui.
     setUnauthorizedHandler(() => setUser(null));
 
     const token = getToken();
@@ -22,25 +23,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authService
       .me()
       .then(({ user: currentUser }) => setUser(currentUser))
-      .catch(() => clearToken())
+      .catch(() => {
+        clearToken();
+        clearRefreshToken();
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (email: string, password: string) => {
     const result = await authService.login({ email, password });
     setToken(result.token);
+    setRefreshToken(result.refreshToken);
     setUser(result.user);
   };
 
   const register = async (name: string, email: string, password: string) => {
     const result = await authService.register({ name, email, password });
     setToken(result.token);
+    setRefreshToken(result.refreshToken);
     setUser(result.user);
   };
 
   const logout = () => {
+    const refreshToken = getRefreshToken();
     clearToken();
+    clearRefreshToken();
     setUser(null);
+    // Revogação real no servidor, em segundo plano -- não bloqueia a UI
+    // (o usuário já está deslogado localmente) e não deveria falhar o
+    // logout se o servidor estiver fora do ar.
+    if (refreshToken) {
+      authService.logout(refreshToken).catch(() => {});
+    }
   };
 
   return (

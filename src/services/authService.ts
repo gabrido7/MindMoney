@@ -18,4 +18,13 @@ export const authService = {
 
   resetPassword: (input: { token: string; password: string }) =>
     apiRequest<{ message: string }>("/auth/reset-password", { method: "POST", body: input }),
+
+  refresh: (refreshToken: string) =>
+    apiRequest<{ token: string; refreshToken: string }>("/auth/refresh", {
+      method: "POST",
+      body: { refreshToken },
+    }),
+
+  logout: (refreshToken: string) =>
+    apiRequest<void>("/auth/logout", { method: "POST", body: { refreshToken } }),
 };
