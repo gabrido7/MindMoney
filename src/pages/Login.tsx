@@ -65,6 +65,13 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
+        <Link
+          to="/esqueci-senha"
+          className="-mt-2 self-end text-xs font-medium text-neutral-400 hover:text-green-400 hover:underline"
+        >
+          Esqueci minha senha
+        </Link>
+
         <button
           type="submit"
           disabled={loading}

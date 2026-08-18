@@ -9,4 +9,13 @@ export const authService = {
     apiRequest<AuthResponse>("/auth/login", { method: "POST", body: input }),
 
   me: () => apiRequest<{ user: PublicUser }>("/users/me"),
+
+  forgotPassword: (input: { email: string }) =>
+    apiRequest<{ message: string; demoMode: boolean; token?: string; expiresAt?: string }>(
+      "/auth/forgot-password",
+      { method: "POST", body: input }
+    ),
+
+  resetPassword: (input: { token: string; password: string }) =>
+    apiRequest<{ message: string }>("/auth/reset-password", { method: "POST", body: input }),
 };

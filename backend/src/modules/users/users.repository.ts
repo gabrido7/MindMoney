@@ -32,4 +32,8 @@ export const usersRepository = {
   async seedDefaultCategories(userId: number): Promise<void> {
     await pool.query("CALL sp_seed_user_categories(?)", [userId]);
   },
+
+  async updatePassword(id: number, passwordHash: string): Promise<void> {
+    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, id]);
+  },
 };
