@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { env } from "./config/env";
+import { pool } from "./config/db";
+import { logger } from "./utils/logger";
 import { errorHandler } from "./middlewares/errorHandler";
 import { notFoundHandler } from "./middlewares/notFound";
 import { apiRateLimit } from "./middlewares/rateLimit";
@@ -27,7 +29,33 @@ app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN }));
 app.use(express.json());
 
-app.get("/health", (_req, res) => res.json({ status: "ok" }));
+/**
+ * Antes disso era só {status: "ok"} estático -- não provava nada sobre o
+ * estado real do sistema. Agora testa a conexão de verdade com o banco
+ * (a mesma dependência que faz o processo inteiro falhar no boot, ver
+ * server.ts) e devolve 503 se ela estiver fora, em vez de mentir que
+ * está tudo bem.
+ */
+app.get("/health", async (_req, res) => {
+  const startedAt = Date.now();
+  try {
+    await pool.query("SELECT 1");
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.round(process.uptime()),
+      db: { status: "ok", latencyMs: Date.now() - startedAt },
+    });
+  } catch (err) {
+    logger.error({ err }, "Health check: banco inacessível");
+    res.status(503).json({
+      status: "degraded",
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.round(process.uptime()),
+      db: { status: "error" },
+    });
+  }
+});
 
 app.use("/api", apiRateLimit);
 
