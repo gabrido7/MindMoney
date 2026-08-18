@@ -86,7 +86,7 @@ export default function ScoreCard({ month }: { month: string }) {
               <XAxis dataKey="month" tickFormatter={formatMonthBR} stroke="#898781" fontSize={11} />
               <YAxis domain={[0, 100]} stroke="#898781" fontSize={11} width={28} />
               <Tooltip
-                formatter={(value?: number) => [value ?? 0, "Score"]}
+                formatter={(value: unknown) => [Number(value) || 0, "Score"]}
                 labelFormatter={(label) => (typeof label === "string" ? formatMonthBR(label) : "")}
               />
               <Line type="monotone" dataKey="score" stroke="#2a78d6" strokeWidth={2} dot={{ r: 3 }} />

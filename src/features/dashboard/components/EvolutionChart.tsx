@@ -32,7 +32,7 @@ export default function EvolutionChart({
             />
             <YAxis stroke="#898781" fontSize={12} />
             <Tooltip
-              formatter={(value?: number) => [formatCurrency(value ?? 0), "Saldo"]}
+              formatter={(value: unknown) => [formatCurrency(Number(value) || 0), "Saldo"]}
               labelFormatter={(label) =>
                 typeof label === "string" ? formatMonthBR(label) : ""
               }

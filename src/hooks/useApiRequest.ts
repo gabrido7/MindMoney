@@ -9,19 +9,19 @@ export function useApiRequest<T>(request: () => Promise<T>, deps: unknown[] = []
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(null);
 
-    request()
-      .then((result) => {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await request();
         if (active) setData(result);
-      })
-      .catch((err) => {
+      } catch (err) {
         if (active) setError(err instanceof ApiError ? err.message : "Erro inesperado.");
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    })();
 
     return () => {
       active = false;

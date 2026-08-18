@@ -21,7 +21,9 @@ export default function GoalCard({
 
   // sincroniza o rascunho quando a meta muda por fora (troca de mês, primeira carga)
   useEffect(() => {
-    setDraft(goal || "");
+    (() => {
+      setDraft(goal || "");
+    })();
   }, [goal, month]);
 
   const savingPercent = goal > 0 ? (saldo / goal) * 100 : 0;

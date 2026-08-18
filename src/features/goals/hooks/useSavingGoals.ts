@@ -31,7 +31,9 @@ export function useSavingGoals() {
   }, []);
 
   useEffect(() => {
-    load();
+    (async () => {
+      await load();
+    })();
   }, [load]);
 
   const setGoalForMonth = useCallback(

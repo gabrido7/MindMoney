@@ -37,7 +37,9 @@ export function useCategories() {
   }, []);
 
   useEffect(() => {
-    load();
+    (async () => {
+      await load();
+    })();
   }, [load]);
 
   const addCategory = useCallback(

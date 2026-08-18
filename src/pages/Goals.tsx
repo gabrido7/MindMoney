@@ -69,7 +69,9 @@ export default function Goals() {
   }, []);
 
   useEffect(() => {
-    load();
+    (async () => {
+      await load();
+    })();
   }, [load]);
 
   const handleCreate = async (values: GoalFormValues) => {

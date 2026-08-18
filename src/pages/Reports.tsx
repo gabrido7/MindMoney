@@ -125,7 +125,7 @@ export default function Reports() {
                 <XAxis dataKey="month" tickFormatter={formatMonthBR} stroke="#898781" fontSize={12} />
                 <YAxis stroke="#898781" fontSize={12} />
                 <Tooltip
-                  formatter={(value?: number) => formatCurrency(value ?? 0)}
+                  formatter={(value: unknown) => formatCurrency(Number(value) || 0)}
                   labelFormatter={(label) => (typeof label === "string" ? formatMonthBR(label) : "")}
                 />
                 <Bar dataKey="entradas" name="Entradas" fill="#0ca30c" radius={[4, 4, 0, 0]} />

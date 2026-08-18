@@ -36,7 +36,9 @@ export function useTransactions(categories: Category[]) {
   }, []);
 
   useEffect(() => {
-    load();
+    (async () => {
+      await load();
+    })();
   }, [load]);
 
   const resolveInput = useCallback(

@@ -89,7 +89,7 @@ export default function CategoryPieChart({
                   label={({ name, value }) =>
                     `${name} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`
                   }
-                  onClick={(data) => onSelectCategory(data.name)}
+                  onClick={(data) => onSelectCategory(data.name ?? null)}
                 >
                   {categoryData.map((entry) => (
                     <Cell
@@ -99,7 +99,7 @@ export default function CategoryPieChart({
                     />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value?: number) => formatCurrency(value ?? 0)} />
+                <Tooltip formatter={(value: unknown) => formatCurrency(Number(value) || 0)} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -158,7 +158,7 @@ export default function CategoryPieChart({
                     <Cell key={entry.name} fill={colorFor(entry.name)} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value?: number) => formatCurrency(value ?? 0)} />
+                <Tooltip formatter={(value: unknown) => formatCurrency(Number(value) || 0)} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
