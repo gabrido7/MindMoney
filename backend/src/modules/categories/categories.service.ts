@@ -1,11 +1,30 @@
 import { AppError } from "../../utils/AppError";
 import { colorForLabel } from "../../utils/color";
-import { categoriesRepository } from "./categories.repository";
+import { categoriesRepository, type SubcategoryRow } from "./categories.repository";
 import type { CreateCategoryInput, CreateSubcategoryInput } from "./categories.validation";
 
 export const categoriesService = {
+  /**
+   * Uma chamada de categorias + uma chamada de subcategorias (com IN),
+   * nunca 1+N -- antes o frontend fazia uma chamada de subcategorias por
+   * categoria (useCategories.ts), o que virava 1+N requisições sempre que
+   * a lista carregava.
+   */
   async listForUser(userId: number) {
-    return categoriesRepository.findAllByUser(userId);
+    const categories = await categoriesRepository.findAllByUser(userId);
+    if (categories.length === 0) return [];
+
+    const subcategories = await categoriesRepository.findSubcategoriesForCategories(
+      categories.map((c) => c.id)
+    );
+    const byCategory = new Map<number, SubcategoryRow[]>();
+    for (const sub of subcategories) {
+      const list = byCategory.get(sub.category_id) ?? [];
+      list.push(sub);
+      byCategory.set(sub.category_id, list);
+    }
+
+    return categories.map((c) => ({ ...c, subcategories: byCategory.get(c.id) ?? [] }));
   },
 
   async listSubcategories(categoryId: number, userId: number) {
@@ -19,7 +38,8 @@ export const categoriesService = {
     if (existing) throw AppError.conflict("Já existe uma categoria com esse nome.");
 
     const id = await categoriesRepository.create(userId, input.name, colorForLabel(input.name), input.type);
-    return categoriesRepository.findByIdAndUser(id, userId);
+    const category = await categoriesRepository.findByIdAndUser(id, userId);
+    return category ? { ...category, subcategories: [] } : null;
   },
 
   async archive(id: number, userId: number) {

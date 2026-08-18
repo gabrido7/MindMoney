@@ -4,7 +4,12 @@ import { ApiError } from "../../../services/api";
 import { colorForLabel } from "../../../utils/color";
 import type { Category } from "../../../types";
 
-/** Categorias/subcategorias vêm da API (por usuário, seedadas no cadastro) — não mais do localStorage. */
+/**
+ * Categorias/subcategorias vêm da API (por usuário, seedadas no cadastro) —
+ * não mais do localStorage. Uma chamada só: GET /api/categories já devolve
+ * as subcategorias aninhadas (antes disso o front fazia 1 chamada de
+ * categorias + N chamadas de subcategorias, uma por categoria).
+ */
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,20 +20,18 @@ export function useCategories() {
     setError(null);
     try {
       const { categories: apiCategories } = await categoriesService.list();
-      const withSubcategories = await Promise.all(
-        apiCategories.map(async (c) => {
-          const { subcategories } = await categoriesService.subcategories(c.id);
-          return {
+      setCategories(
+        apiCategories.map(
+          (c): Category => ({
             id: c.id,
             name: c.name,
             color: c.color,
             type: c.type,
             builtin: c.is_builtin === 1,
-            subcategories: subcategories.map((s) => ({ id: s.id, name: s.name, color: s.color })),
-          } satisfies Category;
-        })
+            subcategories: c.subcategories.map((s) => ({ id: s.id, name: s.name, color: s.color })),
+          })
+        )
       );
-      setCategories(withSubcategories);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erro ao carregar categorias.");
     } finally {

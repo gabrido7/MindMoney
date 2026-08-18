@@ -53,6 +53,30 @@ export const compareCategories = (
   });
 };
 
+/**
+ * Igual a compareCategories, mas opera sobre totais já agregados por
+ * categoria (o formato que o backend devolve em categoryBreakdown) em vez
+ * de transações brutas — usada pelo Dashboard, que agora busca o
+ * comparativo mês-a-mês pronto da API em vez de recalcular a partir do
+ * histórico completo de transações no navegador.
+ */
+export const compareCategoryBreakdowns = (
+  current: CategoryTotal[],
+  previous: CategoryTotal[]
+): CategoryComparison[] => {
+  const previousByName = new Map(previous.map((c) => [c.name, c.value]));
+
+  return current.map((c) => {
+    const previousValue = previousByName.get(c.name) ?? 0;
+    return {
+      category: c.name,
+      change: calcPercentChange(c.value, previousValue),
+      current: c.value,
+      previous: previousValue,
+    };
+  });
+};
+
 export const getPreviousMonth = (month: string): string => {
   const date = new Date(month + "-01T00:00:00");
   date.setMonth(date.getMonth() - 1);

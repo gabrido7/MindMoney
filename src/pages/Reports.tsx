@@ -16,7 +16,6 @@ import EmptyState from "../components/ui/EmptyState";
 import { dashboardService } from "../services/dashboardService";
 import { useApiRequest } from "../hooks/useApiRequest";
 import { formatCurrency, formatMonthBR, currentMonth } from "../utils/formatters";
-import { getPreviousMonth } from "../features/transactions/utils/aggregations";
 import { exportReportCSV, type MonthReport } from "../features/reports/utils/exportReport";
 
 const MONTHS_IN_REPORT = 6;
@@ -25,17 +24,9 @@ export default function Reports() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth());
 
   const { data, loading, error } = useApiRequest(async () => {
-    const months: string[] = [];
-    let m = selectedMonth;
-    for (let i = 0; i < MONTHS_IN_REPORT; i++) {
-      months.push(m);
-      m = getPreviousMonth(m);
-    }
-    months.reverse();
+    const { months: summaries } = await dashboardService.range(MONTHS_IN_REPORT, selectedMonth);
 
-    const dashboards = await Promise.all(months.map((month) => dashboardService.get(month)));
-
-    const rows: MonthReport[] = dashboards.map((d) => ({
+    const rows: MonthReport[] = summaries.map((d) => ({
       month: d.month,
       entradas: d.totals.entradas,
       saidas: d.totals.saidas,
@@ -43,7 +34,7 @@ export default function Reports() {
       savingsRate: d.totals.entradas > 0 ? (d.totals.saldo / d.totals.entradas) * 100 : 0,
     }));
 
-    const selected = dashboards[dashboards.length - 1];
+    const selected = summaries[summaries.length - 1];
     return { rows, selected };
   }, [selectedMonth]);
 

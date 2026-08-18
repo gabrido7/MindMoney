@@ -3,8 +3,7 @@ import { transactionsRepository } from "../transactions/transactions.repository"
 import { goalsRepository } from "../goals/goals.repository";
 import { notificationsRepository } from "./notifications.repository";
 import { formatMonthLabel } from "../../utils/month";
-
-const ALERT_PERCENT = 70; // mesmo limiar usado hoje no front (ALERT_PERCENT em Dashboard.tsx)
+import { ALERT_PERCENT } from "../../config/rules";
 
 export const notificationsService = {
   async list(userId: number) {

@@ -6,20 +6,14 @@ import ProgressBar from "../components/ui/ProgressBar";
 import EmptyState from "../components/ui/EmptyState";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { goalsService } from "../services/goalsService";
-import { dashboardService } from "../services/dashboardService";
 import { ApiError } from "../services/api";
 import { formatCurrency, formatMonthBR, currentMonth } from "../utils/formatters";
 import GoalFormModal, { type GoalFormValues } from "../features/goals/components/GoalFormModal";
 import type { ApiGoal } from "../types/api";
 
-interface GoalWithProgress extends ApiGoal {
-  saldo: number;
-  progressPercent: number;
-}
-
 type GoalStatus = "atingida" | "em_andamento" | "nao_atingida" | "futura";
 
-function statusFor(goal: GoalWithProgress): GoalStatus {
+function statusFor(goal: ApiGoal): GoalStatus {
   if (goal.progressPercent >= 100) return "atingida";
   if (goal.reference_month > currentMonth()) return "futura";
   if (goal.reference_month === currentMonth()) return "em_andamento";
@@ -34,33 +28,27 @@ const STATUS_LABEL: Record<GoalStatus, { label: string; className: string }> = {
 };
 
 export default function Goals() {
-  const [goals, setGoals] = useState<GoalWithProgress[]>([]);
+  const [goals, setGoals] = useState<ApiGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<GoalWithProgress | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<GoalWithProgress | null>(null);
+  const [editingGoal, setEditingGoal] = useState<ApiGoal | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ApiGoal | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  /**
+   * Uma chamada só -- GET /api/goals já devolve saldo/progressPercent
+   * calculados pelo backend. Antes disso, cada meta disparava sua própria
+   * chamada de dashboard só para ler o saldo (1+N requisições).
+   */
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const { goals: apiGoals } = await goalsService.list();
-      const withProgress = await Promise.all(
-        apiGoals.map(async (g): Promise<GoalWithProgress> => {
-          const dashboard = await dashboardService.get(g.reference_month);
-          const saldo = dashboard.totals.saldo;
-          return {
-            ...g,
-            saldo,
-            progressPercent: g.target_amount > 0 ? (saldo / g.target_amount) * 100 : 0,
-          };
-        })
-      );
-      withProgress.sort((a, b) => b.reference_month.localeCompare(a.reference_month));
-      setGoals(withProgress);
+      const sorted = [...apiGoals].sort((a, b) => b.reference_month.localeCompare(a.reference_month));
+      setGoals(sorted);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erro ao carregar metas.");
     } finally {

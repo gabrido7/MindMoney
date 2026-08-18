@@ -1,45 +1,64 @@
 import { useCallback, useEffect, useState } from "react";
 import { transactionsService } from "../../../services/transactionsService";
 import { ApiError } from "../../../services/api";
+import { toLocalTransaction } from "../utils/mapApiTransaction";
 import type { Category, Transaction } from "../../../types";
-import type { ApiTransaction } from "../../../types/api";
+import type { Pagination } from "../../../types/api";
 
 export type TransactionInput = Omit<Transaction, "id">;
 
-const toLocalTransaction = (t: ApiTransaction): Transaction => ({
-  id: String(t.id),
-  description: t.description,
-  amount: t.amount,
-  type: t.type,
-  date: t.transaction_date,
-  category: t.category_name,
-  subcategory: t.subcategory_name ?? undefined,
-});
+const PAGE_SIZE = 50;
 
-/** Transações vêm da API/MySQL agora — localStorage não é mais a fonte dos dados financeiros. */
-export function useTransactions(categories: Category[]) {
+/**
+ * Transações vêm da API/MySQL, paginadas e restritas ao mês pedido — antes
+ * este hook buscava o histórico inteiro do usuário de uma vez (sem limite
+ * nenhum), a cada carregamento do Dashboard. Agora cada chamada busca no
+ * máximo PAGE_SIZE transações daquele mês; "carregar mais" busca a
+ * próxima página sem re-buscar o que já foi carregado.
+ */
+export function useTransactions(categories: Category[], month: string) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { transactions: apiTransactions } = await transactionsService.list();
-      setTransactions(apiTransactions.map(toLocalTransaction));
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erro ao carregar transações.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchPage = useCallback(
+    async (targetPage: number, append: boolean) => {
+      if (append) setLoadingMore(true);
+      else setLoading(true);
+      setError(null);
+
+      try {
+        const result = await transactionsService.list({ month, page: targetPage, limit: PAGE_SIZE });
+        const mapped = result.transactions.map(toLocalTransaction);
+        setTransactions((prev) => (append ? [...prev, ...mapped] : mapped));
+        setPagination(result.pagination);
+        setPage(targetPage);
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : "Erro ao carregar transações.");
+      } finally {
+        if (append) setLoadingMore(false);
+        else setLoading(false);
+      }
+    },
+    [month]
+  );
 
   useEffect(() => {
     (async () => {
-      await load();
+      await fetchPage(1, false);
     })();
-  }, [load]);
+  }, [fetchPage]);
+
+  const loadMore = useCallback(() => {
+    if (pagination && page < pagination.totalPages && !loadingMore) {
+      fetchPage(page + 1, true);
+    }
+  }, [pagination, page, loadingMore, fetchPage]);
+
+  const reload = useCallback(() => fetchPage(1, false), [fetchPage]);
 
   const resolveInput = useCallback(
     (input: TransactionInput) => {
@@ -64,31 +83,34 @@ export function useTransactions(categories: Category[]) {
   const addTransaction = useCallback(
     async (input: TransactionInput) => {
       await transactionsService.create(resolveInput(input));
-      await load();
+      await reload();
     },
-    [resolveInput, load]
+    [resolveInput, reload]
   );
 
   const updateTransaction = useCallback(
     async (id: string, input: TransactionInput) => {
       await transactionsService.update(Number(id), resolveInput(input));
-      await load();
+      await reload();
     },
-    [resolveInput, load]
+    [resolveInput, reload]
   );
 
   const deleteTransaction = useCallback(
     async (id: string) => {
       await transactionsService.remove(Number(id));
-      await load();
+      await reload();
     },
-    [load]
+    [reload]
   );
 
   return {
     transactions,
+    pagination,
     loading,
+    loadingMore,
     error,
+    loadMore,
     addTransaction,
     updateTransaction,
     deleteTransaction,

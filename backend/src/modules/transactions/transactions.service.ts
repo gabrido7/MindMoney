@@ -19,7 +19,21 @@ async function assertOwnedCategoryAndSubcategory(userId: number, input: Transact
 
 export const transactionsService = {
   async list(userId: number, filters: TransactionListQuery) {
-    return transactionsRepository.list(userId, filters);
+    const { page, limit } = filters;
+    const [transactions, total] = await Promise.all([
+      transactionsRepository.list(userId, filters, { page, limit }),
+      transactionsRepository.count(userId, filters),
+    ]);
+
+    return {
+      transactions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(Math.ceil(total / limit), 1),
+      },
+    };
   },
 
   async create(userId: number, input: TransactionBodyInput) {

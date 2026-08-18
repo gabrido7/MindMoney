@@ -5,7 +5,15 @@ import type { GoalBodyInput, GoalUpdateInput } from "./goals.validation";
 
 export const goalsService = {
   async list(userId: number, month?: string) {
-    return goalsRepository.listByUser(userId, month);
+    const goals = await goalsRepository.listByUserWithTotals(userId, month);
+    return goals.map(({ entradas, saidas, ...goal }) => {
+      const saldo = Number(entradas) - Number(saidas);
+      return {
+        ...goal,
+        saldo,
+        progressPercent: goal.target_amount > 0 ? (saldo / goal.target_amount) * 100 : 0,
+      };
+    });
   },
 
   async create(userId: number, input: GoalBodyInput) {

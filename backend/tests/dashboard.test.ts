@@ -51,4 +51,32 @@ describe("Dashboard (agregação e cálculos)", () => {
     expect(res.body.alert.gastoPercentual).toBe(0);
     expect(Number.isFinite(res.body.changes.saldo)).toBe(true);
   });
+
+  it("/api/dashboard/range devolve N meses numa chamada só, terminando no mês pedido", async () => {
+    const res = await request(app)
+      .get("/api/dashboard/range")
+      .query({ month: "2026-08", months: 3 })
+      .set(authHeader(user.token));
+
+    expect(res.status).toBe(200);
+    expect(res.body.months.length).toBe(3);
+    expect(res.body.months.map((m: { month: string }) => m.month)).toEqual(["2026-06", "2026-07", "2026-08"]);
+    expect(res.body.months[2].totals.entradas).toBe(5000);
+    expect(res.body.months[2].totals.saidas).toBe(1500);
+    expect(Array.isArray(res.body.evolution)).toBe(true);
+  });
+
+  it("/api/dashboard/range usa 6 meses e o mês atual como padrão", async () => {
+    const res = await request(app).get("/api/dashboard/range").set(authHeader(user.token));
+    expect(res.status).toBe(200);
+    expect(res.body.months.length).toBe(6);
+  });
+
+  it("/api/dashboard/range rejeita months fora do intervalo permitido", async () => {
+    const res = await request(app)
+      .get("/api/dashboard/range")
+      .query({ months: 100 })
+      .set(authHeader(user.token));
+    expect(res.status).toBe(400);
+  });
 });

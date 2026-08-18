@@ -96,4 +96,23 @@ describe("Categorias e subcategorias", () => {
       .set(authHeader(userB.token));
     expect(res.status).toBe(404);
   });
+
+  it("GET /api/categories já devolve subcategorias aninhadas (sem precisar de 1 chamada por categoria)", async () => {
+    const res = await request(app).get("/api/categories").set(authHeader(userA.token));
+
+    const alimentacao = res.body.categories.find((c: { name: string }) => c.name === "Alimentação");
+    expect(Array.isArray(alimentacao.subcategories)).toBe(true);
+    expect(alimentacao.subcategories.length).toBeGreaterThan(0);
+    expect(alimentacao.subcategories[0]).toHaveProperty("name");
+    expect(alimentacao.subcategories[0]).toHaveProperty("color");
+  });
+
+  it("categoria recém-criada já vem com subcategories: [] na própria resposta do POST", async () => {
+    const res = await request(app)
+      .post("/api/categories")
+      .set(authHeader(userA.token))
+      .send({ name: "Cuidados com pets", type: "saida" });
+
+    expect(res.body.category.subcategories).toEqual([]);
+  });
 });

@@ -44,6 +44,16 @@ export const categoriesRepository = {
     return rows;
   },
 
+  /** Subcategorias de várias categorias numa query só -- usado para montar a lista com subcategorias já aninhadas, sem 1 chamada por categoria. */
+  async findSubcategoriesForCategories(categoryIds: number[]): Promise<SubcategoryRow[]> {
+    if (categoryIds.length === 0) return [];
+    const [rows] = await pool.query<SubcategoryRow[]>(
+      "SELECT * FROM subcategories WHERE category_id IN (?) AND archived_at IS NULL ORDER BY category_id ASC, id ASC",
+      [categoryIds]
+    );
+    return rows;
+  },
+
   async findSubcategoryByIdAndCategory(id: number, categoryId: number): Promise<SubcategoryRow | null> {
     const [rows] = await pool.query<SubcategoryRow[]>(
       "SELECT * FROM subcategories WHERE id = ? AND category_id = ? LIMIT 1",

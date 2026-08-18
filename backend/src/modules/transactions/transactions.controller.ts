@@ -3,8 +3,8 @@ import { transactionsService } from "./transactions.service";
 
 export const transactionsController = {
   async list(req: Request, res: Response) {
-    const transactions = await transactionsService.list(req.userId!, req.query as never);
-    res.json({ transactions });
+    const result = await transactionsService.list(req.userId!, req.query as never);
+    res.json(result);
   },
 
   async create(req: Request, res: Response) {

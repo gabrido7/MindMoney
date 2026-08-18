@@ -25,6 +25,7 @@ export interface ApiCategory {
   type: "entrada" | "saida" | "ambos";
   is_builtin: 0 | 1;
   archived_at: string | null;
+  subcategories: ApiSubcategory[];
 }
 
 export interface ApiSubcategory {
@@ -60,6 +61,13 @@ export interface ApiTransactionInput {
   transactionDate: string;
 }
 
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface ApiGoal {
   id: number;
   user_id: number;
@@ -67,6 +75,8 @@ export interface ApiGoal {
   target_amount: number;
   created_at: string;
   updated_at: string;
+  saldo: number;
+  progressPercent: number;
 }
 
 export interface ApiNotification {
@@ -79,16 +89,24 @@ export interface ApiNotification {
   created_at: string;
 }
 
-export interface DashboardData {
+export interface DashboardMonthSummary {
   month: string;
   totals: { entradas: number; saidas: number; saldo: number };
   previousMonth: { month: string; entradas: number; saidas: number; saldo: number };
   changes: { entradas: number; saidas: number; saldo: number };
   categoryBreakdown: { categoryId: number; name: string; color: string; value: number }[];
   ranking: { categoryId: number; name: string; color: string; value: number }[];
-  evolution: { month: string; saldo: number }[];
   goal: { id: number; targetAmount: number; progressPercent: number } | null;
   alert: { status: "over" | "near" | "ok"; gastoPercentual: number; threshold: number };
+}
+
+export interface DashboardData extends DashboardMonthSummary {
+  evolution: { month: string; saldo: number }[];
+}
+
+export interface DashboardRangeData {
+  months: DashboardMonthSummary[];
+  evolution: { month: string; saldo: number }[];
 }
 
 export type ScoreLevel = "Excelente" | "Bom" | "Regular" | "Atenção" | "Crítico";

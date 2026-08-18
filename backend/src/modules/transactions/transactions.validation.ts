@@ -17,6 +17,8 @@ export const transactionListQuerySchema = z.object({
   type: z.enum(["entrada", "saida"]).optional(),
   categoryId: z.coerce.number().int().positive().optional(),
   search: z.string().trim().min(1).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 
 export const idParamSchema = z.object({

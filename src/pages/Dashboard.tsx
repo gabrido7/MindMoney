@@ -1,19 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDarkMode } from "../hooks/useDarkMode";
+import { useApiRequest } from "../hooks/useApiRequest";
 import { useTransactions } from "../features/transactions/hooks/useTransactions";
 import { useCategories } from "../features/categories/hooks/useCategories";
 import { useSavingGoals } from "../features/goals/hooks/useSavingGoals";
-import {
-  filterByMonth,
-  sumByType,
-  categoryTotals,
-  groupBySubcategory,
-  compareCategories,
-  monthlyEvolution,
-  getPreviousMonth,
-} from "../features/transactions/utils/aggregations";
-import { calcPercentChange } from "../utils/formatters";
+import { groupBySubcategory, compareCategoryBreakdowns } from "../features/transactions/utils/aggregations";
+import { toLocalTransaction } from "../features/transactions/utils/mapApiTransaction";
 import { limitSuggestion } from "../features/dashboard/utils/insights";
+import { dashboardService } from "../services/dashboardService";
+import { transactionsService } from "../services/transactionsService";
 
 import Sidebar from "../components/ui/Sidebar";
 import Button from "../components/ui/Button";
@@ -42,12 +37,14 @@ import TransactionList from "../features/transactions/components/TransactionList
 import CategoryManagerModal from "../features/categories/components/CategoryManagerModal";
 import ImportExportPanel from "../features/importExport/components/ImportExportPanel";
 
-import type { Transaction } from "../types";
-
-const ALERT_PERCENT = 70;
+import type { Transaction, CategoryTotal } from "../types";
 
 export default function Dashboard() {
   const [darkMode, setDarkMode] = useDarkMode();
+
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  );
 
   const {
     categories,
@@ -59,28 +56,46 @@ export default function Dashboard() {
     removeSubcategory,
     getColor,
   } = useCategories();
+
   const {
     transactions,
+    pagination: txPagination,
     loading: transactionsLoading,
+    loadingMore: transactionsLoadingMore,
     error: transactionsError,
+    loadMore: loadMoreTransactions,
     addTransaction,
     updateTransaction,
     deleteTransaction,
-  } = useTransactions(categories);
+  } = useTransactions(categories, selectedMonth);
+
   const {
-    goals,
+    goals: _goals,
     loading: goalsLoading,
     error: goalsError,
     setGoalForMonth,
     getGoalForMonth,
   } = useSavingGoals();
 
-  const loading = categoriesLoading || transactionsLoading || goalsLoading;
-  const loadError = categoriesError || transactionsError || goalsError;
+  /**
+   * Totais, comparativo com o mês anterior, ranking, evolução e alerta
+   * vêm prontos do servidor (2 meses numa chamada só: o atual + o
+   * anterior, este último só para o comparativo por categoria do
+   * InsightsCard). Antes disso o Dashboard buscava o histórico inteiro de
+   * transações e recalculava tudo isso no navegador.
+   */
+  const {
+    data: rangeData,
+    loading: rangeLoading,
+    error: rangeError,
+  } = useApiRequest(() => dashboardService.range(2, selectedMonth), [selectedMonth]);
 
-  const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7)
-  );
+  const currentSummary = rangeData?.months[rangeData.months.length - 1] ?? null;
+  const previousSummary = rangeData?.months[rangeData.months.length - 2] ?? null;
+  const evolutionData = rangeData?.evolution ?? [];
+
+  const loading = categoriesLoading || transactionsLoading || goalsLoading || rangeLoading;
+  const loadError = categoriesError || transactionsError || goalsError || rangeError;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -95,74 +110,72 @@ export default function Dashboard() {
     category: "todas",
   });
 
-  const monthTransactions = useMemo(
-    () => filterByMonth(transactions, selectedMonth),
-    [transactions, selectedMonth]
-  );
+  // Drill-down de subcategoria: busca sob demanda, restrita ao mês + categoria
+  // selecionados (nunca ao histórico inteiro) -- só dispara quando o usuário
+  // realmente clica numa fatia do gráfico.
+  const [subcategoryData, setSubcategoryData] = useState<CategoryTotal[] | null>(null);
+  const [subcategoryLoading, setSubcategoryLoading] = useState(false);
 
-  const previousMonth = useMemo(() => getPreviousMonth(selectedMonth), [selectedMonth]);
+  useEffect(() => {
+    let active = true;
 
-  const previousMonthTransactions = useMemo(
-    () => filterByMonth(transactions, previousMonth),
-    [transactions, previousMonth]
-  );
+    (async () => {
+      if (!selectedCategory) {
+        setSubcategoryData(null);
+        return;
+      }
+      const category = categories.find((c) => c.name === selectedCategory);
+      if (!category?.id) {
+        setSubcategoryData(null);
+        return;
+      }
 
-  const totalEntradas = useMemo(
-    () => sumByType(monthTransactions, "entrada"),
-    [monthTransactions]
-  );
-  const totalSaidas = useMemo(
-    () => sumByType(monthTransactions, "saida"),
-    [monthTransactions]
-  );
-  const saldo = totalEntradas - totalSaidas;
+      setSubcategoryLoading(true);
+      try {
+        const result = await transactionsService.list({
+          month: selectedMonth,
+          categoryId: category.id,
+          limit: 200,
+        });
+        if (!active) return;
+        const grouped = groupBySubcategory(result.transactions.map(toLocalTransaction), selectedCategory);
+        setSubcategoryData(Object.entries(grouped).map(([name, value]) => ({ name, value })));
+      } catch {
+        if (active) setSubcategoryData([]);
+      } finally {
+        if (active) setSubcategoryLoading(false);
+      }
+    })();
 
-  const prevEntradas = useMemo(
-    () => sumByType(previousMonthTransactions, "entrada"),
-    [previousMonthTransactions]
-  );
-  const prevSaidas = useMemo(
-    () => sumByType(previousMonthTransactions, "saida"),
-    [previousMonthTransactions]
-  );
-  const prevSaldo = prevEntradas - prevSaidas;
+    return () => {
+      active = false;
+    };
+  }, [selectedCategory, selectedMonth, categories]);
 
-  const entradasChange = calcPercentChange(totalEntradas, prevEntradas);
-  const saidasChange = calcPercentChange(totalSaidas, prevSaidas);
-  const saldoChange = calcPercentChange(saldo, prevSaldo);
+  const visibleTransactions = useMemo(() => {
+    return transactions.filter((t) => {
+      if (filters.type !== "todos" && t.type !== filters.type) return false;
+      if (filters.category !== "todas" && t.category !== filters.category) return false;
+      if (filters.search) {
+        const query = filters.search.toLowerCase();
+        const haystack = `${t.description} ${t.category} ${t.subcategory ?? ""}`.toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    });
+  }, [transactions, filters]);
 
-  const categoryData = useMemo(
-    () => categoryTotals(monthTransactions),
-    [monthTransactions]
-  );
-
-  const rankingGastos = useMemo(
-    () => [...categoryData].sort((a, b) => b.value - a.value).slice(0, 3),
-    [categoryData]
-  );
-
-  const gastoPercentual = totalEntradas > 0 ? (totalSaidas / totalEntradas) * 100 : 0;
-  const ultrapassouLimite = totalEntradas > 0 && gastoPercentual > ALERT_PERCENT;
-  const quaseNoLimite =
-    totalEntradas > 0 &&
-    gastoPercentual >= ALERT_PERCENT * 0.8 &&
-    gastoPercentual < ALERT_PERCENT;
-  const limitStatus = ultrapassouLimite ? "over" : quaseNoLimite ? "near" : "ok";
-  const suggestion = limitSuggestion(limitStatus, rankingGastos[0]?.name);
-
-  const categoryComparison = useMemo(
-    () => compareCategories(monthTransactions, previousMonthTransactions),
-    [monthTransactions, previousMonthTransactions]
-  );
+  const categoryComparison = useMemo(() => {
+    if (!currentSummary || !previousSummary) return [];
+    return compareCategoryBreakdowns(currentSummary.categoryBreakdown, previousSummary.categoryBreakdown);
+  }, [currentSummary, previousSummary]);
 
   const biggestIncrease = useMemo(
-    () =>
-      categoryComparison.filter((c) => c.change > 0).sort((a, b) => b.change - a.change)[0],
+    () => categoryComparison.filter((c) => c.change > 0).sort((a, b) => b.change - a.change)[0],
     [categoryComparison]
   );
   const biggestDecrease = useMemo(
-    () =>
-      categoryComparison.filter((c) => c.change < 0).sort((a, b) => a.change - b.change)[0],
+    () => categoryComparison.filter((c) => c.change < 0).sort((a, b) => a.change - b.change)[0],
     [categoryComparison]
   );
   const top3Increases = useMemo(
@@ -174,27 +187,9 @@ export default function Dashboard() {
     [categoryComparison]
   );
 
-  const evolutionData = useMemo(() => monthlyEvolution(transactions), [transactions]);
-
-  const subcategoryData = useMemo(() => {
-    if (!selectedCategory) return null;
-    return Object.entries(groupBySubcategory(monthTransactions, selectedCategory)).map(
-      ([name, value]) => ({ name, value })
-    );
-  }, [monthTransactions, selectedCategory]);
-
-  const visibleTransactions = useMemo(() => {
-    return monthTransactions.filter((t) => {
-      if (filters.type !== "todos" && t.type !== filters.type) return false;
-      if (filters.category !== "todas" && t.category !== filters.category) return false;
-      if (filters.search) {
-        const query = filters.search.toLowerCase();
-        const haystack = `${t.description} ${t.category} ${t.subcategory ?? ""}`.toLowerCase();
-        if (!haystack.includes(query)) return false;
-      }
-      return true;
-    });
-  }, [monthTransactions, filters]);
+  const suggestion = currentSummary
+    ? limitSuggestion(currentSummary.alert.status, currentSummary.ranking[0]?.name)
+    : null;
 
   const handleOpenNew = () => {
     setEditingTransaction(null);
@@ -288,39 +283,43 @@ export default function Dashboard() {
           Dashboard Financeiro
         </h1>
 
-        {limitStatus !== "ok" && (
+        {currentSummary && currentSummary.alert.status !== "ok" && (
           <AlertBanner
-            level={limitStatus === "over" ? "over" : "near"}
-            gastoPercentual={gastoPercentual}
+            level={currentSummary.alert.status === "over" ? "over" : "near"}
+            gastoPercentual={currentSummary.alert.gastoPercentual}
             suggestion={suggestion}
           />
         )}
 
-        <SummaryCards
-          totalEntradas={totalEntradas}
-          totalSaidas={totalSaidas}
-          saldo={saldo}
-          entradasChange={entradasChange}
-          saidasChange={saidasChange}
-          saldoChange={saldoChange}
-        />
+        {currentSummary && (
+          <SummaryCards
+            totalEntradas={currentSummary.totals.entradas}
+            totalSaidas={currentSummary.totals.saidas}
+            saldo={currentSummary.totals.saldo}
+            entradasChange={currentSummary.changes.entradas}
+            saidasChange={currentSummary.changes.saidas}
+            saldoChange={currentSummary.changes.saldo}
+          />
+        )}
 
         <ScoreCard month={selectedMonth} />
 
         <GoalCard
           month={selectedMonth}
           goal={getGoalForMonth(selectedMonth)}
-          saldo={saldo}
+          saldo={currentSummary?.totals.saldo ?? 0}
           onChangeGoal={(value) => setGoalForMonth(selectedMonth, value)}
         />
 
         <div className="grid md:grid-cols-2 gap-6">
-          <RankingCard ranking={rankingGastos} />
-          <MonthComparisonCard
-            entradasChange={entradasChange}
-            saidasChange={saidasChange}
-            saldoChange={saldoChange}
-          />
+          <RankingCard ranking={currentSummary?.ranking ?? []} />
+          {currentSummary && (
+            <MonthComparisonCard
+              entradasChange={currentSummary.changes.entradas}
+              saidasChange={currentSummary.changes.saidas}
+              saldoChange={currentSummary.changes.saldo}
+            />
+          )}
         </div>
 
         <InsightsCard
@@ -334,11 +333,11 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-2 gap-6">
           <EvolutionChart data={evolutionData} />
           <CategoryPieChart
-            categoryData={categoryData}
+            categoryData={currentSummary?.categoryBreakdown ?? []}
             colorFor={getColor}
             selectedCategory={selectedCategory}
             onSelectCategory={setSelectedCategory}
-            subcategoryData={subcategoryData}
+            subcategoryData={subcategoryLoading ? null : subcategoryData}
           />
         </div>
 
@@ -355,6 +354,9 @@ export default function Dashboard() {
             transactions={visibleTransactions}
             onEdit={handleEditRequest}
             onDeleteRequest={setDeleteTarget}
+            pagination={txPagination}
+            loadingMore={transactionsLoadingMore}
+            onLoadMore={loadMoreTransactions}
           />
         </div>
       </main>
@@ -381,8 +383,7 @@ export default function Dashboard() {
 
       {isImportExportOpen && (
         <ImportExportPanel
-          transactions={transactions}
-          savingGoals={goals}
+          savingGoals={_goals}
           categories={categories}
           onClose={() => setIsImportExportOpen(false)}
         />

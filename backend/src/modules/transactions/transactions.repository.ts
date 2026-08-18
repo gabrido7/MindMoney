@@ -29,33 +29,54 @@ const SELECT_WITH_JOINS = `
   LEFT JOIN subcategories sc ON sc.id = t.subcategory_id
 `;
 
-export const transactionsRepository = {
-  async list(userId: number, filters: TransactionListQuery): Promise<TransactionRow[]> {
-    const conditions = ["t.user_id = ?"];
-    const params: unknown[] = [userId];
+/** Monta as condições WHERE compartilhadas por list() e count() -- os mesmos filtros têm que valer para os dois, senão a paginação (total/totalPages) fica inconsistente com as linhas devolvidas. */
+function buildFilterConditions(userId: number, filters: TransactionListQuery) {
+  const conditions = ["t.user_id = ?"];
+  const params: unknown[] = [userId];
 
-    if (filters.month) {
-      conditions.push("t.transaction_date LIKE ?");
-      params.push(`${filters.month}%`);
-    }
-    if (filters.type) {
-      conditions.push("t.type = ?");
-      params.push(filters.type);
-    }
-    if (filters.categoryId) {
-      conditions.push("t.category_id = ?");
-      params.push(filters.categoryId);
-    }
-    if (filters.search) {
-      conditions.push("(t.description LIKE ? OR c.name LIKE ?)");
-      params.push(`%${filters.search}%`, `%${filters.search}%`);
-    }
+  if (filters.month) {
+    conditions.push("t.transaction_date LIKE ?");
+    params.push(`${filters.month}%`);
+  }
+  if (filters.type) {
+    conditions.push("t.type = ?");
+    params.push(filters.type);
+  }
+  if (filters.categoryId) {
+    conditions.push("t.category_id = ?");
+    params.push(filters.categoryId);
+  }
+  if (filters.search) {
+    conditions.push("(t.description LIKE ? OR c.name LIKE ?)");
+    params.push(`%${filters.search}%`, `%${filters.search}%`);
+  }
+
+  return { where: conditions.join(" AND "), params };
+}
+
+export const transactionsRepository = {
+  async list(
+    userId: number,
+    filters: TransactionListQuery,
+    pagination: { page: number; limit: number }
+  ): Promise<TransactionRow[]> {
+    const { where, params } = buildFilterConditions(userId, filters);
+    const offset = (pagination.page - 1) * pagination.limit;
 
     const [rows] = await pool.query<TransactionRow[]>(
-      `${SELECT_WITH_JOINS} WHERE ${conditions.join(" AND ")} ORDER BY t.transaction_date DESC, t.id DESC`,
-      params
+      `${SELECT_WITH_JOINS} WHERE ${where} ORDER BY t.transaction_date DESC, t.id DESC LIMIT ? OFFSET ?`,
+      [...params, pagination.limit, offset]
     );
     return rows;
+  },
+
+  async count(userId: number, filters: TransactionListQuery): Promise<number> {
+    const { where, params } = buildFilterConditions(userId, filters);
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) AS total FROM transactions t JOIN categories c ON c.id = t.category_id WHERE ${where}`,
+      params
+    );
+    return Number(rows[0]?.total ?? 0);
   },
 
   async findByIdAndUser(id: number, userId: number): Promise<TransactionRow | null> {

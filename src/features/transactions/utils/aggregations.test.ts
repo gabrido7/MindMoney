@@ -5,6 +5,7 @@ import {
   categoryTotals,
   groupBySubcategory,
   compareCategories,
+  compareCategoryBreakdowns,
   getPreviousMonth,
   monthlyEvolution,
 } from "./aggregations";
@@ -90,6 +91,21 @@ describe("compareCategories", () => {
     const current = [tx({ category: "Pets", amount: 50 })];
     const result = compareCategories(current, []);
     expect(Number.isFinite(result[0].change)).toBe(true);
+  });
+});
+
+describe("compareCategoryBreakdowns", () => {
+  it("calcula variação por categoria a partir de totais já agregados (categoryBreakdown da API)", () => {
+    const current = [{ name: "Alimentação", value: 200 }];
+    const previous = [{ name: "Alimentação", value: 100 }];
+    const result = compareCategoryBreakdowns(current, previous);
+    expect(result[0]).toMatchObject({ category: "Alimentação", change: 100, current: 200, previous: 100 });
+  });
+
+  it("categoria nova (sem valor no mês anterior) não gera -Infinity", () => {
+    const result = compareCategoryBreakdowns([{ name: "Pets", value: 50 }], []);
+    expect(Number.isFinite(result[0].change)).toBe(true);
+    expect(result[0].previous).toBe(0);
   });
 });
 

@@ -10,6 +10,11 @@ export interface GoalRow extends RowDataPacket {
   updated_at: string;
 }
 
+export interface GoalWithTotalsRow extends GoalRow {
+  entradas: number;
+  saidas: number;
+}
+
 export const goalsRepository = {
   async listByUser(userId: number, month?: string): Promise<GoalRow[]> {
     if (month) {
@@ -22,6 +27,31 @@ export const goalsRepository = {
     const [rows] = await pool.query<GoalRow[]>(
       "SELECT * FROM saving_goals WHERE user_id = ? ORDER BY reference_month DESC",
       [userId]
+    );
+    return rows;
+  },
+
+  /**
+   * Metas já com entradas/saidas do mês de referência de cada uma,
+   * calculadas numa única query (LEFT JOIN + agregação) -- antes disso o
+   * frontend buscava a lista de metas e depois um dashboard inteiro por
+   * meta só para ler o saldo (1+N chamadas).
+   */
+  async listByUserWithTotals(userId: number, month?: string): Promise<GoalWithTotalsRow[]> {
+    const condition = month ? "AND g.reference_month = ?" : "";
+
+    const [rows] = await pool.query<GoalWithTotalsRow[]>(
+      `SELECT
+         g.*,
+         COALESCE(SUM(CASE WHEN t.type = 'entrada' THEN t.amount ELSE 0 END), 0) AS entradas,
+         COALESCE(SUM(CASE WHEN t.type = 'saida' THEN t.amount ELSE 0 END), 0) AS saidas
+       FROM saving_goals g
+       LEFT JOIN transactions t
+         ON t.user_id = g.user_id AND t.transaction_date LIKE CONCAT(g.reference_month, '%')
+       WHERE g.user_id = ? ${condition}
+       GROUP BY g.id
+       ORDER BY g.reference_month DESC`,
+      condition ? [userId, month] : [userId]
     );
     return rows;
   },

@@ -130,4 +130,61 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
       .send({ categoryId: salarioId, description: "hack", amount: 10, type: "entrada", transactionDate: "2026-08-01" });
     expect(res.status).toBe(400);
   });
+
+  it("pagina o resultado (limit define o tamanho da página, total reflete o total real)", async () => {
+    const pagUser = await registerTestUser("paginacao");
+    const catId = await getCategoryId(pagUser.token, "Alimentação");
+
+    for (let i = 0; i < 7; i++) {
+      await request(app)
+        .post("/api/transactions")
+        .set(authHeader(pagUser.token))
+        .send({
+          categoryId: catId,
+          description: `Transação ${i}`,
+          amount: 10 + i,
+          type: "saida",
+          transactionDate: "2026-08-01",
+        });
+    }
+
+    const page1 = await request(app)
+      .get("/api/transactions")
+      .query({ limit: 3, page: 1 })
+      .set(authHeader(pagUser.token));
+    expect(page1.body.transactions.length).toBe(3);
+    expect(page1.body.pagination).toEqual({ page: 1, limit: 3, total: 7, totalPages: 3 });
+
+    const page3 = await request(app)
+      .get("/api/transactions")
+      .query({ limit: 3, page: 3 })
+      .set(authHeader(pagUser.token));
+    expect(page3.body.transactions.length).toBe(1);
+
+    const idsPage1 = page1.body.transactions.map((t: { id: number }) => t.id);
+    const idsPage3 = page3.body.transactions.map((t: { id: number }) => t.id);
+    expect(idsPage1.some((id: number) => idsPage3.includes(id))).toBe(false);
+
+    await cleanupUser(pagUser.userId);
+  });
+
+  it("limita o tamanho máximo de página e rejeita page/limit inválidos", async () => {
+    const tooBig = await request(app)
+      .get("/api/transactions")
+      .query({ limit: 500 })
+      .set(authHeader(userA.token));
+    expect(tooBig.status).toBe(400);
+
+    const zeroPage = await request(app)
+      .get("/api/transactions")
+      .query({ page: 0 })
+      .set(authHeader(userA.token));
+    expect(zeroPage.status).toBe(400);
+  });
+
+  it("usa limit=50/page=1 como padrão quando não informado", async () => {
+    const res = await request(app).get("/api/transactions").set(authHeader(userA.token));
+    expect(res.body.pagination.page).toBe(1);
+    expect(res.body.pagination.limit).toBe(50);
+  });
 });

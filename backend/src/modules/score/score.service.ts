@@ -2,9 +2,9 @@ import { transactionsRepository } from "../transactions/transactions.repository"
 import { goalsRepository } from "../goals/goals.repository";
 import { scoreRepository } from "./score.repository";
 import { currentMonth, getPreviousMonth } from "../../utils/month";
+import { ALERT_PERCENT, SAVINGS_RATE_FULL_SCORE } from "../../config/rules";
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-const ALERT_PERCENT = 70; // mesmo limiar usado no front (ALERT_PERCENT) e no dashboard
 
 export type ScoreLevel = "Excelente" | "Bom" | "Regular" | "Atenção" | "Crítico";
 
@@ -70,7 +70,7 @@ export const scoreService = {
       savingsCapacity = Math.round(clamp(30 * (saldo / goal.target_amount), 0, 30));
     } else {
       const savingsRate = totals.entradas > 0 ? saldo / totals.entradas : 0;
-      savingsCapacity = Math.round(clamp(30 * (savingsRate / 0.2), 0, 30));
+      savingsCapacity = Math.round(clamp(30 * (savingsRate / SAVINGS_RATE_FULL_SCORE), 0, 30));
     }
 
     // 3) evolução financeira

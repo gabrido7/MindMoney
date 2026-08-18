@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
-import { registerTestUser, cleanupUser, authHeader, type TestUser } from "./helpers";
+import { registerTestUser, cleanupUser, authHeader, getCategoryId, type TestUser } from "./helpers";
 
 describe("Metas financeiras", () => {
   let userA: TestUser;
@@ -68,5 +68,33 @@ describe("Metas financeiras", () => {
 
     const deleteB = await request(app).delete(`/api/goals/${id}`).set(authHeader(userB.token));
     expect(deleteB.status).toBe(404);
+  });
+
+  it("a listagem já devolve saldo e progresso calculados, sem exigir chamada extra por meta", async () => {
+    const salarioId = await getCategoryId(userA.token, "Salário");
+    const alimentacaoId = await getCategoryId(userA.token, "Alimentação");
+
+    await request(app)
+      .post("/api/goals")
+      .set(authHeader(userA.token))
+      .send({ referenceMonth: "2026-12", targetAmount: 1000 });
+
+    await request(app)
+      .post("/api/transactions")
+      .set(authHeader(userA.token))
+      .send({ categoryId: salarioId, description: "Salário", amount: 2000, type: "entrada", transactionDate: "2026-12-05" });
+    await request(app)
+      .post("/api/transactions")
+      .set(authHeader(userA.token))
+      .send({ categoryId: alimentacaoId, description: "Mercado", amount: 500, type: "saida", transactionDate: "2026-12-10" });
+
+    const list = await request(app)
+      .get("/api/goals")
+      .query({ month: "2026-12" })
+      .set(authHeader(userA.token));
+
+    const goal = list.body.goals.find((g: { reference_month: string }) => g.reference_month === "2026-12");
+    expect(goal.saldo).toBe(1500);
+    expect(goal.progressPercent).toBe(150);
   });
 });
