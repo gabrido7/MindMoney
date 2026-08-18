@@ -8,7 +8,7 @@ export interface BackupData {
   categories: Category[];
 }
 
-const downloadFile = (content: string, filename: string, mimeType: string) => {
+export const downloadFile = (content: string, filename: string, mimeType: string) => {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -31,7 +31,7 @@ export const exportBackupJSON = (data: Omit<BackupData, "version" | "exportedAt"
   );
 };
 
-const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
+export const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
 export const exportTransactionsCSV = (transactions: Transaction[]) => {
   const header = ["data", "descricao", "categoria", "subcategoria", "tipo", "valor"];
