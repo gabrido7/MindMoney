@@ -13,6 +13,7 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,8 +21,16 @@ export default function Register() {
     e.preventDefault();
     setError(null);
 
+    if (name.trim().length < 2) {
+      setError("Informe seu nome completo.");
+      return;
+    }
     if (password.length < 8) {
       setError("A senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem.");
       return;
     }
 
@@ -39,7 +48,11 @@ export default function Register() {
   return (
     <Card title="Criar conta">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+        {error && (
+          <p role="alert" className="text-red-500 text-sm font-medium">
+            {error}
+          </p>
+        )}
 
         <Input id="name" label="Nome" required value={name} onChange={(e) => setName(e.target.value)} />
 
@@ -61,6 +74,16 @@ export default function Register() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <Input
+          id="confirmPassword"
+          label="Confirmar senha"
+          type="password"
+          autoComplete="new-password"
+          required
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
         />
 
         <Button type="submit" disabled={loading} className="w-full">

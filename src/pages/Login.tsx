@@ -35,7 +35,11 @@ export default function Login() {
   return (
     <Card title="Entrar">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+        {error && (
+          <p role="alert" className="text-red-500 text-sm font-medium">
+            {error}
+          </p>
+        )}
 
         <Input
           id="email"

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { authService } from "../services/authService";
 import { getToken, setToken, clearToken } from "../utils/token";
+import { setUnauthorizedHandler } from "../services/api";
 import type { PublicUser } from "../types/api";
 import { AuthContext } from "./auth-context";
 
@@ -11,6 +12,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(() => Boolean(getToken()));
 
   useEffect(() => {
+    // qualquer 401 (token ausente, inválido, expirado) em qualquer chamada
+    // da API derruba a sessão local — o ProtectedRoute cuida do redirect.
+    setUnauthorizedHandler(() => setUser(null));
+
     const token = getToken();
     if (!token) return;
 

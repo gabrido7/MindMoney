@@ -14,6 +14,18 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Chamado sempre que qualquer requisição recebe 401 — token ausente,
+ * inválido ou expirado. AuthContext registra um handler aqui para limpar
+ * o usuário da sessão e deixar o ProtectedRoute redirecionar para o
+ * login, mesmo quando o 401 acontece no meio do uso (não só ao carregar).
+ */
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: () => void): void {
+  unauthorizedHandler = handler;
+}
+
 type QueryParams = object;
 
 interface RequestOptions {
@@ -59,6 +71,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   if (!response.ok) {
     if (response.status === 401) {
       clearToken();
+      unauthorizedHandler?.();
     }
     const message = data?.error?.message ?? "Erro inesperado. Tente novamente.";
     throw new ApiError(message, response.status, data?.error?.details);
