@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../../components/ui/Icon";
+import LogoMark from "../../../components/ui/LogoMark";
 import { useAuth } from "../../../hooks/useAuth";
 
 const NAV_LINKS = [
@@ -18,9 +19,7 @@ export default function LandingNavbar() {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-neutral-950/80 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 md:px-8">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500 text-neutral-950">
-            <Icon name="wallet" size={20} />
-          </div>
+          <LogoMark size={40} />
           <span className="text-lg font-bold text-white">Mind Money</span>
         </Link>
 

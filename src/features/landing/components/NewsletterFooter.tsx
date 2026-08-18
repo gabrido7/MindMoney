@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../../../components/ui/Icon";
+import LogoMark from "../../../components/ui/LogoMark";
 import { newsletterService } from "../../../services/newsletterService";
 import { ApiError } from "../../../services/api";
 
@@ -92,9 +93,7 @@ export default function NewsletterFooter() {
       <div className="mx-auto mt-16 grid max-w-6xl gap-10 sm:grid-cols-2 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500 text-neutral-950">
-              <Icon name="wallet" size={18} />
-            </div>
+            <LogoMark size={32} />
             <span className="font-bold text-white">Mind Money</span>
           </div>
           <p className="mt-3 text-sm text-neutral-500">

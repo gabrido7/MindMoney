@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import Icon from "../components/ui/Icon";
+import LogoMark from "../components/ui/LogoMark";
 import { useAuth } from "../hooks/useAuth";
 import NotificationBell from "../features/notifications/components/NotificationBell";
 
@@ -17,9 +18,7 @@ export default function AppLayout() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-4 md:px-8 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white">
-            <Icon name="wallet" size={18} />
-          </div>
+          <LogoMark size={32} />
           <span className="font-bold text-gray-900 dark:text-white">Mind Money</span>
         </div>
 
