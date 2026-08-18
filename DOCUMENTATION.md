@@ -216,3 +216,37 @@ funcionalidade quebrada:
   projeto hoje, o risco prático é baixo, mas é uma escolha a revisar
   antes de um deploy de produção real.
 - **Recurso inteligente sem IA externa**: ver seção 10.
+
+## 13. Auditoria final (etapa 20)
+
+Revisão completa do estado atual do sistema, feita depois de todas as
+outras etapas concluídas:
+
+- **Código**: sem uso de `any` em nenhum dos dois projetos (grep
+  dedicado); sem comentários `TODO`/`FIXME` pendentes; sem
+  `console.log`/`console.debug` de depuração esquecido (só o log de
+  inicialização do servidor e o `console.error` intencional do
+  tratamento de erro global); build e lint limpos.
+- **Funcionalidades**: validadas de ponta a ponta com interação real de
+  UI (não só chamadas de API) — cadastro, lançar transação de entrada e
+  de saída com subcategoria, definir meta, navegar por todas as páginas,
+  perfil, logout seguido de login (dados persistem), modo escuro. Zero
+  erros de console.
+- **Achado durante a validação, não é bug**: o rate limiting da etapa 16
+  (30 tentativas/15min por IP em `/api/auth/*`) bloqueou um dos testes
+  desta própria auditoria, porque a sessão de desenvolvimento já tinha
+  feito dezenas de cadastros de teste antes. Isso é o limite funcionando
+  como projetado, não uma falha — só reforça que é um valor adequado
+  para conter força bruta de verdade. Reiniciar o processo do backend
+  zera o contador (guardado em memória).
+- **Performance**: uma característica conhecida, não corrigida nesta
+  etapa — `useCategories` no front faz uma requisição por categoria para
+  buscar as subcategorias (N+1), em vez de um endpoint único que já
+  devolva tudo aninhado. Com 11 categorias por usuário o impacto é
+  pequeno, mas é o ponto mais claro de otimização futura se o número de
+  categorias crescer. O bundle de produção do frontend também passou de
+  500kB (aviso do Vite) — nenhum code-splitting foi aplicado; dado que é
+  uma SPA de uma página só carregada por vez, não afeta a experiência de
+  forma perceptível hoje.
+- **Banco de dados e segurança**: sem novos achados além dos já
+  registrados em `database/README.md` e `SECURITY.md`.
