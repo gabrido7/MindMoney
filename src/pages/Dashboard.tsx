@@ -28,6 +28,7 @@ import EvolutionChart from "../features/dashboard/components/EvolutionChart";
 import RankingCard from "../features/dashboard/components/RankingCard";
 import MonthComparisonCard from "../features/dashboard/components/MonthComparisonCard";
 import InsightsCard from "../features/dashboard/components/InsightsCard";
+import ScoreCard from "../features/dashboard/components/ScoreCard";
 
 import GoalCard from "../features/goals/components/GoalCard";
 
@@ -302,6 +303,8 @@ export default function Dashboard() {
           saidasChange={saidasChange}
           saldoChange={saldoChange}
         />
+
+        <ScoreCard month={selectedMonth} />
 
         <GoalCard
           month={selectedMonth}

@@ -91,13 +91,25 @@ export interface DashboardData {
   alert: { status: "over" | "near" | "ok"; gastoPercentual: number; threshold: number };
 }
 
+export type ScoreLevel = "Excelente" | "Bom" | "Regular" | "Atenção" | "Crítico";
+
 export interface ScoreData {
   month: string;
   score: number;
+  level: ScoreLevel;
   breakdown: {
     spendingControl: number;
-    goalAchievement: number;
+    savingsCapacity: number;
+    evolution: number;
+    consistency: number;
     hasGoal: boolean;
     gastoPercentual: number;
+    monthsWithinLimit: number;
   };
+}
+
+export interface ScoreHistoryEntry {
+  month: string;
+  score: number;
+  level: ScoreLevel;
 }
