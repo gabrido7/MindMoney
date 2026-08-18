@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import Card from "../../../components/ui/Card";
 import Input from "../../../components/ui/Input";
 import ProgressBar from "../../../components/ui/ProgressBar";
@@ -12,9 +13,34 @@ export default function GoalCard({
   month: string;
   goal: number;
   saldo: number;
-  onChangeGoal: (value: number) => void;
+  onChangeGoal: (value: number) => Promise<void>;
 }) {
+  const [draft, setDraft] = useState(goal || "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // sincroniza o rascunho quando a meta muda por fora (troca de mês, primeira carga)
+  useEffect(() => {
+    setDraft(goal || "");
+  }, [goal, month]);
+
   const savingPercent = goal > 0 ? (saldo / goal) * 100 : 0;
+
+  const handleBlur = async () => {
+    const value = Number(draft) || 0;
+    if (value === goal) return; // nada mudou, não chama a API à toa
+
+    setSaving(true);
+    setError(null);
+    try {
+      await onChangeGoal(value);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível salvar a meta.");
+      setDraft(goal || ""); // desfaz o rascunho já que não foi salvo
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Card title={`Meta de Economia — ${formatMonthBR(month)}`}>
@@ -23,14 +49,19 @@ export default function GoalCard({
           label="Meta do mês (R$)"
           type="number"
           placeholder="Definir meta"
-          value={goal || ""}
-          onChange={(e) => onChangeGoal(Number(e.target.value))}
+          value={draft}
+          disabled={saving}
+          onChange={(e) => setDraft(e.target.value === "" ? "" : Number(e.target.value))}
+          onBlur={handleBlur}
           className="max-w-[200px]"
         />
         <span className="text-gray-500 dark:text-gray-400 text-sm">
           Meta atual: {formatCurrency(goal)}
+          {saving && " — salvando..."}
         </span>
       </div>
+
+      {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
       {goal > 0 && (
         <>

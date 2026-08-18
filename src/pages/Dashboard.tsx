@@ -83,6 +83,7 @@ export default function Dashboard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isImportExportOpen, setIsImportExportOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -212,8 +213,14 @@ export default function Dashboard() {
   };
 
   const confirmDelete = async () => {
-    if (deleteTarget) await deleteTransaction(deleteTarget.id);
-    setDeleteTarget(null);
+    if (!deleteTarget) return;
+    setDeleteError(null);
+    try {
+      await deleteTransaction(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Não foi possível excluir a transação.");
+    }
   };
 
   if (loading) {
@@ -380,8 +387,12 @@ export default function Dashboard() {
           title="Excluir transação"
           message={`Tem certeza que deseja excluir "${deleteTarget.description}"? Essa ação não pode ser desfeita.`}
           confirmLabel="Excluir"
+          error={deleteError}
           onConfirm={confirmDelete}
-          onCancel={() => setDeleteTarget(null)}
+          onCancel={() => {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }}
         />
       )}
     </div>

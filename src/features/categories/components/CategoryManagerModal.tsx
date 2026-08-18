@@ -15,10 +15,10 @@ export default function CategoryManagerModal({
   onClose,
 }: {
   categories: Category[];
-  onAddCategory: (name: string, type: Category["type"]) => void;
-  onRemoveCategory: (name: string) => void;
-  onAddSubcategory: (categoryName: string, subName: string) => void;
-  onRemoveSubcategory: (categoryName: string, subName: string) => void;
+  onAddCategory: (name: string, type: Category["type"]) => Promise<void>;
+  onRemoveCategory: (name: string) => Promise<void>;
+  onAddSubcategory: (categoryName: string, subName: string) => Promise<void>;
+  onRemoveSubcategory: (categoryName: string, subName: string) => Promise<void>;
   onClose: () => void;
 }) {
   const [newCategory, setNewCategory] = useState("");
@@ -26,10 +26,26 @@ export default function CategoryManagerModal({
     "saida"
   );
   const [subInputs, setSubInputs] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const runAction = async (action: () => Promise<void>) => {
+    setError(null);
+    setBusy(true);
+    try {
+      await action();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível concluir a ação.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Modal title="Gerenciar Categorias" onClose={onClose} size="lg">
       <div className="flex flex-col gap-6">
+        {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+
         <div className="flex flex-wrap gap-3 items-end border-b border-gray-100 dark:border-gray-700 pb-4">
           <Input
             label="Nova categoria"
@@ -50,10 +66,13 @@ export default function CategoryManagerModal({
             <option value="ambos">Ambos</option>
           </Select>
           <Button
+            disabled={busy}
             onClick={() => {
               if (!newCategory.trim()) return;
-              onAddCategory(newCategory, newCategoryType);
-              setNewCategory("");
+              runAction(async () => {
+                await onAddCategory(newCategory, newCategoryType);
+                setNewCategory("");
+              });
             }}
           >
             <Icon name="plus" size={16} />
@@ -77,9 +96,10 @@ export default function CategoryManagerModal({
                 </span>
                 {!category.builtin && (
                   <button
-                    onClick={() => onRemoveCategory(category.name)}
+                    disabled={busy}
+                    onClick={() => runAction(() => onRemoveCategory(category.name))}
                     aria-label={`Remover categoria ${category.name}`}
-                    className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950 p-1.5 rounded-lg"
+                    className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950 p-1.5 rounded-lg disabled:opacity-50"
                   >
                     <Icon name="trash" size={16} />
                   </button>
@@ -94,7 +114,8 @@ export default function CategoryManagerModal({
                   >
                     {sub.name}
                     <button
-                      onClick={() => onRemoveSubcategory(category.name, sub.name)}
+                      disabled={busy}
+                      onClick={() => runAction(() => onRemoveSubcategory(category.name, sub.name))}
                       aria-label={`Remover subcategoria ${sub.name}`}
                     >
                       <Icon name="close" size={12} />
@@ -115,11 +136,14 @@ export default function CategoryManagerModal({
                 />
                 <Button
                   variant="secondary"
+                  disabled={busy}
                   onClick={() => {
                     const value = subInputs[category.name]?.trim();
                     if (!value) return;
-                    onAddSubcategory(category.name, value);
-                    setSubInputs((prev) => ({ ...prev, [category.name]: "" }));
+                    runAction(async () => {
+                      await onAddSubcategory(category.name, value);
+                      setSubInputs((prev) => ({ ...prev, [category.name]: "" }));
+                    });
                   }}
                 >
                   <Icon name="plus" size={14} />
