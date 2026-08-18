@@ -25,5 +25,20 @@ export const idParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
+const importRowSchema = z.object({
+  date: z.string().regex(DATE_REGEX, "Data deve estar no formato YYYY-MM-DD"),
+  description: z.string().trim().min(1).max(255),
+  category: z.string().trim().min(1).max(60),
+  subcategory: z.string().trim().max(60).optional(),
+  type: z.enum(["entrada", "saida"]),
+  amount: z.coerce.number().positive("O valor deve ser maior que zero"),
+});
+
+export const importTransactionsSchema = z.object({
+  transactions: z.array(importRowSchema).min(1, "Nenhuma transação para importar").max(1000, "Máximo de 1000 transações por importação"),
+});
+
 export type TransactionBodyInput = z.infer<typeof transactionBodySchema>;
 export type TransactionListQuery = z.infer<typeof transactionListQuerySchema>;
+export type ImportRow = z.infer<typeof importRowSchema>;
+export type ImportTransactionsInput = z.infer<typeof importTransactionsSchema>;

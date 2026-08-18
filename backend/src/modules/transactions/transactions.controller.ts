@@ -23,4 +23,9 @@ export const transactionsController = {
     await transactionsService.delete(id, req.userId!);
     res.status(204).send();
   },
+
+  async importBatch(req: Request, res: Response) {
+    const result = await transactionsService.importBatch(req.userId!, req.body.transactions);
+    res.status(201).json(result);
+  },
 };

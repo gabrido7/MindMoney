@@ -1,5 +1,11 @@
 import { apiRequest } from "./api";
 import type { ApiTransaction, ApiTransactionInput, Pagination } from "../types/api";
+import type { ImportRow } from "../features/importExport/utils/exportImport";
+
+export interface ImportResult {
+  imported: number;
+  skipped: { row: number; reason: string }[];
+}
 
 export interface TransactionFilters {
   month?: string;
@@ -45,4 +51,7 @@ export const transactionsService = {
     apiRequest<{ transaction: ApiTransaction }>(`/transactions/${id}`, { method: "PUT", body: input }),
 
   remove: (id: number) => apiRequest<void>(`/transactions/${id}`, { method: "DELETE" }),
+
+  importBatch: (transactions: ImportRow[]) =>
+    apiRequest<ImportResult>("/transactions/import", { method: "POST", body: { transactions } }),
 };
