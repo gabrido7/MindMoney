@@ -36,4 +36,30 @@ export const usersRepository = {
   async updatePassword(id: number, passwordHash: string): Promise<void> {
     await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, id]);
   },
+
+  async updateProfile(id: number, name: string, email: string): Promise<void> {
+    await pool.query("UPDATE users SET name = ?, email = ? WHERE id = ?", [name, email, id]);
+  },
+
+  /**
+   * transactions.category_id é ON DELETE RESTRICT de propósito (ver
+   * database/README.md) -- apagar um usuário direto falharia no meio do
+   * CASCADE se ele tiver qualquer transação. Por isso: apagar as
+   * transações primeiro, depois o usuário (o resto cascateia limpo). As
+   * duas exclusões numa transação só, pra nunca sobrar um estado parcial.
+   */
+  async deleteAccount(id: number): Promise<void> {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.query("DELETE FROM transactions WHERE user_id = ?", [id]);
+      await conn.query("DELETE FROM users WHERE id = ?", [id]);
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  },
 };
