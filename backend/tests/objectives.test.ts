@@ -255,8 +255,35 @@ describe("Objetivos financeiros (metas de longo prazo)", () => {
     expect(summary.body.totalTarget).toBe(3000);
     expect(summary.body.totalSaved).toBe(200);
     expect(summary.body.nearDeadlineCount).toBe(1);
+    expect(summary.body.mostUrgentObjective).toMatchObject({ name: "Perto do prazo", category: "viagem" });
+    expect(summary.body.mostUrgentObjective.daysRemaining).toBeGreaterThan(0);
 
     await cleanupUser(freshUser.userId);
+  });
+
+  it("resumo aponta a meta mais urgente (menos dias) entre as próximas do prazo, e null quando nenhuma está próxima", async () => {
+    const freshUser = await registerTestUser("objectives-most-urgent");
+
+    await request(app)
+      .post("/api/objectives")
+      .set(authHeader(freshUser.token))
+      .send({ name: "Daqui a 3 meses", category: "viagem", targetAmount: 1000, targetMonth: "2026-11" });
+    await request(app)
+      .post("/api/objectives")
+      .set(authHeader(freshUser.token))
+      .send({ name: "Mais urgente", category: "reserva", targetAmount: 1000, targetMonth: "2026-09" });
+
+    const summary = await request(app).get("/api/objectives/summary").set(authHeader(freshUser.token));
+    expect(summary.body.nearDeadlineCount).toBe(2);
+    expect(summary.body.mostUrgentObjective.name).toBe("Mais urgente");
+
+    await cleanupUser(freshUser.userId);
+
+    const emptyUser = await registerTestUser("objectives-no-urgent");
+    const emptySummary = await request(app).get("/api/objectives/summary").set(authHeader(emptyUser.token));
+    expect(emptySummary.body.nearDeadlineCount).toBe(0);
+    expect(emptySummary.body.mostUrgentObjective).toBeNull();
+    await cleanupUser(emptyUser.userId);
   });
 
   it("ritmo: dados insuficientes no primeiro mês do objetivo (sem histórico pra comparar)", async () => {

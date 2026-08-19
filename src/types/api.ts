@@ -153,6 +153,7 @@ export interface ApiObjective {
   overdue: boolean;
   monthsRemaining: number;
   requiredMonthlyAmount: number;
+  daysRemaining: number;
   createdAt: string;
   monthlyPace: number | null;
   paceStatus: PaceStatus;
@@ -166,6 +167,12 @@ export interface ObjectiveSummary {
   overallProgressPercent: number;
   nearDeadlineCount: number;
   totalObjectives: number;
+  mostUrgentObjective: {
+    id: number;
+    name: string;
+    category: ObjectiveCategory;
+    daysRemaining: number;
+  } | null;
 }
 
 export interface ObjectiveEvolutionPoint {

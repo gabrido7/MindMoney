@@ -1,5 +1,5 @@
 import { AppError } from "../../utils/AppError";
-import { currentMonth, monthsBetween } from "../../utils/month";
+import { currentMonth, daysUntilEndOfMonth, monthsBetween } from "../../utils/month";
 import { objectivesRepository, type ObjectiveWithCurrentRow } from "./objectives.repository";
 import type { ContributionBodyInput, ObjectiveBodyInput } from "./objectives.validation";
 
@@ -111,6 +111,7 @@ function enrich(row: ObjectiveWithCurrentRow) {
     overdue,
     monthsRemaining,
     requiredMonthlyAmount,
+    daysRemaining: daysUntilEndOfMonth(row.target_month),
     createdAt: row.created_at,
     ...pace,
   };
@@ -136,16 +137,28 @@ export const objectivesService = {
     const totalTarget = objectives.reduce((sum, o) => sum + o.targetAmount, 0);
     const totalSaved = objectives.reduce((sum, o) => sum + o.currentAmount, 0);
     const overallProgressPercent = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
-    const nearDeadlineCount = objectives.filter(
-      (o) => !o.achieved && !o.overdue && o.monthsRemaining <= NEAR_DEADLINE_MONTHS
-    ).length;
+
+    // "Próxima do prazo" mostra qual meta, não só quantas -- a mais urgente
+    // (menos dias restantes) entre as que estão perto do prazo.
+    const nearDeadline = objectives
+      .filter((o) => !o.achieved && !o.overdue && o.monthsRemaining <= NEAR_DEADLINE_MONTHS)
+      .sort((a, b) => a.daysRemaining - b.daysRemaining);
+    const mostUrgent = nearDeadline[0];
 
     return {
       totalTarget,
       totalSaved,
       overallProgressPercent,
-      nearDeadlineCount,
+      nearDeadlineCount: nearDeadline.length,
       totalObjectives: objectives.length,
+      mostUrgentObjective: mostUrgent
+        ? {
+            id: mostUrgent.id,
+            name: mostUrgent.name,
+            category: mostUrgent.category,
+            daysRemaining: mostUrgent.daysRemaining,
+          }
+        : null,
     };
   },
 
