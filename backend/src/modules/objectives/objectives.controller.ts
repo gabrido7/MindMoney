@@ -12,6 +12,11 @@ export const objectivesController = {
     res.json(summary);
   },
 
+  async evolution(req: Request, res: Response) {
+    const evolution = await objectivesService.evolution(req.userId!);
+    res.json({ evolution });
+  },
+
   async create(req: Request, res: Response) {
     const objective = await objectivesService.create(req.userId!, req.body);
     res.status(201).json({ objective });

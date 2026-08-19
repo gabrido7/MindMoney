@@ -168,6 +168,11 @@ export interface ObjectiveSummary {
   totalObjectives: number;
 }
 
+export interface ObjectiveEvolutionPoint {
+  month: string;
+  totalSaved: number;
+}
+
 export interface ApiContribution {
   id: number;
   objective_id: number;

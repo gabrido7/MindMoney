@@ -9,6 +9,7 @@ export const objectivesRouter = Router();
 
 objectivesRouter.use(requireAuth);
 objectivesRouter.get("/summary", asyncHandler(objectivesController.summary));
+objectivesRouter.get("/evolution", asyncHandler(objectivesController.evolution));
 objectivesRouter.get("/", asyncHandler(objectivesController.list));
 objectivesRouter.post("/", validate(objectiveBodySchema), asyncHandler(objectivesController.create));
 objectivesRouter.put("/:id", validate(objectiveBodySchema), asyncHandler(objectivesController.update));

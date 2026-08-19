@@ -1,5 +1,12 @@
 import { apiRequest } from "./api";
-import type { ApiObjective, ApiContribution, ObjectiveCategory, ObjectivePriority, ObjectiveSummary } from "../types/api";
+import type {
+  ApiObjective,
+  ApiContribution,
+  ObjectiveCategory,
+  ObjectiveEvolutionPoint,
+  ObjectivePriority,
+  ObjectiveSummary,
+} from "../types/api";
 
 export interface ObjectiveInput {
   name: string;
@@ -19,6 +26,8 @@ export const objectivesService = {
   list: () => apiRequest<{ objectives: ApiObjective[] }>("/objectives"),
 
   summary: () => apiRequest<ObjectiveSummary>("/objectives/summary"),
+
+  evolution: () => apiRequest<{ evolution: ObjectiveEvolutionPoint[] }>("/objectives/evolution"),
 
   create: (input: ObjectiveInput) =>
     apiRequest<{ objective: ApiObjective }>("/objectives", { method: "POST", body: input }),

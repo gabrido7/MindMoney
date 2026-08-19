@@ -168,6 +168,21 @@ export const objectivesService = {
     await objectivesRepository.delete(id, userId);
   },
 
+  /**
+   * "Total acumulado" real por mês, somando aportes de todos os objetivos --
+   * soma cumulativa calculada aqui (nunca guardada), sobre meses reais que
+   * tiveram aporte (mesmo padrão de transactionsRepository.monthlyEvolution:
+   * sem preencher lacuna de mês sem dado).
+   */
+  async evolution(userId: number): Promise<{ month: string; totalSaved: number }[]> {
+    const rows = await objectivesRepository.monthlyContributionsByUser(userId);
+    let cumulative = 0;
+    return rows.map(({ month, total }) => {
+      cumulative += total;
+      return { month, totalSaved: cumulative };
+    });
+  },
+
   async listContributions(objectiveId: number, userId: number) {
     const objective = await objectivesRepository.findByIdAndUser(objectiveId, userId);
     if (!objective) throw AppError.notFound("Meta não encontrada.");

@@ -334,6 +334,61 @@ describe("Objetivos financeiros (metas de longo prazo)", () => {
     expect(res.body.objective.paceMonthsEarlier).toBe(2);
   });
 
+  it("evolução acumula aportes reais por mês, só de objetivos do próprio usuário", async () => {
+    const freshUser = await registerTestUser("objectives-evolution");
+    const other = await registerTestUser("objectives-evolution-other");
+
+    const objA = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(freshUser.token))
+      .send({ name: "Meta A", category: "reserva", targetAmount: 5000, targetMonth: "2026-12" });
+    const objB = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(freshUser.token))
+      .send({ name: "Meta B", category: "viagem", targetAmount: 5000, targetMonth: "2026-12" });
+
+    await request(app)
+      .post(`/api/objectives/${objA.body.objective.id}/contributions`)
+      .set(authHeader(freshUser.token))
+      .send({ amount: 300, contributedAt: "2026-07-05" });
+    await request(app)
+      .post(`/api/objectives/${objB.body.objective.id}/contributions`)
+      .set(authHeader(freshUser.token))
+      .send({ amount: 200, contributedAt: "2026-07-20" });
+    await request(app)
+      .post(`/api/objectives/${objA.body.objective.id}/contributions`)
+      .set(authHeader(freshUser.token))
+      .send({ amount: 150, contributedAt: "2026-08-10" });
+
+    // aporte de outro usuário não pode aparecer na evolução de freshUser
+    const objOther = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(other.token))
+      .send({ name: "Meta de outro usuário", category: "reserva", targetAmount: 1000, targetMonth: "2026-12" });
+    await request(app)
+      .post(`/api/objectives/${objOther.body.objective.id}/contributions`)
+      .set(authHeader(other.token))
+      .send({ amount: 9999, contributedAt: "2026-07-10" });
+
+    const res = await request(app).get("/api/objectives/evolution").set(authHeader(freshUser.token));
+    expect(res.status).toBe(200);
+    expect(res.body.evolution).toEqual([
+      { month: "2026-07", totalSaved: 500 },
+      { month: "2026-08", totalSaved: 650 },
+    ]);
+
+    await cleanupUser(freshUser.userId);
+    await cleanupUser(other.userId);
+  });
+
+  it("evolução vem vazia quando o usuário ainda não tem nenhum aporte", async () => {
+    const freshUser = await registerTestUser("objectives-evolution-empty");
+    const res = await request(app).get("/api/objectives/evolution").set(authHeader(freshUser.token));
+    expect(res.status).toBe(200);
+    expect(res.body.evolution).toEqual([]);
+    await cleanupUser(freshUser.userId);
+  });
+
   it("usuário B não vê, edita, apaga nem lança aporte em objetivo de A (IDOR)", async () => {
     const created = await request(app)
       .post("/api/objectives")
@@ -368,5 +423,8 @@ describe("Objetivos financeiros (metas de longo prazo)", () => {
       .post("/api/objectives")
       .send({ name: "x", category: "compra", targetAmount: 1, targetMonth: "2026-11" });
     expect(create.status).toBe(401);
+
+    const evolution = await request(app).get("/api/objectives/evolution");
+    expect(evolution.status).toBe(401);
   });
 });

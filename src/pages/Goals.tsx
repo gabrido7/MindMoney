@@ -10,9 +10,20 @@ import { errorMessage } from "../services/api";
 import { invalidateObjectives } from "../features/objectives/hooks/invalidateObjectives";
 import ObjectiveSummaryCards from "../features/objectives/components/ObjectiveSummaryCards";
 import ObjectiveCard from "../features/objectives/components/ObjectiveCard";
+import MainObjectiveCard from "../features/objectives/components/MainObjectiveCard";
+import ObjectiveEvolutionChart from "../features/objectives/components/ObjectiveEvolutionChart";
 import ObjectiveFormModal from "../features/objectives/components/ObjectiveFormModal";
 import ContributionModal from "../features/objectives/components/ContributionModal";
 import type { ApiObjective } from "../types/api";
+
+type ObjectiveFilter = "todas" | "ativas" | "concluidas" | "atrasadas";
+
+const FILTERS: { value: ObjectiveFilter; label: string }[] = [
+  { value: "todas", label: "Todas" },
+  { value: "ativas", label: "Ativas" },
+  { value: "concluidas", label: "Concluídas" },
+  { value: "atrasadas", label: "Atrasadas" },
+];
 
 export default function Goals() {
   const queryClient = useQueryClient();
@@ -35,9 +46,32 @@ export default function Goals() {
     queryFn: () => objectivesService.summary(),
   });
 
+  const {
+    data: evolutionData,
+    isLoading: evolutionLoading,
+    error: evolutionQueryError,
+  } = useQuery({
+    queryKey: ["objectivesEvolution"],
+    queryFn: () => objectivesService.evolution(),
+  });
+
   const objectives = objectivesData?.objectives ?? [];
-  const loading = objectivesLoading || summaryLoading;
-  const error = errorMessage(objectivesQueryError) ?? errorMessage(summaryQueryError);
+  const evolution = evolutionData?.evolution ?? [];
+  const loading = objectivesLoading || summaryLoading || evolutionLoading;
+  const error = errorMessage(objectivesQueryError) ?? errorMessage(summaryQueryError) ?? errorMessage(evolutionQueryError);
+
+  // objectives já vem ordenado do backend por prioridade (alta -> média -> baixa) e depois por
+  // prazo mais próximo -- a primeira não concluída da lista já é, por construção, a de maior
+  // prioridade com o prazo mais próximo.
+  const mainObjective = objectives.find((o) => !o.achieved);
+
+  const [filter, setFilter] = useState<ObjectiveFilter>("todas");
+  const filteredObjectives = objectives.filter((o) => {
+    if (filter === "ativas") return !o.achieved && !o.overdue;
+    if (filter === "concluidas") return o.achieved;
+    if (filter === "atrasadas") return o.overdue;
+    return true;
+  });
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingObjective, setEditingObjective] = useState<ApiObjective | null>(null);
@@ -100,9 +134,12 @@ export default function Goals() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col gap-6">
+    <div className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Metas</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Metas</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Planeje seus objetivos financeiros</p>
+        </div>
         <Button
           onClick={() => {
             setEditingObjective(null);
@@ -129,20 +166,63 @@ export default function Goals() {
       )}
 
       {!loading && !error && objectives.length > 0 && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {objectives.map((objective) => (
-            <ObjectiveCard
-              key={objective.id}
-              objective={objective}
-              onEdit={() => {
-                setEditingObjective(objective);
-                setIsFormOpen(true);
-              }}
-              onDelete={() => setDeleteTarget(objective)}
-              onAddContribution={() => setContributingTo(objective)}
-            />
-          ))}
-        </div>
+        <>
+          {mainObjective && (
+            <div className="grid lg:grid-cols-12 gap-4 items-stretch">
+              <div className="lg:col-span-5">
+                <MainObjectiveCard
+                  objective={mainObjective}
+                  onAddContribution={() => setContributingTo(mainObjective)}
+                />
+              </div>
+              <div className="lg:col-span-7">
+                <ObjectiveEvolutionChart data={evolution} />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Suas metas</h2>
+              <div className="flex gap-2 flex-wrap">
+                {FILTERS.map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setFilter(f.value)}
+                    className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                      filter === f.value
+                        ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
+                        : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {filteredObjectives.length === 0 ? (
+              <Card>
+                <EmptyState message="Nenhuma meta encontrada para esse filtro." />
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {filteredObjectives.map((objective) => (
+                  <ObjectiveCard
+                    key={objective.id}
+                    objective={objective}
+                    onEdit={() => {
+                      setEditingObjective(objective);
+                      setIsFormOpen(true);
+                    }}
+                    onDelete={() => setDeleteTarget(objective)}
+                    onAddContribution={() => setContributingTo(objective)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {isFormOpen && (

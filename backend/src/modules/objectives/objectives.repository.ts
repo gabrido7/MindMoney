@@ -113,4 +113,18 @@ export const objectivesRepository = {
     );
     return Number(rows[0]?.total ?? 0);
   },
+
+  /** Soma real de aportes por mês, entre todos os objetivos do usuário -- só meses com aporte, sem preencher lacuna. */
+  async monthlyContributionsByUser(userId: number): Promise<{ month: string; total: number }[]> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT DATE_FORMAT(c.contributed_at, '%Y-%m') AS month, SUM(c.amount) AS total
+       FROM objective_contributions c
+       JOIN financial_objectives o ON o.id = c.objective_id
+       WHERE o.user_id = ?
+       GROUP BY month
+       ORDER BY month ASC`,
+      [userId]
+    );
+    return rows.map((row) => ({ month: String(row.month), total: Number(row.total) }));
+  },
 };
