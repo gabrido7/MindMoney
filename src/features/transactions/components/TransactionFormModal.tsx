@@ -18,13 +18,24 @@ export default function TransactionFormModal({
   onClose: () => void;
 }) {
   const firstCategory = categories[0]?.name ?? "";
+  const initialCategoryName = initial?.category ?? firstCategory;
+  // A categoria padrão (ex: "Salário", só entrada) precisa começar com o
+  // tipo dela batendo -- sem isso, o Select de Tipo nascia travado em
+  // "saida" (o valor inicial fixo abaixo) mesmo com "Salário" já
+  // selecionado, e só se corrigia quando o usuário trocava de categoria
+  // manualmente (dispara handleCategoryChange). Até lá, salvar sem tocar
+  // no campo Categoria gravava a transação com o tipo errado de verdade,
+  // não só exibia errado.
+  const initialCategory = categories.find((c) => c.name === initialCategoryName);
 
-  const [category, setCategory] = useState(initial?.category ?? firstCategory);
+  const [category, setCategory] = useState(initialCategoryName);
   const [subcategory, setSubcategory] = useState(initial?.subcategory ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
   const [date, setDate] = useState(initial?.date ?? "");
-  const [type, setType] = useState<TransactionType>(initial?.type ?? "saida");
+  const [type, setType] = useState<TransactionType>(
+    initial?.type ?? (initialCategory && initialCategory.type !== "ambos" ? initialCategory.type : "saida")
+  );
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
