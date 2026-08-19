@@ -3,8 +3,9 @@ import Modal from "../../../components/ui/Modal";
 import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
 import { CATEGORY_PRESETS } from "../data/categoryPresets";
+import { PRIORITY_PRESETS } from "../data/priorityPresets";
 import { currentMonth } from "../../../utils/formatters";
-import type { ApiObjective, ObjectiveCategory } from "../../../types/api";
+import type { ApiObjective, ObjectiveCategory, ObjectivePriority } from "../../../types/api";
 import type { ObjectiveInput } from "../../../services/objectivesService";
 
 export default function ObjectiveFormModal({
@@ -20,6 +21,7 @@ export default function ObjectiveFormModal({
   onClose: () => void;
 }) {
   const [category, setCategory] = useState<ObjectiveCategory>(initial?.category ?? "compra");
+  const [priority, setPriority] = useState<ObjectivePriority>(initial?.priority ?? "media");
   const [name, setName] = useState(initial?.name ?? "");
   const [targetAmount, setTargetAmount] = useState(initial ? String(initial.targetAmount) : "");
   const [targetMonth, setTargetMonth] = useState(initial?.targetMonth ?? currentMonth());
@@ -52,7 +54,13 @@ export default function ObjectiveFormModal({
 
     setError("");
     setSubmitting(true);
-    const values: ObjectiveInput = { name: name.trim(), category, targetAmount: numericTarget, targetMonth };
+    const values: ObjectiveInput = {
+      name: name.trim(),
+      category,
+      priority,
+      targetAmount: numericTarget,
+      targetMonth,
+    };
     try {
       if (!initial && numericInitial > 0 && onSubmitWithInitialContribution) {
         await onSubmitWithInitialContribution(values, numericInitial);
@@ -90,6 +98,29 @@ export default function ObjectiveFormModal({
               >
                 <span className="text-lg">{c.icon}</span>
                 {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+            Prioridade
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {PRIORITY_PRESETS.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => setPriority(p.value)}
+                className={`flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-sm transition-colors ${
+                  priority === p.value
+                    ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
+                    : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                }`}
+              >
+                <span>{p.dot}</span>
+                {p.label}
               </button>
             ))}
           </div>

@@ -43,6 +43,51 @@ describe("Objetivos financeiros (metas de longo prazo)", () => {
     });
   });
 
+  it("cria um objetivo com prioridade explícita, e usa 'media' como padrão quando omitida", async () => {
+    const withPriority = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Reserva", category: "reserva", priority: "alta", targetAmount: 1000, targetMonth: "2026-11" });
+    expect(withPriority.body.objective.priority).toBe("alta");
+
+    const withoutPriority = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Sem prioridade", category: "reserva", targetAmount: 1000, targetMonth: "2026-11" });
+    expect(withoutPriority.body.objective.priority).toBe("media");
+  });
+
+  it("rejeita prioridade inválida (400)", async () => {
+    const res = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "x", category: "reserva", priority: "urgente", targetAmount: 100, targetMonth: "2026-11" });
+    expect(res.status).toBe(400);
+  });
+
+  it("lista os objetivos ordenados por prioridade (alta, depois média, depois baixa)", async () => {
+    const freshUser = await registerTestUser("objectives-priority-order");
+
+    await request(app)
+      .post("/api/objectives")
+      .set(authHeader(freshUser.token))
+      .send({ name: "Baixa primeiro criada", category: "personalizada", priority: "baixa", targetAmount: 100, targetMonth: "2026-11" });
+    await request(app)
+      .post("/api/objectives")
+      .set(authHeader(freshUser.token))
+      .send({ name: "Alta criada depois", category: "personalizada", priority: "alta", targetAmount: 100, targetMonth: "2026-11" });
+    await request(app)
+      .post("/api/objectives")
+      .set(authHeader(freshUser.token))
+      .send({ name: "Média", category: "personalizada", priority: "media", targetAmount: 100, targetMonth: "2026-11" });
+
+    const list = await request(app).get("/api/objectives").set(authHeader(freshUser.token));
+    const priorities = list.body.objectives.map((o: { priority: string }) => o.priority);
+    expect(priorities).toEqual(["alta", "media", "baixa"]);
+
+    await cleanupUser(freshUser.userId);
+  });
+
   it("rejeita categoria inválida, mês malformado e valor não positivo (400)", async () => {
     const badCategory = await request(app)
       .post("/api/objectives")

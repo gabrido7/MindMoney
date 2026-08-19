@@ -1,9 +1,10 @@
 import { apiRequest } from "./api";
-import type { ApiObjective, ApiContribution, ObjectiveCategory, ObjectiveSummary } from "../types/api";
+import type { ApiObjective, ApiContribution, ObjectiveCategory, ObjectivePriority, ObjectiveSummary } from "../types/api";
 
 export interface ObjectiveInput {
   name: string;
   category: ObjectiveCategory;
+  priority: ObjectivePriority;
   targetAmount: number;
   targetMonth: string;
 }

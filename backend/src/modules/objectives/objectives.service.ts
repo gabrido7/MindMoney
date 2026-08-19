@@ -101,6 +101,7 @@ function enrich(row: ObjectiveWithCurrentRow) {
     id: row.id,
     name: row.name,
     category: row.category,
+    priority: row.priority,
     targetAmount,
     targetMonth: row.target_month,
     currentAmount,

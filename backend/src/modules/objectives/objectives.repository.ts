@@ -7,6 +7,7 @@ export interface ObjectiveRow extends RowDataPacket {
   user_id: number;
   name: string;
   category: string;
+  priority: string;
   target_amount: number;
   target_month: string;
   created_at: string;
@@ -35,7 +36,7 @@ export const objectivesRepository = {
        LEFT JOIN objective_contributions c ON c.objective_id = o.id
        WHERE o.user_id = ?
        GROUP BY o.id
-       ORDER BY o.target_month ASC, o.created_at ASC`,
+       ORDER BY FIELD(o.priority, 'alta', 'media', 'baixa'), o.target_month ASC, o.created_at ASC`,
       [userId]
     );
     return rows;
@@ -51,16 +52,16 @@ export const objectivesRepository = {
 
   async create(userId: number, input: ObjectiveBodyInput): Promise<number> {
     const [result] = await pool.query<ResultSetHeader>(
-      "INSERT INTO financial_objectives (user_id, name, category, target_amount, target_month) VALUES (?, ?, ?, ?, ?)",
-      [userId, input.name, input.category, input.targetAmount, input.targetMonth]
+      "INSERT INTO financial_objectives (user_id, name, category, priority, target_amount, target_month) VALUES (?, ?, ?, ?, ?, ?)",
+      [userId, input.name, input.category, input.priority, input.targetAmount, input.targetMonth]
     );
     return result.insertId;
   },
 
   async update(id: number, userId: number, input: ObjectiveBodyInput): Promise<boolean> {
     const [result] = await pool.query<ResultSetHeader>(
-      "UPDATE financial_objectives SET name = ?, category = ?, target_amount = ?, target_month = ? WHERE id = ? AND user_id = ?",
-      [input.name, input.category, input.targetAmount, input.targetMonth, id, userId]
+      "UPDATE financial_objectives SET name = ?, category = ?, priority = ?, target_amount = ?, target_month = ? WHERE id = ? AND user_id = ?",
+      [input.name, input.category, input.priority, input.targetAmount, input.targetMonth, id, userId]
     );
     return result.affectedRows > 0;
   },

@@ -1,7 +1,8 @@
 import { transactionsRepository } from "../transactions/transactions.repository";
 import { goalsRepository } from "../goals/goals.repository";
 import { scoreService } from "../score/score.service";
-import { currentMonth, getPreviousMonth } from "../../utils/month";
+import { objectivesService } from "../objectives/objectives.service";
+import { currentMonth, getPreviousMonth, formatMonthLabel } from "../../utils/month";
 import { formatCurrency } from "../../utils/formatCurrency";
 import type { Insight } from "./insights.types";
 
@@ -137,6 +138,41 @@ export const insightsService = {
         title: "Score financeiro excelente",
         message: "Seus indicadores estão bons este mês. Considere direcionar parte do saldo para uma meta ou investimento.",
       });
+    }
+
+    // 6) objetivos de alta prioridade: sinaliza os que precisam de atenção
+    // (atrasados ou abaixo do ritmo necessário) e reforça os que estão indo bem --
+    // usa os mesmos campos já calculados pelo módulo de objetivos (overdue,
+    // paceStatus), nunca recalcula nada aqui.
+    const highPriorityObjectives = (await objectivesService.list(userId)).filter(
+      (o) => o.priority === "alta" && !o.achieved
+    );
+    for (const objective of highPriorityObjectives) {
+      if (objective.overdue) {
+        insights.push({
+          type: "objetivo_prioridade",
+          severity: "warning",
+          title: `Meta prioritária atrasada: ${objective.name}`,
+          message: `O prazo da sua meta de alta prioridade "${objective.name}" (${formatMonthLabel(objective.targetMonth)}) já passou e ainda faltam ${formatCurrency(objective.remainingAmount)}.`,
+        });
+      } else if (objective.paceStatus === "behind") {
+        insights.push({
+          type: "objetivo_prioridade",
+          severity: "warning",
+          title: `Ritmo abaixo do necessário: ${objective.name}`,
+          message: `Sua meta de alta prioridade "${objective.name}" precisa de ${formatCurrency(objective.paceMonthlyDifference)}/mês a mais do que você tem guardado em média.`,
+        });
+      } else if (objective.paceStatus === "on_track" || objective.paceStatus === "ahead") {
+        insights.push({
+          type: "objetivo_prioridade",
+          severity: "success",
+          title: `No caminho certo: ${objective.name}`,
+          message:
+            objective.paceStatus === "ahead"
+              ? `Você está adiantado na sua meta de alta prioridade "${objective.name}" — no ritmo atual, deve atingi-la antes do prazo.`
+              : `Você está no ritmo certo na sua meta de alta prioridade "${objective.name}".`,
+        });
+      }
     }
 
     return insights;

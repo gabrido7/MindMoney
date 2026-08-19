@@ -8,6 +8,7 @@ import { objectivesService } from "../../../services/objectivesService";
 import { errorMessage } from "../../../services/api";
 import { formatCurrency, formatMonthBR } from "../../../utils/formatters";
 import { CATEGORY_BY_VALUE } from "../data/categoryPresets";
+import { PRIORITY_BY_VALUE } from "../data/priorityPresets";
 import { invalidateObjectives } from "../hooks/invalidateObjectives";
 import type { ApiObjective } from "../../../types/api";
 
@@ -48,6 +49,7 @@ export default function ObjectiveCard({
   const queryClient = useQueryClient();
   const [showContributions, setShowContributions] = useState(false);
   const preset = CATEGORY_BY_VALUE[objective.category];
+  const priorityPreset = PRIORITY_BY_VALUE[objective.priority];
 
   const { data, isLoading } = useQuery({
     queryKey: ["objectiveContributions", objective.id],
@@ -72,7 +74,10 @@ export default function ObjectiveCard({
         <div className="flex items-center gap-2">
           <span className="text-2xl">{preset.icon}</span>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">{objective.name}</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+              <span title={`Prioridade ${priorityPreset.label}`}>{priorityPreset.dot}</span>
+              {objective.name}
+            </h3>
             <p className="text-xs text-gray-400">{preset.label}</p>
           </div>
         </div>

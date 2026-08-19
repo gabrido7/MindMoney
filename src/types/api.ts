@@ -135,12 +135,15 @@ export interface ScoreHistoryEntry {
 
 export type ObjectiveCategory = "compra" | "viagem" | "educacao" | "reserva" | "patrimonio" | "personalizada";
 
+export type ObjectivePriority = "alta" | "media" | "baixa";
+
 export type PaceStatus = "on_track" | "behind" | "ahead" | "insufficient_data" | null;
 
 export interface ApiObjective {
   id: number;
   name: string;
   category: ObjectiveCategory;
+  priority: ObjectivePriority;
   targetAmount: number;
   targetMonth: string;
   currentAmount: number;
