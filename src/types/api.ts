@@ -132,3 +132,38 @@ export interface ScoreHistoryEntry {
   score: number;
   level: ScoreLevel;
 }
+
+export type ObjectiveCategory = "compra" | "viagem" | "educacao" | "reserva" | "patrimonio" | "personalizada";
+
+export interface ApiObjective {
+  id: number;
+  name: string;
+  category: ObjectiveCategory;
+  targetAmount: number;
+  targetMonth: string;
+  currentAmount: number;
+  remainingAmount: number;
+  progressPercent: number;
+  achieved: boolean;
+  overdue: boolean;
+  monthsRemaining: number;
+  requiredMonthlyAmount: number;
+  createdAt: string;
+}
+
+export interface ObjectiveSummary {
+  totalTarget: number;
+  totalSaved: number;
+  overallProgressPercent: number;
+  nearDeadlineCount: number;
+  totalObjectives: number;
+}
+
+export interface ApiContribution {
+  id: number;
+  objective_id: number;
+  amount: number;
+  contributed_at: string;
+  note: string | null;
+  created_at: string;
+}

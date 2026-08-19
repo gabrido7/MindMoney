@@ -13,3 +13,10 @@ export const calcPercentChange = (current: number, previous: number): number => 
   if (previous === 0) return current === 0 ? 0 : current > 0 ? 100 : -100;
   return ((current - previous) / previous) * 100;
 };
+
+/** Diferença em meses inteiros entre "from" e "to" (positiva se "to" é depois de "from", negativa se antes). */
+export const monthsBetween = (from: string, to: string): number => {
+  const [fromYear, fromMonth] = from.split("-").map(Number);
+  const [toYear, toMonth] = to.split("-").map(Number);
+  return (toYear - fromYear) * 12 + (toMonth - fromMonth);
+};
