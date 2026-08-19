@@ -19,7 +19,19 @@ function tipMessage(objective: ApiObjective): string {
   if (objective.monthsRemaining === 0) {
     return `💡 O prazo é este mês: faltam ${formatCurrency(objective.remainingAmount)} para atingir a meta.`;
   }
-  return `💡 Para atingir essa meta no prazo, você precisa economizar aproximadamente ${formatCurrency(objective.requiredMonthlyAmount)} por mês.`;
+
+  switch (objective.paceStatus) {
+    case "on_track":
+      return "📈 Você está no ritmo certo para atingir sua meta.";
+    case "behind":
+      return `⚠️ Você está economizando ${formatCurrency(objective.paceMonthlyDifference)}/mês abaixo do necessário.`;
+    case "ahead": {
+      const months = objective.paceMonthsEarlier;
+      return `🟢 Mantendo seu ritmo atual, você atingirá a meta ${months} ${months === 1 ? "mês" : "meses"} antes.`;
+    }
+    default:
+      return `💡 Para atingir essa meta no prazo, você precisa economizar aproximadamente ${formatCurrency(objective.requiredMonthlyAmount)} por mês.`;
+  }
 }
 
 export default function ObjectiveCard({
@@ -82,23 +94,30 @@ export default function ObjectiveCard({
         </div>
       </div>
 
-      <ProgressBar percent={objective.progressPercent} />
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            <strong className="text-base text-gray-900 dark:text-white">
+              {formatCurrency(objective.currentAmount)}
+            </strong>{" "}
+            / {formatCurrency(objective.targetAmount)}
+          </span>
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+            {objective.progressPercent.toFixed(1)}%
+          </span>
+        </div>
 
-      <div className="flex flex-wrap justify-between gap-2 mt-2 text-sm text-gray-500 dark:text-gray-400">
-        <span>
-          Objetivo: <strong className="text-gray-700 dark:text-gray-200">{formatCurrency(objective.targetAmount)}</strong>
+        <ProgressBar percent={objective.progressPercent} />
+
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {objective.achieved
+            ? "Meta atingida"
+            : `${formatCurrency(objective.remainingAmount)} restantes`}
         </span>
-        <span>
-          Atual: <strong className="text-[#0ca30c]">{formatCurrency(objective.currentAmount)}</strong>
-        </span>
-        <span>
-          Faltam: <strong className="text-gray-700 dark:text-gray-200">{formatCurrency(objective.remainingAmount)}</strong>
-        </span>
-        <span>{objective.progressPercent.toFixed(1)}%</span>
       </div>
 
       <div className="flex items-center gap-2 mt-3 text-sm">
-        <span className="text-gray-500 dark:text-gray-400">Prazo: {formatMonthBR(objective.targetMonth)}</span>
+        <span className="text-gray-500 dark:text-gray-400">Meta: {formatMonthBR(objective.targetMonth)}</span>
         {objective.achieved ? (
           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#0ca30c]/10 text-[#0ca30c]">
             Concluída

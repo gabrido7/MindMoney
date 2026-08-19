@@ -135,6 +135,8 @@ export interface ScoreHistoryEntry {
 
 export type ObjectiveCategory = "compra" | "viagem" | "educacao" | "reserva" | "patrimonio" | "personalizada";
 
+export type PaceStatus = "on_track" | "behind" | "ahead" | "insufficient_data" | null;
+
 export interface ApiObjective {
   id: number;
   name: string;
@@ -149,6 +151,10 @@ export interface ApiObjective {
   monthsRemaining: number;
   requiredMonthlyAmount: number;
   createdAt: string;
+  monthlyPace: number | null;
+  paceStatus: PaceStatus;
+  paceMonthlyDifference: number;
+  paceMonthsEarlier: number;
 }
 
 export interface ObjectiveSummary {

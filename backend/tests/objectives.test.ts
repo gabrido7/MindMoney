@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
+import { pool } from "../src/config/db";
 import { registerTestUser, cleanupUser, authHeader, type TestUser } from "./helpers";
+
+/** Só o real created_at faria os aportes acumularem por vários meses; nos testes, forçamos a data direto no banco. */
+async function backdateCreatedAt(objectiveId: number, mysqlDateTime: string) {
+  await pool.query("UPDATE financial_objectives SET created_at = ? WHERE id = ?", [mysqlDateTime, objectiveId]);
+}
 
 describe("Objetivos financeiros (metas de longo prazo)", () => {
   let userA: TestUser;
@@ -206,6 +212,81 @@ describe("Objetivos financeiros (metas de longo prazo)", () => {
     expect(summary.body.nearDeadlineCount).toBe(1);
 
     await cleanupUser(freshUser.userId);
+  });
+
+  it("ritmo: dados insuficientes no primeiro mês do objetivo (sem histórico pra comparar)", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Recém criada", category: "compra", targetAmount: 3000, targetMonth: "2026-12" });
+    const id = created.body.objective.id;
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 100, contributedAt: "2026-08-10" });
+
+    expect(res.body.objective.paceStatus).toBe("insufficient_data");
+    expect(res.body.objective.monthlyPace).toBeNull();
+  });
+
+  it("ritmo: 'behind' quando o ritmo médio de aportes fica abaixo do necessário", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Atrás do ritmo", category: "patrimonio", targetAmount: 6000, targetMonth: "2026-12" });
+    const id = created.body.objective.id;
+    await backdateCreatedAt(id, "2026-06-15 00:00:00");
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 400, contributedAt: "2026-08-10" });
+
+    // 2 meses desde a criação, R$400 guardados => ritmo de R$200/mês.
+    // Faltam R$5.600 em 4 meses => necessário R$1.400/mês.
+    expect(res.body.objective.monthlyPace).toBe(200);
+    expect(res.body.objective.paceStatus).toBe("behind");
+    expect(res.body.objective.paceMonthlyDifference).toBe(1200);
+  });
+
+  it("ritmo: 'on_track' quando o ritmo médio bate com o necessário", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "No ritmo", category: "patrimonio", targetAmount: 6000, targetMonth: "2026-12" });
+    const id = created.body.objective.id;
+    await backdateCreatedAt(id, "2026-06-15 00:00:00");
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 2000, contributedAt: "2026-08-10" });
+
+    // 2 meses desde a criação, R$2.000 guardados => ritmo de R$1.000/mês.
+    // Faltam R$4.000 em 4 meses => necessário R$1.000/mês -- bate certinho.
+    expect(res.body.objective.monthlyPace).toBe(1000);
+    expect(res.body.objective.paceStatus).toBe("on_track");
+  });
+
+  it("ritmo: 'ahead' quando o ritmo médio supera o necessário, projeta meses de antecipação", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Adiantada", category: "patrimonio", targetAmount: 6000, targetMonth: "2026-12" });
+    const id = created.body.objective.id;
+    await backdateCreatedAt(id, "2026-06-15 00:00:00");
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 3000, contributedAt: "2026-08-10" });
+
+    // 2 meses desde a criação, R$3.000 guardados => ritmo de R$1.500/mês.
+    // Faltam R$3.000 em 4 meses => necessário R$750/mês; no ritmo atual, acaba em 2 meses => 2 meses de antecipação.
+    expect(res.body.objective.monthlyPace).toBe(1500);
+    expect(res.body.objective.paceStatus).toBe("ahead");
+    expect(res.body.objective.paceMonthsEarlier).toBe(2);
   });
 
   it("usuário B não vê, edita, apaga nem lança aporte em objetivo de A (IDOR)", async () => {
