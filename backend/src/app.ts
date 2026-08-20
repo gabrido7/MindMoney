@@ -21,6 +21,7 @@ import { notificationsRouter } from "./modules/notifications/notifications.route
 import { insightsRouter } from "./modules/insights/insights.routes";
 import { newsletterRouter } from "./modules/newsletter/newsletter.routes";
 import { educationRouter } from "./modules/education/education.routes";
+import { gamificationRouter } from "./modules/gamification/gamification.routes";
 
 export const app = express();
 
@@ -73,6 +74,7 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/insights", insightsRouter);
 app.use("/api/newsletter", newsletterRouter);
 app.use("/api/education", educationRouter);
+app.use("/api/gamification", gamificationRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

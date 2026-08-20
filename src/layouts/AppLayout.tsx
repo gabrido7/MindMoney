@@ -3,6 +3,7 @@ import Icon from "../components/ui/Icon";
 import LogoMark from "../components/ui/LogoMark";
 import { useAuth } from "../hooks/useAuth";
 import NotificationBell from "../features/notifications/components/NotificationBell";
+import LevelPill from "../features/gamification/components/LevelPill";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard" },
@@ -41,6 +42,7 @@ export default function AppLayout() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <LevelPill />
           <NotificationBell />
           <NavLink
             to="/perfil"

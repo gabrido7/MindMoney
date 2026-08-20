@@ -5,9 +5,13 @@ import { TRAILS } from "../features/education/data/trails";
 import { TRAIL_COLOR_DOT } from "../features/education/data/trailColors";
 import { trailLessonCount, trailCompletedCount, trailProgressPercent } from "../features/education/utils/trailProgress";
 import { useEducationProgress } from "../features/education/hooks/useEducationProgress";
+import { useGamification } from "../features/gamification/hooks/useGamification";
+import LevelCard from "../features/gamification/components/LevelCard";
+import AchievementsGrid from "../features/gamification/components/AchievementsGrid";
 
 export default function FinancialEducation() {
   const { progress, isLoading, error } = useEducationProgress();
+  const { summary: gamificationSummary } = useGamification();
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col gap-6">
@@ -17,6 +21,13 @@ export default function FinancialEducation() {
           Trilhas de aprendizado, do básico ao avançado — cada assunto é um curso completo, com aulas, exemplos, quiz e exercício prático.
         </p>
       </div>
+
+      {gamificationSummary && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <LevelCard summary={gamificationSummary} />
+          <AchievementsGrid achievements={gamificationSummary.achievements} />
+        </div>
+      )}
 
       {isLoading && <p className="text-gray-500 dark:text-gray-400">Carregando...</p>}
       {error && <p className="text-red-500">Não foi possível carregar seu progresso agora.</p>}

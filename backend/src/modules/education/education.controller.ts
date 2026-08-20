@@ -9,8 +9,8 @@ export const educationController = {
 
   async upsert(req: Request, res: Response) {
     const { lessonId } = req.params;
-    const progress = await educationService.upsert(req.userId!, lessonId, req.body);
-    res.json({ progress });
+    const result = await educationService.upsert(req.userId!, lessonId, req.body);
+    res.json(result);
   },
 
   async remove(req: Request, res: Response) {

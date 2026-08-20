@@ -1,6 +1,7 @@
 import { AppError } from "../../utils/AppError";
 import { currentMonth, daysUntilEndOfMonth, monthsBetween } from "../../utils/month";
 import { objectivesRepository, type ObjectiveWithCurrentRow } from "./objectives.repository";
+import { gamificationService, type GamificationResult } from "../gamification/gamification.service";
 import type { ContributionBodyInput, ObjectiveBodyInput } from "./objectives.validation";
 
 /** "Próxima do prazo" = falta atingir e o prazo está a até 3 meses (ou menos) de distância. */
@@ -220,7 +221,7 @@ export const objectivesService = {
     objectiveId: number,
     userId: number,
     input: ContributionBodyInput
-  ): Promise<{ objective: EnrichedObjective; milestoneReached: number | null }> {
+  ): Promise<{ objective: EnrichedObjective; milestoneReached: number | null; gamification: GamificationResult | null }> {
     const existing = await objectivesRepository.findByIdAndUser(objectiveId, userId);
     if (!existing) throw AppError.notFound("Meta não encontrada.");
 
@@ -231,7 +232,11 @@ export const objectivesService = {
     await objectivesRepository.addContribution(objectiveId, input);
     const objective = await getEnriched(objectiveId, userId);
 
-    return { objective, milestoneReached: computeMilestone(previousProgressPercent, objective.progressPercent) };
+    const milestoneReached = computeMilestone(previousProgressPercent, objective.progressPercent);
+    const gamification =
+      milestoneReached === 100 ? await gamificationService.processGoalAchieved(userId, objectiveId) : null;
+
+    return { objective, milestoneReached, gamification };
   },
 
   async removeContribution(

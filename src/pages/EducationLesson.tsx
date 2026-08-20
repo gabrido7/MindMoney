@@ -8,8 +8,9 @@ import LessonQuiz from "../features/education/components/LessonQuiz";
 import LessonExercise from "../features/education/components/LessonExercise";
 import { findLesson } from "../features/education/data/trails";
 import { useEducationProgress } from "../features/education/hooks/useEducationProgress";
+import { useGamification } from "../features/gamification/hooks/useGamification";
 import { useToast } from "../hooks/useToast";
-import type { ApiLessonProgress } from "../types/api";
+import type { ApiLessonProgress, GamificationResult } from "../types/api";
 import type { Course, Lesson, LessonContent, Trail } from "../features/education/types";
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { ProgressUpsertInput } from "../services/educationService";
@@ -57,13 +58,14 @@ function LessonView({
   currentProgress: ApiLessonProgress | undefined;
   isLoading: boolean;
   upsertMutation: UseMutationResult<
-    { progress: ApiLessonProgress },
+    { progress: ApiLessonProgress; gamification: GamificationResult | null },
     Error,
     { lessonId: string; values: ProgressUpsertInput }
   >;
 }) {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { celebrate } = useGamification();
 
   const [quizResult, setQuizResult] = useState<{ score: number; total: number } | null>(
     currentProgress?.quizScore != null && currentProgress?.quizTotal != null
@@ -91,10 +93,13 @@ function LessonView({
 
   const handleQuizFinish = (score: number, total: number) => {
     setQuizResult({ score, total });
-    upsertMutation.mutate({
-      lessonId: lesson.id,
-      values: { completed: isCompleted, quizScore: score, quizTotal: total, exerciseResponse: exerciseValue },
-    });
+    upsertMutation.mutate(
+      {
+        lessonId: lesson.id,
+        values: { completed: isCompleted, quizScore: score, quizTotal: total, exerciseResponse: exerciseValue },
+      },
+      { onSuccess: ({ gamification }) => celebrate(gamification) }
+    );
   };
 
   const handleMarkComplete = () => {
@@ -109,8 +114,9 @@ function LessonView({
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: ({ gamification }) => {
           showToast(`✓ Aula "${lesson.title}" concluída com sucesso.`);
+          celebrate(gamification);
           if (nextLesson?.content) {
             navigate(`/educacao-financeira/${trail.id}/${course.id}/${nextLesson.id}`);
           }
@@ -189,8 +195,10 @@ function LessonView({
       )}
 
       {content.quiz.length > 0 && (
-        <Card>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Perguntas</h2>
+        <Card className="border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-950/30">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300 mb-3">
+            🧠 Teste seus conhecimentos
+          </h2>
           <LessonQuiz questions={content.quiz} onFinish={handleQuizFinish} />
         </Card>
       )}

@@ -1,0 +1,104 @@
+/**
+ * XP por tipo de evento. O valor nunca vem do cliente -- só o "reason"
+ * (validado contra este catálogo) e um "reference_id" de deduplicação;
+ * o valor em XP é sempre decidido aqui, no servidor.
+ */
+export const XP_AMOUNTS = {
+  lesson_completed: 20,
+  quiz_completed: 15,
+  course_completed: 50,
+  trail_completed: 200,
+  goal_achieved: 100,
+  streak_bonus: 0, // varia por marco, ver STREAK_MILESTONES
+  achievement: 25, // bônus fixo por conquista desbloqueada, além do XP do evento que a disparou
+} as const;
+
+export type XpReason = keyof typeof XP_AMOUNTS;
+
+/** Dias seguidos de estudo (pelo menos 1 aula concluída no dia) que rendem um bônus extra de XP. */
+export const STREAK_MILESTONES: { days: number; xp: number }[] = [
+  { days: 3, xp: 30 },
+  { days: 7, xp: 70 },
+  { days: 14, xp: 150 },
+  { days: 30, xp: 300 },
+];
+
+/**
+ * IDs das aulas de cada curso de Fundamentos que hoje tem conteúdo completo
+ * (espelha src/features/education/data/fundamentos.ts no frontend). Usado
+ * só para detectar "curso/trilha 100% concluída" e liberar o bônus de XP e
+ * as conquistas correspondentes -- se novo conteúdo for escrito, esses
+ * conjuntos precisam ser atualizados junto.
+ */
+const fundamentosCourseLessonIds = (courseId: string): string[] =>
+  Array.from({ length: 5 }, (_, i) => `fundamentos.${courseId}.aula-${i + 1}`);
+
+export const COURSE_LESSON_SETS: Record<string, string[]> = {
+  "fundamentos.o-que-e-dinheiro": fundamentosCourseLessonIds("o-que-e-dinheiro"),
+  "fundamentos.receitas-e-despesas": fundamentosCourseLessonIds("receitas-e-despesas"),
+  "fundamentos.como-montar-um-orcamento": fundamentosCourseLessonIds("como-montar-um-orcamento"),
+  "fundamentos.controle-de-gastos": fundamentosCourseLessonIds("controle-de-gastos"),
+  "fundamentos.reserva-emergencia": fundamentosCourseLessonIds("reserva-emergencia"),
+};
+
+export const TRAIL_LESSON_SETS: Record<string, string[]> = {
+  fundamentos: Object.values(COURSE_LESSON_SETS).flat(),
+};
+
+export interface Achievement {
+  id: string;
+  title: string;
+  emoji: string;
+  description: string;
+}
+
+export const ACHIEVEMENTS: Achievement[] = [
+  { id: "primeira-aula", title: "Primeira aula", emoji: "🏆", description: "Complete sua primeira aula." },
+  { id: "primeiro-quiz", title: "Primeiro quiz", emoji: "🧠", description: "Responda seu primeiro quiz." },
+  { id: "cinco-aulas", title: "5 aulas concluídas", emoji: "📚", description: "Complete 5 aulas, em qualquer trilha." },
+  { id: "vinte-aulas", title: "20 aulas concluídas", emoji: "📖", description: "Complete 20 aulas, em qualquer trilha." },
+  {
+    id: "mestre-orcamento",
+    title: "Mestre do orçamento",
+    emoji: "💰",
+    description: 'Complete todas as aulas do curso "Como montar um orçamento".',
+  },
+  {
+    id: "trilha-fundamentos",
+    title: "Trilha Fundamentos completa",
+    emoji: "🌱",
+    description: "Complete todas as aulas da trilha Fundamentos.",
+  },
+  { id: "primeira-meta", title: "Primeira meta atingida", emoji: "🎯", description: "Atinja sua primeira meta financeira." },
+  {
+    id: "investidor-consciente",
+    title: "Investidor consciente",
+    emoji: "📈",
+    description: "Complete a primeira aula da trilha de Investimentos.",
+  },
+  { id: "sequencia-3-dias", title: "Sequência de 3 dias", emoji: "🔥", description: "Estude 3 dias seguidos." },
+];
+
+/**
+ * XP necessário para completar cada nível (não cumulativo do zero -- é
+ * "quanto esse nível específico exige"). Cresce de forma linear e
+ * moderada: nível 1 pede 100 XP, nível 2 pede 150, e assim por diante.
+ */
+export const xpForLevel = (level: number): number => 100 + (level - 1) * 50;
+
+export interface LevelInfo {
+  level: number;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
+  totalXp: number;
+}
+
+export function levelInfo(totalXp: number): LevelInfo {
+  let level = 1;
+  let remaining = totalXp;
+  while (remaining >= xpForLevel(level)) {
+    remaining -= xpForLevel(level);
+    level += 1;
+  }
+  return { level, xpIntoLevel: remaining, xpForNextLevel: xpForLevel(level), totalXp };
+}

@@ -978,6 +978,13 @@ export const fundamentosTrail: Trail = {
                 correctIndex: 1,
                 explanation: "Quanto menos previsível a receita, maior o risco de um mês (ou vários) com receita baixa — por isso o colchão precisa ser maior.",
               },
+              {
+                question:
+                  "Você possui R$ 5.000 guardados e seus gastos mensais são R$ 2.000. Considerando uma reserva de 6 meses, quanto você deveria possuir?",
+                options: ["R$ 6.000", "R$ 10.000", "R$ 12.000", "R$ 15.000"],
+                correctIndex: 2,
+                explanation: "Reserva-alvo = custo de vida mensal × meses = R$ 2.000 × 6 = R$ 12.000. Com R$ 5.000 guardados, ainda faltariam R$ 7.000 para chegar lá.",
+              },
             ],
             exercise: {
               prompt: "Calcule seu custo de vida mensal (despesas essenciais, não o total geral) e defina sua reserva-alvo usando o múltiplo (3 a 12) mais adequado à sua situação de renda.",

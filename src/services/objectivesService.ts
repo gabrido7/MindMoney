@@ -2,6 +2,7 @@ import { apiRequest } from "./api";
 import type {
   ApiObjective,
   ApiContribution,
+  GamificationResult,
   ObjectiveCategory,
   ObjectiveEvolutionPoint,
   ObjectivePriority,
@@ -41,10 +42,10 @@ export const objectivesService = {
     apiRequest<{ contributions: ApiContribution[] }>(`/objectives/${id}/contributions`),
 
   addContribution: (id: number, input: ContributionInput) =>
-    apiRequest<{ objective: ApiObjective; milestoneReached: number | null }>(`/objectives/${id}/contributions`, {
-      method: "POST",
-      body: input,
-    }),
+    apiRequest<{ objective: ApiObjective; milestoneReached: number | null; gamification: GamificationResult | null }>(
+      `/objectives/${id}/contributions`,
+      { method: "POST", body: input }
+    ),
 
   removeContribution: (id: number, contributionId: number) =>
     apiRequest<{ objective: ApiObjective }>(`/objectives/${id}/contributions/${contributionId}`, {

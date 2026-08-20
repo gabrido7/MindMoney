@@ -190,6 +190,32 @@ export interface ApiLessonProgress {
   updatedAt: string;
 }
 
+export interface Achievement {
+  id: string;
+  title: string;
+  emoji: string;
+  description: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+}
+
+export interface GamificationSummary {
+  totalXp: number;
+  level: number;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
+  streak: number;
+  achievements: Achievement[];
+}
+
+export interface GamificationResult {
+  xpAwarded: number;
+  totalXp: number;
+  level: number;
+  leveledUp: boolean;
+  newAchievements: Achievement[];
+}
+
 export interface ApiContribution {
   id: number;
   objective_id: number;

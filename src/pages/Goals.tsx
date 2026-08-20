@@ -15,6 +15,7 @@ import ObjectiveEvolutionChart from "../features/objectives/components/Objective
 import ObjectiveFormModal from "../features/objectives/components/ObjectiveFormModal";
 import ContributionModal from "../features/objectives/components/ContributionModal";
 import { useToast } from "../hooks/useToast";
+import { useGamification } from "../features/gamification/hooks/useGamification";
 import { celebrationMessage } from "../features/objectives/utils/celebrationMessage";
 import { formatCurrency } from "../utils/formatters";
 import type { ApiObjective } from "../types/api";
@@ -84,6 +85,7 @@ export default function Goals() {
   const [justCompletedId, setJustCompletedId] = useState<number | null>(null);
 
   const { showToast } = useToast();
+  const { celebrate } = useGamification();
   const invalidate = () => invalidateObjectives(queryClient);
 
   const createMutation = useMutation({
@@ -111,7 +113,7 @@ export default function Goals() {
   const contributeMutation = useMutation({
     mutationFn: (input: { id: number; values: ContributionInput }) =>
       objectivesService.addContribution(input.id, input.values),
-    onSuccess: ({ objective, milestoneReached }, variables) => {
+    onSuccess: ({ objective, milestoneReached, gamification }, variables) => {
       invalidate();
       if (milestoneReached !== null) {
         showToast(celebrationMessage(milestoneReached, objective.name), "celebration");
@@ -122,6 +124,7 @@ export default function Goals() {
       } else {
         showToast(`✓ Aporte de ${formatCurrency(variables.values.amount)} registrado com sucesso.`);
       }
+      celebrate(gamification);
     },
   });
 
