@@ -14,6 +14,8 @@ import MainObjectiveCard from "../features/objectives/components/MainObjectiveCa
 import ObjectiveEvolutionChart from "../features/objectives/components/ObjectiveEvolutionChart";
 import ObjectiveFormModal from "../features/objectives/components/ObjectiveFormModal";
 import ContributionModal from "../features/objectives/components/ContributionModal";
+import CelebrationToast from "../features/objectives/components/CelebrationToast";
+import { celebrationMessage } from "../features/objectives/utils/celebrationMessage";
 import type { ApiObjective } from "../types/api";
 
 type ObjectiveFilter = "todas" | "ativas" | "concluidas" | "atrasadas";
@@ -78,6 +80,7 @@ export default function Goals() {
   const [deleteTarget, setDeleteTarget] = useState<ApiObjective | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [contributingTo, setContributingTo] = useState<ApiObjective | null>(null);
+  const [celebration, setCelebration] = useState<string | null>(null);
 
   const invalidate = () => invalidateObjectives(queryClient);
 
@@ -97,7 +100,12 @@ export default function Goals() {
   const contributeMutation = useMutation({
     mutationFn: (input: { id: number; values: ContributionInput }) =>
       objectivesService.addContribution(input.id, input.values),
-    onSuccess: invalidate,
+    onSuccess: ({ objective, milestoneReached }) => {
+      invalidate();
+      if (milestoneReached !== null) {
+        setCelebration(celebrationMessage(milestoneReached, objective.name));
+      }
+    },
   });
 
   const handleCreate = async (values: ObjectiveInput) => {
@@ -254,6 +262,10 @@ export default function Goals() {
             setDeleteError(null);
           }}
         />
+      )}
+
+      {celebration && (
+        <CelebrationToast key={celebration} message={celebration} onClose={() => setCelebration(null)} />
       )}
     </div>
   );

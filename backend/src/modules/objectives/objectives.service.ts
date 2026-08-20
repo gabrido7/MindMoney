@@ -9,7 +9,21 @@ const NEAR_DEADLINE_MONTHS = 3;
 /** Ritmo dentro de +-10% do necessário conta como "no ritmo certo", não atrasado/adiantado. */
 const PACE_TOLERANCE = 0.1;
 
+/** Marcos de progresso que disparam uma pequena celebração na tela quando um aporte cruza um deles. */
+const PROGRESS_MILESTONES = [25, 50, 75, 100] as const;
+
 export type PaceStatus = "on_track" | "behind" | "ahead" | "insufficient_data" | null;
+
+/**
+ * Qual marco (se algum) esse aporte específico cruzou -- compara o progresso
+ * antes e depois do aporte, não só o valor final, senão um objetivo que já
+ * estava em 80% "celebraria" 25%/50% de novo a cada aporte novo. Quando um
+ * aporte cruza mais de um marco de uma vez, celebra o mais alto.
+ */
+function computeMilestone(previousProgressPercent: number, newProgressPercent: number): number | null {
+  const crossed = PROGRESS_MILESTONES.filter((m) => previousProgressPercent < m && newProgressPercent >= m);
+  return crossed.length > 0 ? Math.max(...crossed) : null;
+}
 
 /**
  * Ritmo real de economia: a média de quanto o usuário guardou por mês desde
@@ -206,12 +220,18 @@ export const objectivesService = {
     objectiveId: number,
     userId: number,
     input: ContributionBodyInput
-  ): Promise<EnrichedObjective> {
-    const objective = await objectivesRepository.findByIdAndUser(objectiveId, userId);
-    if (!objective) throw AppError.notFound("Meta não encontrada.");
+  ): Promise<{ objective: EnrichedObjective; milestoneReached: number | null }> {
+    const existing = await objectivesRepository.findByIdAndUser(objectiveId, userId);
+    if (!existing) throw AppError.notFound("Meta não encontrada.");
+
+    const previousAmount = await objectivesRepository.currentAmount(objectiveId);
+    const targetAmount = Number(existing.target_amount);
+    const previousProgressPercent = targetAmount > 0 ? Math.min((previousAmount / targetAmount) * 100, 100) : 0;
 
     await objectivesRepository.addContribution(objectiveId, input);
-    return getEnriched(objectiveId, userId);
+    const objective = await getEnriched(objectiveId, userId);
+
+    return { objective, milestoneReached: computeMilestone(previousProgressPercent, objective.progressPercent) };
   },
 
   async removeContribution(

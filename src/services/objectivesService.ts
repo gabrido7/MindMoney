@@ -41,7 +41,7 @@ export const objectivesService = {
     apiRequest<{ contributions: ApiContribution[] }>(`/objectives/${id}/contributions`),
 
   addContribution: (id: number, input: ContributionInput) =>
-    apiRequest<{ objective: ApiObjective }>(`/objectives/${id}/contributions`, {
+    apiRequest<{ objective: ApiObjective; milestoneReached: number | null }>(`/objectives/${id}/contributions`, {
       method: "POST",
       body: input,
     }),

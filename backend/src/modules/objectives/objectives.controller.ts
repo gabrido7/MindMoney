@@ -42,8 +42,8 @@ export const objectivesController = {
 
   async addContribution(req: Request, res: Response) {
     const objectiveId = Number(req.params.id);
-    const objective = await objectivesService.addContribution(objectiveId, req.userId!, req.body);
-    res.status(201).json({ objective });
+    const result = await objectivesService.addContribution(objectiveId, req.userId!, req.body);
+    res.status(201).json(result);
   },
 
   async removeContribution(req: Request, res: Response) {

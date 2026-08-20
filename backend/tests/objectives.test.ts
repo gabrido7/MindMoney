@@ -361,6 +361,101 @@ describe("Objetivos financeiros (metas de longo prazo)", () => {
     expect(res.body.objective.paceMonthsEarlier).toBe(2);
   });
 
+  it("marco de progresso: aporte que não cruza nenhum marco não retorna milestoneReached", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Sem marco ainda", category: "compra", targetAmount: 1000, targetMonth: "2026-11" });
+    const id = created.body.objective.id;
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 100, contributedAt: "2026-08-10" }); // 10%, não cruza 25%
+    expect(res.body.milestoneReached).toBeNull();
+  });
+
+  it("marco de progresso: cruzar 25% retorna milestoneReached 25", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Cruza 25", category: "compra", targetAmount: 1000, targetMonth: "2026-11" });
+    const id = created.body.objective.id;
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 300, contributedAt: "2026-08-10" }); // 30%, cruza 25%
+    expect(res.body.milestoneReached).toBe(25);
+  });
+
+  it("marco de progresso: aporte que pula direto de 0% pra 60% celebra o marco mais alto cruzado (50), não o menor (25)", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Pula marcos", category: "compra", targetAmount: 1000, targetMonth: "2026-11" });
+    const id = created.body.objective.id;
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 600, contributedAt: "2026-08-10" });
+    expect(res.body.milestoneReached).toBe(50);
+  });
+
+  it("marco de progresso: um segundo aporte só celebra marcos ainda não cruzados", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Dois aportes", category: "compra", targetAmount: 1000, targetMonth: "2026-11" });
+    const id = created.body.objective.id;
+
+    const first = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 250, contributedAt: "2026-08-05" }); // 25%
+    expect(first.body.milestoneReached).toBe(25);
+
+    const second = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 300, contributedAt: "2026-08-10" }); // 25% -> 55%, cruza 50 mas não 25 de novo
+    expect(second.body.milestoneReached).toBe(50);
+  });
+
+  it("marco de progresso: aporte que atinge exatamente o valor alvo retorna milestoneReached 100", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Bate 100%", category: "compra", targetAmount: 1000, targetMonth: "2026-11" });
+    const id = created.body.objective.id;
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 1000, contributedAt: "2026-08-10" });
+    expect(res.body.milestoneReached).toBe(100);
+  });
+
+  it("marco de progresso: aporte extra numa meta já concluída não celebra de novo", async () => {
+    const created = await request(app)
+      .post("/api/objectives")
+      .set(authHeader(userA.token))
+      .send({ name: "Já concluída", category: "compra", targetAmount: 1000, targetMonth: "2026-11" });
+    const id = created.body.objective.id;
+
+    await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 1000, contributedAt: "2026-08-10" });
+
+    const res = await request(app)
+      .post(`/api/objectives/${id}/contributions`)
+      .set(authHeader(userA.token))
+      .send({ amount: 50, contributedAt: "2026-08-12" });
+    expect(res.body.milestoneReached).toBeNull();
+  });
+
   it("evolução acumula aportes reais por mês, só de objetivos do próprio usuário", async () => {
     const freshUser = await registerTestUser("objectives-evolution");
     const other = await registerTestUser("objectives-evolution-other");
