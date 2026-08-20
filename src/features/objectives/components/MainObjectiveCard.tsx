@@ -12,15 +12,21 @@ import type { ApiObjective } from "../../../types/api";
 export default function MainObjectiveCard({
   objective,
   onAddContribution,
+  justCompleted = false,
 }: {
   objective: ApiObjective;
   onAddContribution: () => void;
+  justCompleted?: boolean;
 }) {
   const preset = CATEGORY_BY_VALUE[objective.category];
   const priorityPreset = PRIORITY_BY_VALUE[objective.priority];
 
   return (
-    <Card className="border-2 border-green-500/30 flex flex-col h-full">
+    <Card
+      className={`border-2 border-green-500/30 flex flex-col h-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+        justCompleted ? "motion-safe:animate-goal-complete" : ""
+      }`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-green-600 dark:text-green-400 mb-2">
         Meta principal
       </p>

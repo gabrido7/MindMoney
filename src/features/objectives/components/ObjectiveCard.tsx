@@ -6,6 +6,7 @@ import Icon from "../../../components/ui/Icon";
 import ProgressBar from "../../../components/ui/ProgressBar";
 import { objectivesService } from "../../../services/objectivesService";
 import { errorMessage } from "../../../services/api";
+import { useToast } from "../../../hooks/useToast";
 import { formatCurrency, formatMonthBR } from "../../../utils/formatters";
 import { CATEGORY_BY_VALUE } from "../data/categoryPresets";
 import { PRIORITY_BY_VALUE } from "../data/priorityPresets";
@@ -19,13 +20,16 @@ export default function ObjectiveCard({
   onEdit,
   onDelete,
   onAddContribution,
+  justCompleted = false,
 }: {
   objective: ApiObjective;
   onEdit: () => void;
   onDelete: () => void;
   onAddContribution: () => void;
+  justCompleted?: boolean;
 }) {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [showContributions, setShowContributions] = useState(false);
   const [showSimulator, setShowSimulator] = useState(false);
   const preset = CATEGORY_BY_VALUE[objective.category];
@@ -44,12 +48,17 @@ export default function ObjectiveCard({
       queryClient.invalidateQueries({ queryKey: ["objectiveContributions", objective.id] });
       invalidateObjectives(queryClient);
       setRemoveError(null);
+      showToast("✓ Aporte removido com sucesso.");
     },
     onError: (err) => setRemoveError(errorMessage(err) ?? "Não foi possível remover o aporte."),
   });
 
   return (
-    <Card>
+    <Card
+      className={`transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+        justCompleted ? "motion-safe:animate-goal-complete" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{preset.icon}</span>
@@ -65,14 +74,14 @@ export default function ObjectiveCard({
           <button
             onClick={onEdit}
             aria-label={`Editar meta ${objective.name}`}
-            className="p-2 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+            className="p-2 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-950 transition-colors active:scale-90"
           >
             <Icon name="edit" size={16} />
           </button>
           <button
             onClick={onDelete}
             aria-label={`Excluir meta ${objective.name}`}
-            className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+            className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors active:scale-90"
           >
             <Icon name="trash" size={16} />
           </button>
@@ -131,29 +140,39 @@ export default function ObjectiveCard({
         </Button>
         <button
           onClick={() => setShowContributions((v) => !v)}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600"
+          className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 flex items-center gap-1 transition-colors"
         >
           {showContributions ? "Ocultar aportes" : "Ver aportes"}
+          <Icon
+            name="chevronDown"
+            size={14}
+            className={`transition-transform duration-200 ${showContributions ? "rotate-180" : ""}`}
+          />
         </button>
         {!objective.achieved && (
           <button
             onClick={() => setShowSimulator((v) => !v)}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 flex items-center gap-1"
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 flex items-center gap-1 transition-colors"
           >
             <Icon name="sparkles" size={14} />
             {showSimulator ? "Ocultar simulador" : "E se...?"}
+            <Icon
+              name="chevronDown"
+              size={14}
+              className={`transition-transform duration-200 ${showSimulator ? "rotate-180" : ""}`}
+            />
           </button>
         )}
       </div>
 
       {showSimulator && (
-        <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+        <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3 motion-safe:animate-fade-in">
           <GoalSimulator objective={objective} />
         </div>
       )}
 
       {showContributions && (
-        <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+        <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3 motion-safe:animate-fade-in">
           {isLoading && <p className="text-xs text-gray-400">Carregando...</p>}
           {removeError && <p className="text-xs text-red-500 mb-2">{removeError}</p>}
           {data && data.contributions.length === 0 && (
@@ -171,7 +190,7 @@ export default function ObjectiveCard({
                     onClick={() => removeMutation.mutate(c.id)}
                     disabled={removeMutation.isPending}
                     aria-label="Remover aporte"
-                    className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                    className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors active:scale-90"
                   >
                     <Icon name="trash" size={14} />
                   </button>

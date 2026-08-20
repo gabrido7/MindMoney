@@ -90,10 +90,10 @@ export default function ObjectiveFormModal({
                 key={c.value}
                 type="button"
                 onClick={() => setCategory(c.value)}
-                className={`flex flex-col items-center gap-1 rounded-lg border p-2.5 text-xs transition-colors ${
+                className={`flex flex-col items-center gap-1 rounded-lg border p-2.5 text-xs transition-all active:scale-95 ${
                   category === c.value
                     ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
-                    : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300"
                 }`}
               >
                 <span className="text-lg">{c.icon}</span>
@@ -113,10 +113,10 @@ export default function ObjectiveFormModal({
                 key={p.value}
                 type="button"
                 onClick={() => setPriority(p.value)}
-                className={`flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-sm transition-colors ${
+                className={`flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-sm transition-all active:scale-95 ${
                   priority === p.value
                     ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
-                    : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300"
                 }`}
               >
                 <span>{p.dot}</span>
@@ -133,7 +133,7 @@ export default function ObjectiveFormModal({
                 key={s}
                 type="button"
                 onClick={() => setName(s)}
-                className="rounded-full border border-gray-200 dark:border-gray-600 px-3 py-1 text-xs text-gray-600 dark:text-gray-300 hover:border-green-400 hover:text-green-600"
+                className="rounded-full border border-gray-200 dark:border-gray-600 px-3 py-1 text-xs text-gray-600 dark:text-gray-300 hover:border-green-400 hover:text-green-600 transition-colors active:scale-95"
               >
                 {s}
               </button>

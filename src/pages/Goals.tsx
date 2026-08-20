@@ -14,8 +14,9 @@ import MainObjectiveCard from "../features/objectives/components/MainObjectiveCa
 import ObjectiveEvolutionChart from "../features/objectives/components/ObjectiveEvolutionChart";
 import ObjectiveFormModal from "../features/objectives/components/ObjectiveFormModal";
 import ContributionModal from "../features/objectives/components/ContributionModal";
-import CelebrationToast from "../features/objectives/components/CelebrationToast";
+import { useToast } from "../hooks/useToast";
 import { celebrationMessage } from "../features/objectives/utils/celebrationMessage";
+import { formatCurrency } from "../utils/formatters";
 import type { ApiObjective } from "../types/api";
 
 type ObjectiveFilter = "todas" | "ativas" | "concluidas" | "atrasadas";
@@ -80,30 +81,46 @@ export default function Goals() {
   const [deleteTarget, setDeleteTarget] = useState<ApiObjective | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [contributingTo, setContributingTo] = useState<ApiObjective | null>(null);
-  const [celebration, setCelebration] = useState<string | null>(null);
+  const [justCompletedId, setJustCompletedId] = useState<number | null>(null);
 
+  const { showToast } = useToast();
   const invalidate = () => invalidateObjectives(queryClient);
 
   const createMutation = useMutation({
     mutationFn: (input: ObjectiveInput) => objectivesService.create(input),
-    onSuccess: invalidate,
+    onSuccess: ({ objective }) => {
+      invalidate();
+      showToast(`✓ Meta "${objective.name}" criada com sucesso.`);
+    },
   });
   const updateMutation = useMutation({
     mutationFn: (input: { id: number; values: ObjectiveInput }) =>
       objectivesService.update(input.id, input.values),
-    onSuccess: invalidate,
+    onSuccess: ({ objective }) => {
+      invalidate();
+      showToast(`✓ Meta "${objective.name}" atualizada com sucesso.`);
+    },
   });
   const removeMutation = useMutation({
-    mutationFn: (id: number) => objectivesService.remove(id),
-    onSuccess: invalidate,
+    mutationFn: (input: { id: number; name: string }) => objectivesService.remove(input.id),
+    onSuccess: (_data, variables) => {
+      invalidate();
+      showToast(`✓ Meta "${variables.name}" excluída com sucesso.`);
+    },
   });
   const contributeMutation = useMutation({
     mutationFn: (input: { id: number; values: ContributionInput }) =>
       objectivesService.addContribution(input.id, input.values),
-    onSuccess: ({ objective, milestoneReached }) => {
+    onSuccess: ({ objective, milestoneReached }, variables) => {
       invalidate();
       if (milestoneReached !== null) {
-        setCelebration(celebrationMessage(milestoneReached, objective.name));
+        showToast(celebrationMessage(milestoneReached, objective.name), "celebration");
+        if (milestoneReached === 100) {
+          setJustCompletedId(objective.id);
+          setTimeout(() => setJustCompletedId(null), 1500);
+        }
+      } else {
+        showToast(`✓ Aporte de ${formatCurrency(variables.values.amount)} registrado com sucesso.`);
       }
     },
   });
@@ -129,7 +146,7 @@ export default function Goals() {
     if (!deleteTarget) return;
     setDeleteError(null);
     try {
-      await removeMutation.mutateAsync(deleteTarget.id);
+      await removeMutation.mutateAsync({ id: deleteTarget.id, name: deleteTarget.name });
       setDeleteTarget(null);
     } catch (err) {
       setDeleteError(errorMessage(err) ?? "Não foi possível excluir a meta.");
@@ -181,6 +198,7 @@ export default function Goals() {
                 <MainObjectiveCard
                   objective={mainObjective}
                   onAddContribution={() => setContributingTo(mainObjective)}
+                  justCompleted={mainObjective.id === justCompletedId}
                 />
               </div>
               <div className="lg:col-span-7">
@@ -197,7 +215,7 @@ export default function Goals() {
                   <button
                     key={f.value}
                     onClick={() => setFilter(f.value)}
-                    className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                    className={`text-sm px-3 py-1.5 rounded-full border transition-all active:scale-95 ${
                       filter === f.value
                         ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
                         : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -225,6 +243,7 @@ export default function Goals() {
                     }}
                     onDelete={() => setDeleteTarget(objective)}
                     onAddContribution={() => setContributingTo(objective)}
+                    justCompleted={objective.id === justCompletedId}
                   />
                 ))}
               </div>
@@ -262,10 +281,6 @@ export default function Goals() {
             setDeleteError(null);
           }}
         />
-      )}
-
-      {celebration && (
-        <CelebrationToast key={celebration} message={celebration} onClose={() => setCelebration(null)} />
       )}
     </div>
   );

@@ -16,7 +16,7 @@ export default function ProgressBar({ percent }: { percent: number }) {
       className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3"
     >
       <div
-        className={`h-3 rounded-full transition-all ${colorClass}`}
+        className={`h-3 rounded-full transition-all duration-700 ease-out ${colorClass}`}
         style={{ width: `${clamped}%` }}
       />
     </div>

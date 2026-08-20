@@ -18,7 +18,7 @@ export default function GoalSimulator({ objective }: { objective: ApiObjective }
     <div className="flex flex-col gap-2">
       <label className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 flex-wrap">
         E se eu guardar
-        <span className="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1 bg-white dark:bg-gray-700">
+        <span className="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-600 px-2 py-1 bg-white dark:bg-gray-700 transition-colors focus-within:border-green-400 focus-within:ring-1 focus-within:ring-green-400">
           <span className="text-gray-400 text-sm">R$</span>
           <input
             type="number"
@@ -38,7 +38,7 @@ export default function GoalSimulator({ objective }: { objective: ApiObjective }
       )}
 
       {result && (
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-sm text-gray-700 dark:text-gray-100">
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-sm text-gray-700 dark:text-gray-100 motion-safe:animate-fade-in">
           {result.tooFar ? (
             <p>🔮 Nesse ritmo, levaria muito tempo para chegar lá — talvez valha guardar um pouco mais por mês.</p>
           ) : (
