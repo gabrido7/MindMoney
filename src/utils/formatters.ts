@@ -13,3 +13,38 @@ export const calcPercentChange = (current: number, previous: number): number => 
 };
 
 export const currentMonth = (): string => new Date().toISOString().slice(0, 7);
+
+const MONTHS_PT = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
+/** '2026-08' -> 'agosto de 2026' */
+export const formatMonthLongBR = (yyyyMm: string): string => {
+  const [year, month] = yyyyMm.split("-").map(Number);
+  return `${MONTHS_PT[month - 1]} de ${year}`;
+};
+
+/** '2026-08' + 3 -> '2026-11' */
+export const addMonths = (yyyyMm: string, months: number): string => {
+  const [year, month] = yyyyMm.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + months, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+};
+
+/** Diferença em meses inteiros entre "from" e "to" (positiva se "to" é depois de "from"). */
+export const monthsBetween = (from: string, to: string): number => {
+  const [fromYear, fromMonth] = from.split("-").map(Number);
+  const [toYear, toMonth] = to.split("-").map(Number);
+  return (toYear - fromYear) * 12 + (toMonth - fromMonth);
+};

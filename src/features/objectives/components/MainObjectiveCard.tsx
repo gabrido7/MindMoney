@@ -6,6 +6,7 @@ import { formatCurrency, formatMonthBR } from "../../../utils/formatters";
 import { CATEGORY_BY_VALUE } from "../data/categoryPresets";
 import { PRIORITY_BY_VALUE } from "../data/priorityPresets";
 import { tipMessage } from "../utils/tipMessage";
+import GoalSimulator from "./GoalSimulator";
 import type { ApiObjective } from "../../../types/api";
 
 export default function MainObjectiveCard({
@@ -69,6 +70,13 @@ export default function MainObjectiveCard({
       <p className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/40 rounded-lg text-sm text-gray-700 dark:text-gray-100">
         {tipMessage(objective)}
       </p>
+
+      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+          🔮 Simulador de meta
+        </p>
+        <GoalSimulator objective={objective} />
+      </div>
 
       <div className="mt-auto pt-4">
         <Button onClick={onAddContribution} className="text-sm">

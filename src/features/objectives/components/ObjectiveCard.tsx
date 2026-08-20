@@ -11,6 +11,7 @@ import { CATEGORY_BY_VALUE } from "../data/categoryPresets";
 import { PRIORITY_BY_VALUE } from "../data/priorityPresets";
 import { invalidateObjectives } from "../hooks/invalidateObjectives";
 import { tipMessage } from "../utils/tipMessage";
+import GoalSimulator from "./GoalSimulator";
 import type { ApiObjective } from "../../../types/api";
 
 export default function ObjectiveCard({
@@ -26,6 +27,7 @@ export default function ObjectiveCard({
 }) {
   const queryClient = useQueryClient();
   const [showContributions, setShowContributions] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
   const preset = CATEGORY_BY_VALUE[objective.category];
   const priorityPreset = PRIORITY_BY_VALUE[objective.priority];
 
@@ -133,7 +135,22 @@ export default function ObjectiveCard({
         >
           {showContributions ? "Ocultar aportes" : "Ver aportes"}
         </button>
+        {!objective.achieved && (
+          <button
+            onClick={() => setShowSimulator((v) => !v)}
+            className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 flex items-center gap-1"
+          >
+            <Icon name="sparkles" size={14} />
+            {showSimulator ? "Ocultar simulador" : "E se...?"}
+          </button>
+        )}
       </div>
+
+      {showSimulator && (
+        <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+          <GoalSimulator objective={objective} />
+        </div>
+      )}
 
       {showContributions && (
         <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">

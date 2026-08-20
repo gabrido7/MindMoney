@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { formatCurrency, formatDateBR, formatMonthBR, calcPercentChange } from "./formatters";
+import {
+  formatCurrency,
+  formatDateBR,
+  formatMonthBR,
+  formatMonthLongBR,
+  addMonths,
+  monthsBetween,
+  calcPercentChange,
+} from "./formatters";
 
 describe("formatCurrency", () => {
   it("formata em BRL no padrão pt-BR", () => {
@@ -19,6 +27,42 @@ describe("formatDateBR / formatMonthBR", () => {
 
   it("inverte yyyy-mm para mm/yyyy", () => {
     expect(formatMonthBR("2026-08")).toBe("08/2026");
+  });
+});
+
+describe("formatMonthLongBR", () => {
+  it("escreve o mês por extenso em português", () => {
+    expect(formatMonthLongBR("2027-06")).toBe("junho de 2027");
+    expect(formatMonthLongBR("2026-01")).toBe("janeiro de 2026");
+    expect(formatMonthLongBR("2026-12")).toBe("dezembro de 2026");
+  });
+});
+
+describe("addMonths", () => {
+  it("soma meses dentro do mesmo ano", () => {
+    expect(addMonths("2026-08", 3)).toBe("2026-11");
+  });
+
+  it("vira o ano quando ultrapassa dezembro", () => {
+    expect(addMonths("2026-11", 3)).toBe("2027-02");
+  });
+
+  it("soma zero mantém o mesmo mês", () => {
+    expect(addMonths("2026-08", 0)).toBe("2026-08");
+  });
+});
+
+describe("monthsBetween", () => {
+  it("calcula diferença positiva quando 'to' é depois de 'from'", () => {
+    expect(monthsBetween("2026-08", "2027-06")).toBe(10);
+  });
+
+  it("calcula diferença negativa quando 'to' é antes de 'from'", () => {
+    expect(monthsBetween("2027-06", "2026-08")).toBe(-10);
+  });
+
+  it("mesmo mês -> 0", () => {
+    expect(monthsBetween("2026-08", "2026-08")).toBe(0);
   });
 });
 
