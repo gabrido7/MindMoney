@@ -1,118 +1,61 @@
-import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import Card from "../components/ui/Card";
-import Select from "../components/ui/Select";
-import Modal from "../components/ui/Modal";
-import Icon from "../components/ui/Icon";
-import EmptyState from "../components/ui/EmptyState";
-import {
-  educationTopics,
-  educationCategories,
-  type EducationLevel,
-  type EducationTopic,
-} from "../features/education/data/topics";
-
-const LEVELS: EducationLevel[] = ["Iniciante", "Intermediário", "Avançado"];
-
-const LEVEL_COLOR: Record<EducationLevel, string> = {
-  Iniciante: "#0ca30c",
-  Intermediário: "#fab219",
-  Avançado: "#d03b3b",
-};
+import ProgressBar from "../components/ui/ProgressBar";
+import { TRAILS } from "../features/education/data/trails";
+import { TRAIL_COLOR_DOT } from "../features/education/data/trailColors";
+import { trailLessonCount, trailCompletedCount, trailProgressPercent } from "../features/education/utils/trailProgress";
+import { useEducationProgress } from "../features/education/hooks/useEducationProgress";
 
 export default function FinancialEducation() {
-  const [category, setCategory] = useState<string>("todas");
-  const [level, setLevel] = useState<string>("todos");
-  const [selectedTopic, setSelectedTopic] = useState<EducationTopic | null>(null);
-
-  const filtered = useMemo(
-    () =>
-      educationTopics.filter(
-        (t) => (category === "todas" || t.category === category) && (level === "todos" || t.level === level)
-      ),
-    [category, level]
-  );
+  const { progress, isLoading, error } = useEducationProgress();
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Educação Financeira</h1>
-
-      <div className="flex flex-wrap gap-3">
-        <Select value={category} onChange={(e) => setCategory(e.target.value)} className="w-56">
-          <option value="todas">Todas as categorias</option>
-          {educationCategories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </Select>
-        <Select value={level} onChange={(e) => setLevel(e.target.value)} className="w-48">
-          <option value="todos">Todos os níveis</option>
-          {LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </Select>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Educação Financeira</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Trilhas de aprendizado, do básico ao avançado — cada assunto é um curso completo, com aulas, exemplos, quiz e exercício prático.
+        </p>
       </div>
 
-      {filtered.length === 0 ? (
-        <Card>
-          <EmptyState icon="book" message="Nenhum conteúdo encontrado para esse filtro." />
-        </Card>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-4">
-          {filtered.map((topic) => (
-            <button key={topic.id} onClick={() => setSelectedTopic(topic)} className="text-left">
-              <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <h2 className="font-semibold text-gray-900 dark:text-white">{topic.title}</h2>
-                  <Icon name="book" size={18} className="text-gray-400 shrink-0" />
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{topic.summary}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                    {topic.category}
-                  </span>
-                  <span
-                    className="text-xs px-2 py-1 rounded-full font-medium"
-                    style={{
-                      backgroundColor: `${LEVEL_COLOR[topic.level]}1a`,
-                      color: LEVEL_COLOR[topic.level],
-                    }}
-                  >
-                    {topic.level}
-                  </span>
-                </div>
-              </Card>
-            </button>
-          ))}
-        </div>
-      )}
+      {isLoading && <p className="text-gray-500 dark:text-gray-400">Carregando...</p>}
+      {error && <p className="text-red-500">Não foi possível carregar seu progresso agora.</p>}
 
-      {selectedTopic && (
-        <Modal title={selectedTopic.title} onClose={() => setSelectedTopic(null)} size="lg">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-              {selectedTopic.category}
-            </span>
-            <span
-              className="text-xs px-2 py-1 rounded-full font-medium"
-              style={{
-                backgroundColor: `${LEVEL_COLOR[selectedTopic.level]}1a`,
-                color: LEVEL_COLOR[selectedTopic.level],
-              }}
-            >
-              {selectedTopic.level}
-            </span>
-          </div>
-          <div className="flex flex-col gap-3">
-            {selectedTopic.content.map((paragraph, index) => (
-              <p key={index} className="text-gray-700 dark:text-gray-200 leading-relaxed">
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </Modal>
+      {!isLoading && (
+        <div className="flex flex-col gap-4">
+          {TRAILS.map((trail) => {
+            const total = trailLessonCount(trail);
+            const completed = trailCompletedCount(trail, progress);
+            const percent = trailProgressPercent(trail, progress);
+
+            return (
+              <Link key={trail.id} to={`/educacao-financeira/${trail.id}`}>
+                <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl leading-none mt-0.5">{TRAIL_COLOR_DOT[trail.color]}</span>
+                      <div>
+                        <h2 className="font-semibold text-gray-900 dark:text-white">
+                          {trail.title}
+                          <span className="ml-2 text-xs font-normal text-gray-400">{trail.courses.length} cursos</span>
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{trail.description}</p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 shrink-0">{percent}%</span>
+                  </div>
+
+                  <div className="mt-4">
+                    <ProgressBar percent={percent} />
+                    <p className="text-xs text-gray-400 mt-1.5">
+                      {completed} de {total} aulas concluídas
+                    </p>
+                  </div>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
       )}
     </div>
   );

@@ -20,6 +20,9 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Goals = lazy(() => import("./pages/Goals"));
 const Reports = lazy(() => import("./pages/Reports"));
 const FinancialEducation = lazy(() => import("./pages/FinancialEducation"));
+const EducationTrail = lazy(() => import("./pages/EducationTrail"));
+const EducationCourse = lazy(() => import("./pages/EducationCourse"));
+const EducationLesson = lazy(() => import("./pages/EducationLesson"));
 
 function RouteFallback() {
   return (
@@ -50,6 +53,12 @@ function App() {
               <Route path="/metas" element={<Goals />} />
               <Route path="/relatorios" element={<Reports />} />
               <Route path="/educacao-financeira" element={<FinancialEducation />} />
+              <Route path="/educacao-financeira/:trailId" element={<EducationTrail />} />
+              <Route path="/educacao-financeira/:trailId/:courseId" element={<EducationCourse />} />
+              <Route
+                path="/educacao-financeira/:trailId/:courseId/:lessonId"
+                element={<EducationLesson />}
+              />
             </Route>
           </Route>
 

@@ -180,6 +180,16 @@ export interface ObjectiveEvolutionPoint {
   totalSaved: number;
 }
 
+export interface ApiLessonProgress {
+  lessonId: string;
+  completed: boolean;
+  completedAt: string | null;
+  quizScore: number | null;
+  quizTotal: number | null;
+  exerciseResponse: string | null;
+  updatedAt: string;
+}
+
 export interface ApiContribution {
   id: number;
   objective_id: number;
