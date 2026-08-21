@@ -78,6 +78,19 @@ export const gamificationRepository = {
     return Number(rows[0]?.total ?? 0);
   },
 
+  /**
+   * "Hoje" segundo o próprio MySQL (CURDATE(), no fuso da sessão -- SYSTEM),
+   * não segundo o Node. completed_at é TIMESTAMP e é resolvido nesse mesmo
+   * fuso pelo servidor; calcular "hoje" separadamente em UTC no JS (via
+   * `new Date().toISOString()`) diverge da data que o MySQL usa sempre que
+   * o horário local está à frente do UTC e já passou da meia-noite UTC mas
+   * não da meia-noite local -- um bug de fuso horário real, não hipotético.
+   */
+  async today(): Promise<string> {
+    const [rows] = await pool.query<RowDataPacket[]>("SELECT CURDATE() AS d");
+    return String(rows[0].d);
+  },
+
   /** Dias distintos (formato 'YYYY-MM-DD') em que o usuário concluiu pelo menos uma aula. */
   async completedLessonDates(userId: number): Promise<string[]> {
     const [rows] = await pool.query<RowDataPacket[]>(

@@ -12,10 +12,18 @@ async function backdateCompletedAt(userId: number, lessonId: string, mysqlDateTi
   ]);
 }
 
+/**
+ * Formata em componentes LOCAIS (não toISOString, que é UTC) -- o valor é
+ * gravado como string literal no MySQL (sessão em fuso SYSTEM = local), e
+ * precisa representar o mesmo horário de parede que um "N dias atrás"
+ * calculado localmente, não a data UTC equivalente (que pode cair num dia
+ * diferente perto da virada de meia-noite UTC).
+ */
 function daysAgoDateTime(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 19).replace("T", " ");
+  const pad = (x: number) => String(x).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
 async function completeLesson(token: string, lessonId: string, extra: Record<string, unknown> = {}) {
@@ -135,6 +143,23 @@ describe("Gamificação: XP, nível e conquistas", () => {
     expect(ids).toContain("cinco-aulas");
     expect(ids).toContain("mestre-orcamento");
     expect(last!.body.gamification.totalXp).toBe(225);
+
+    await cleanupUser(user.userId);
+  });
+
+  it("bônus de curso também funciona para trilhas além de Fundamentos (Organização financeira)", async () => {
+    const user = await registerTestUser("gami-other-trail-course");
+
+    let last;
+    for (let i = 1; i <= 5; i++) {
+      last = await completeLesson(user.token, `organizacao-financeira.metas-financeiras.aula-${i}`);
+    }
+
+    // aula-5: lesson(20) + course_completed(50) + "5 aulas concluídas"(25) = 95 (sem conquista de curso específica aqui)
+    expect(last!.body.gamification.xpAwarded).toBe(95);
+    const ids = last!.body.gamification.newAchievements.map((a: { id: string }) => a.id);
+    expect(ids).toContain("cinco-aulas");
+    expect(ids).not.toContain("trilha-organizacao"); // só 5 de 30 aulas da trilha
 
     await cleanupUser(user.userId);
   });

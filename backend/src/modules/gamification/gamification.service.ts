@@ -29,12 +29,16 @@ export interface GamificationResult {
  * "Hoje" ainda sem nenhuma aula concluída não quebra a sequência (dá a
  * margem de terminar o dia); só conta como quebrada se o dia mais recente
  * de atividade for anterior a ontem.
+ *
+ * `today` é sempre passado explicitamente (vindo de gamificationRepository.today(),
+ * ou seja, do próprio MySQL) -- nunca calculado aqui via `new Date()`, pra não
+ * divergir do fuso horário que resolveu as datas em `sortedDatesDesc`.
  */
-export function calculateStreak(sortedDatesDesc: string[]): number {
+export function calculateStreak(sortedDatesDesc: string[], today: string): number {
   if (sortedDatesDesc.length === 0) return 0;
 
   const DAY_MS = 24 * 60 * 60 * 1000;
-  const todayMs = Date.parse(new Date().toISOString().slice(0, 10));
+  const todayMs = Date.parse(today);
   const mostRecentMs = Date.parse(sortedDatesDesc[0]);
   const daysSinceLast = Math.round((todayMs - mostRecentMs) / DAY_MS);
   if (daysSinceLast > 1) return 0;
@@ -72,13 +76,20 @@ async function evaluateAchievement(userId: number, achievementId: string): Promi
       const set = TRAIL_LESSON_SETS.fundamentos;
       return (await gamificationRepository.countCompletedLessonsIn(userId, set)) >= set.length;
     }
+    case "trilha-organizacao": {
+      const set = TRAIL_LESSON_SETS["organizacao-financeira"];
+      return (await gamificationRepository.countCompletedLessonsIn(userId, set)) >= set.length;
+    }
     case "primeira-meta":
       return (await gamificationRepository.countAchievedObjectives(userId)) >= 1;
     case "investidor-consciente":
       return (await gamificationRepository.countCompletedLessonsLike(userId, "investimentos.")) >= 1;
     case "sequencia-3-dias": {
-      const dates = await gamificationRepository.completedLessonDates(userId);
-      return calculateStreak(dates) >= 3;
+      const [dates, today] = await Promise.all([
+        gamificationRepository.completedLessonDates(userId),
+        gamificationRepository.today(),
+      ]);
+      return calculateStreak(dates, today) >= 3;
     }
     default:
       return false;
@@ -133,14 +144,17 @@ export const gamificationService = {
     const info = levelInfo(totalXp);
     const unlocked = await gamificationRepository.unlockedAchievements(userId);
     const unlockedMap = new Map(unlocked.map((a) => [a.achievementId, a.unlockedAt]));
-    const dates = await gamificationRepository.completedLessonDates(userId);
+    const [dates, today] = await Promise.all([
+      gamificationRepository.completedLessonDates(userId),
+      gamificationRepository.today(),
+    ]);
 
     return {
       totalXp: info.totalXp,
       level: info.level,
       xpIntoLevel: info.xpIntoLevel,
       xpForNextLevel: info.xpForNextLevel,
-      streak: calculateStreak(dates),
+      streak: calculateStreak(dates, today),
       achievements: ACHIEVEMENTS.map((a) => ({
         ...a,
         unlocked: unlockedMap.has(a.id),
@@ -178,8 +192,11 @@ export const gamificationService = {
         }
       }
 
-      const dates = await gamificationRepository.completedLessonDates(userId);
-      const streak = calculateStreak(dates);
+      const [dates, today] = await Promise.all([
+        gamificationRepository.completedLessonDates(userId),
+        gamificationRepository.today(),
+      ]);
+      const streak = calculateStreak(dates, today);
       const milestone = STREAK_MILESTONES.find((m) => m.days === streak);
       if (milestone) {
         events.push({ amount: milestone.xp, reason: "streak_bonus", referenceId: `streak-${milestone.days}` });

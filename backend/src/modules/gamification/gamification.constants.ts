@@ -24,25 +24,49 @@ export const STREAK_MILESTONES: { days: number; xp: number }[] = [
 ];
 
 /**
- * IDs das aulas de cada curso de Fundamentos que hoje tem conteúdo completo
- * (espelha src/features/education/data/fundamentos.ts no frontend). Usado
- * só para detectar "curso/trilha 100% concluída" e liberar o bônus de XP e
- * as conquistas correspondentes -- se novo conteúdo for escrito, esses
- * conjuntos precisam ser atualizados junto.
+ * IDs das aulas de cada curso que hoje tem conteúdo completo (espelha
+ * src/features/education/data/*.ts no frontend). Usado só para detectar
+ * "curso/trilha 100% concluída" e liberar o bônus de XP e as conquistas
+ * correspondentes -- se novo conteúdo for escrito, esses conjuntos
+ * precisam ser atualizados junto.
  */
-const fundamentosCourseLessonIds = (courseId: string): string[] =>
-  Array.from({ length: 5 }, (_, i) => `fundamentos.${courseId}.aula-${i + 1}`);
+const courseLessonIds = (trailId: string, courseId: string, lessonCount: number): string[] =>
+  Array.from({ length: lessonCount }, (_, i) => `${trailId}.${courseId}.aula-${i + 1}`);
+
+const FUNDAMENTOS_COURSE_IDS = [
+  "o-que-e-dinheiro",
+  "receitas-e-despesas",
+  "como-montar-um-orcamento",
+  "controle-de-gastos",
+  "reserva-emergencia",
+];
+
+const ORGANIZACAO_FINANCEIRA_COURSE_IDS = [
+  "metas-financeiras",
+  "planejamento-mensal",
+  "metodo-50-30-20",
+  "controle-de-dividas",
+  "organizacao-financeira-na-pratica",
+  "automatizando-suas-financas",
+];
 
 export const COURSE_LESSON_SETS: Record<string, string[]> = {
-  "fundamentos.o-que-e-dinheiro": fundamentosCourseLessonIds("o-que-e-dinheiro"),
-  "fundamentos.receitas-e-despesas": fundamentosCourseLessonIds("receitas-e-despesas"),
-  "fundamentos.como-montar-um-orcamento": fundamentosCourseLessonIds("como-montar-um-orcamento"),
-  "fundamentos.controle-de-gastos": fundamentosCourseLessonIds("controle-de-gastos"),
-  "fundamentos.reserva-emergencia": fundamentosCourseLessonIds("reserva-emergencia"),
+  ...Object.fromEntries(
+    FUNDAMENTOS_COURSE_IDS.map((c) => [`fundamentos.${c}`, courseLessonIds("fundamentos", c, 5)])
+  ),
+  ...Object.fromEntries(
+    ORGANIZACAO_FINANCEIRA_COURSE_IDS.map((c) => [
+      `organizacao-financeira.${c}`,
+      courseLessonIds("organizacao-financeira", c, 5),
+    ])
+  ),
 };
 
 export const TRAIL_LESSON_SETS: Record<string, string[]> = {
-  fundamentos: Object.values(COURSE_LESSON_SETS).flat(),
+  fundamentos: FUNDAMENTOS_COURSE_IDS.flatMap((c) => courseLessonIds("fundamentos", c, 5)),
+  "organizacao-financeira": ORGANIZACAO_FINANCEIRA_COURSE_IDS.flatMap((c) =>
+    courseLessonIds("organizacao-financeira", c, 5)
+  ),
 };
 
 export interface Achievement {
@@ -68,6 +92,12 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: "Trilha Fundamentos completa",
     emoji: "🌱",
     description: "Complete todas as aulas da trilha Fundamentos.",
+  },
+  {
+    id: "trilha-organizacao",
+    title: "Trilha Organização financeira completa",
+    emoji: "📘",
+    description: "Complete todas as aulas da trilha Organização financeira.",
   },
   { id: "primeira-meta", title: "Primeira meta atingida", emoji: "🎯", description: "Atinja sua primeira meta financeira." },
   {
