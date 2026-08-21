@@ -164,6 +164,25 @@ describe("Gamificação: XP, nível e conquistas", () => {
     await cleanupUser(user.userId);
   });
 
+  it("investidor-consciente e bônus de curso funcionam para a trilha Investimentos também", async () => {
+    const user = await registerTestUser("gami-investimentos-course");
+
+    const first = await completeLesson(user.token, "investimentos.inflacao.aula-1");
+    expect(first.body.gamification.newAchievements.map((a: { id: string }) => a.id)).toEqual(
+      expect.arrayContaining(["primeira-aula", "investidor-consciente"])
+    );
+
+    let last;
+    for (let i = 2; i <= 5; i++) {
+      last = await completeLesson(user.token, `investimentos.inflacao.aula-${i}`);
+    }
+    const ids = last!.body.gamification.newAchievements.map((a: { id: string }) => a.id);
+    expect(ids).toContain("cinco-aulas");
+    expect(ids).not.toContain("trilha-investimentos"); // só 5 de 50 aulas da trilha
+
+    await cleanupUser(user.userId);
+  });
+
   it("completar as 25 aulas de Fundamentos desbloqueia a conquista da trilha completa", async () => {
     const user = await registerTestUser("gami-trail-complete");
     const courseIds = [

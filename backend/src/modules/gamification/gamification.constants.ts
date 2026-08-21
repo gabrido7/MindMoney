@@ -50,6 +50,19 @@ const ORGANIZACAO_FINANCEIRA_COURSE_IDS = [
   "automatizando-suas-financas",
 ];
 
+const INVESTIMENTOS_COURSE_IDS = [
+  "inflacao",
+  "juros-compostos",
+  "renda-fixa",
+  "tesouro-direto",
+  "cdb",
+  "fundos-de-investimento",
+  "acoes",
+  "fiis",
+  "diversificacao-de-investimentos",
+  "abrindo-conta-em-corretora",
+];
+
 export const COURSE_LESSON_SETS: Record<string, string[]> = {
   ...Object.fromEntries(
     FUNDAMENTOS_COURSE_IDS.map((c) => [`fundamentos.${c}`, courseLessonIds("fundamentos", c, 5)])
@@ -60,6 +73,9 @@ export const COURSE_LESSON_SETS: Record<string, string[]> = {
       courseLessonIds("organizacao-financeira", c, 5),
     ])
   ),
+  ...Object.fromEntries(
+    INVESTIMENTOS_COURSE_IDS.map((c) => [`investimentos.${c}`, courseLessonIds("investimentos", c, 5)])
+  ),
 };
 
 export const TRAIL_LESSON_SETS: Record<string, string[]> = {
@@ -67,6 +83,7 @@ export const TRAIL_LESSON_SETS: Record<string, string[]> = {
   "organizacao-financeira": ORGANIZACAO_FINANCEIRA_COURSE_IDS.flatMap((c) =>
     courseLessonIds("organizacao-financeira", c, 5)
   ),
+  investimentos: INVESTIMENTOS_COURSE_IDS.flatMap((c) => courseLessonIds("investimentos", c, 5)),
 };
 
 export interface Achievement {
@@ -105,6 +122,12 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: "Investidor consciente",
     emoji: "📈",
     description: "Complete a primeira aula da trilha de Investimentos.",
+  },
+  {
+    id: "trilha-investimentos",
+    title: "Trilha Investimentos completa",
+    emoji: "💹",
+    description: "Complete todas as aulas da trilha Investimentos.",
   },
   { id: "sequencia-3-dias", title: "Sequência de 3 dias", emoji: "🔥", description: "Estude 3 dias seguidos." },
 ];

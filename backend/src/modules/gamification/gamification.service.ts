@@ -80,6 +80,10 @@ async function evaluateAchievement(userId: number, achievementId: string): Promi
       const set = TRAIL_LESSON_SETS["organizacao-financeira"];
       return (await gamificationRepository.countCompletedLessonsIn(userId, set)) >= set.length;
     }
+    case "trilha-investimentos": {
+      const set = TRAIL_LESSON_SETS.investimentos;
+      return (await gamificationRepository.countCompletedLessonsIn(userId, set)) >= set.length;
+    }
     case "primeira-meta":
       return (await gamificationRepository.countAchievedObjectives(userId)) >= 1;
     case "investidor-consciente":
