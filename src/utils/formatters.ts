@@ -1,6 +1,9 @@
 export const formatCurrency = (value: number): string =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+export const formatPercent = (value: number, decimals = 2): string =>
+  `${value.toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}%`;
+
 export const formatDateBR = (isoDate: string): string =>
   isoDate.split("-").reverse().join("/");
 

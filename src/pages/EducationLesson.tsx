@@ -9,6 +9,7 @@ import LessonExercise from "../features/education/components/LessonExercise";
 import { findLesson } from "../features/education/data/trails";
 import { useEducationProgress } from "../features/education/hooks/useEducationProgress";
 import { useGamification } from "../features/gamification/hooks/useGamification";
+import FavoriteButton from "../features/favorites/components/FavoriteButton";
 import { useToast } from "../hooks/useToast";
 import type { ApiLessonProgress, GamificationResult } from "../types/api";
 import type { Course, Lesson, LessonContent, Trail } from "../features/education/types";
@@ -141,6 +142,7 @@ function LessonView({
               <Icon name="check" size={12} /> Concluída
             </span>
           )}
+          <FavoriteButton contentType="lesson" contentId={lesson.id} />
         </div>
         <p className="text-xs text-gray-400 mt-1">
           Aula {lessonIndex + 1} de {course.lessons.length} — {course.title}

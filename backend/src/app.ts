@@ -22,6 +22,7 @@ import { insightsRouter } from "./modules/insights/insights.routes";
 import { newsletterRouter } from "./modules/newsletter/newsletter.routes";
 import { educationRouter } from "./modules/education/education.routes";
 import { gamificationRouter } from "./modules/gamification/gamification.routes";
+import { favoritesRouter } from "./modules/favorites/favorites.routes";
 
 export const app = express();
 
@@ -75,6 +76,7 @@ app.use("/api/insights", insightsRouter);
 app.use("/api/newsletter", newsletterRouter);
 app.use("/api/education", educationRouter);
 app.use("/api/gamification", gamificationRouter);
+app.use("/api/favorites", favoritesRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

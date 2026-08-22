@@ -28,7 +28,9 @@ export type IconName =
   | "arrowRight"
   | "shield"
   | "eye"
-  | "eyeOff";
+  | "eyeOff"
+  | "star"
+  | "home";
 
 const PATHS: Record<IconName, string> = {
   sun: "M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-6.66 1.42-1.42M4.92 19.08l1.42-1.42M19.08 19.08l-1.42-1.42M4.92 4.92 6.34 6.34M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z",
@@ -62,23 +64,27 @@ const PATHS: Record<IconName, string> = {
   eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
   eyeOff:
     "M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a17.4 17.4 0 0 1-3.15 4.31M6.5 6.5C3.6 8.3 1 12 1 12s4 8 11 8a9.26 9.26 0 0 0 4.15-.94M9.9 9.9a3 3 0 1 0 4.2 4.2M2 2l20 20",
+  star: "m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z",
+  home: "M3 9.5 12 2l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z",
 };
 
 export default function Icon({
   name,
   size = 20,
   className = "",
+  filled = false,
 }: {
   name: IconName;
   size?: number;
   className?: string;
+  filled?: boolean;
 }) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth={2}
       strokeLinecap="round"

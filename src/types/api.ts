@@ -180,6 +180,14 @@ export interface ObjectiveEvolutionPoint {
   totalSaved: number;
 }
 
+export type FavoriteContentType = "lesson" | "tool";
+
+export interface ApiFavorite {
+  contentType: FavoriteContentType;
+  contentId: string;
+  createdAt: string;
+}
+
 export interface ApiLessonProgress {
   lessonId: string;
   completed: boolean;

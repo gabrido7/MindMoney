@@ -23,6 +23,9 @@ const FinancialEducation = lazy(() => import("./pages/FinancialEducation"));
 const EducationTrail = lazy(() => import("./pages/EducationTrail"));
 const EducationCourse = lazy(() => import("./pages/EducationCourse"));
 const EducationLesson = lazy(() => import("./pages/EducationLesson"));
+const FinancialTools = lazy(() => import("./pages/FinancialTools"));
+const FinancialToolDetail = lazy(() => import("./pages/FinancialToolDetail"));
+const Favorites = lazy(() => import("./pages/Favorites"));
 
 function RouteFallback() {
   return (
@@ -59,6 +62,9 @@ function App() {
                 path="/educacao-financeira/:trailId/:courseId/:lessonId"
                 element={<EducationLesson />}
               />
+              <Route path="/ferramentas" element={<FinancialTools />} />
+              <Route path="/ferramentas/:toolId" element={<FinancialToolDetail />} />
+              <Route path="/favoritos" element={<Favorites />} />
             </Route>
           </Route>
 
