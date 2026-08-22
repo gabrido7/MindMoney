@@ -8,6 +8,7 @@ import { useEducationProgress } from "../features/education/hooks/useEducationPr
 import { useGamification } from "../features/gamification/hooks/useGamification";
 import LevelCard from "../features/gamification/components/LevelCard";
 import AchievementsGrid from "../features/gamification/components/AchievementsGrid";
+import SmartSearch from "../features/search/components/SmartSearch";
 
 export default function FinancialEducation() {
   const { progress, isLoading, error } = useEducationProgress();
@@ -21,6 +22,8 @@ export default function FinancialEducation() {
           Trilhas de aprendizado, do básico ao avançado — cada assunto é um curso completo, com aulas, exemplos, quiz e exercício prático.
         </p>
       </div>
+
+      <SmartSearch />
 
       {gamificationSummary && (
         <div className="grid md:grid-cols-2 gap-4">

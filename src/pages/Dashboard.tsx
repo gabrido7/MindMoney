@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useDarkMode } from "../hooks/useDarkMode";
 import { useTransactions } from "../features/transactions/hooks/useTransactions";
 import { useCategories } from "../features/categories/hooks/useCategories";
 import { useSavingGoals } from "../features/goals/hooks/useSavingGoals";
@@ -11,7 +10,6 @@ import { dashboardService } from "../services/dashboardService";
 import { transactionsService } from "../services/transactionsService";
 import { errorMessage } from "../services/api";
 
-import Sidebar from "../components/ui/Sidebar";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
@@ -41,8 +39,6 @@ import ImportExportPanel from "../features/importExport/components/ImportExportP
 import type { Transaction, CategoryTotal } from "../types";
 
 export default function Dashboard() {
-  const [darkMode, setDarkMode] = useDarkMode();
-
   const [selectedMonth, setSelectedMonth] = useState(
     new Date().toISOString().slice(0, 7)
   );
@@ -245,48 +241,34 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 md:flex">
-      <Sidebar
-        darkMode={darkMode}
-        onToggleDarkMode={() => setDarkMode((prev) => !prev)}
-        monthControl={
-          <Input
-            label="Mês"
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-          />
-        }
-        actions={
-          <>
-            <Button className="w-full justify-start" onClick={handleOpenNew}>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <main className="p-4 md:p-8 flex flex-col gap-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Dashboard Financeiro
+          </h1>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              aria-label="Mês"
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+            />
+            <Button onClick={handleOpenNew}>
               <Icon name="plus" size={16} />
               Nova Transação
             </Button>
-            <Button
-              variant="secondary"
-              className="w-full justify-start"
-              onClick={() => setIsCategoryModalOpen(true)}
-            >
+            <Button variant="secondary" onClick={() => setIsCategoryModalOpen(true)}>
               <Icon name="tag" size={16} />
-              Gerenciar Categorias
+              Categorias
             </Button>
-            <Button
-              variant="secondary"
-              className="w-full justify-start"
-              onClick={() => setIsImportExportOpen(true)}
-            >
+            <Button variant="secondary" onClick={() => setIsImportExportOpen(true)}>
               <Icon name="download" size={16} />
               Exportar / Importar
             </Button>
-          </>
-        }
-      />
-
-      <main className="flex-1 min-w-0 p-4 md:p-8 flex flex-col gap-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Dashboard Financeiro
-        </h1>
+          </div>
+        </div>
 
         {currentSummary && currentSummary.alert.status !== "ok" && (
           <AlertBanner
