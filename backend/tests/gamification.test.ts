@@ -183,6 +183,57 @@ describe("Gamificação: XP, nível e conquistas", () => {
     await cleanupUser(user.userId);
   });
 
+  it("bônus de curso e trilha também funcionam para a trilha Finanças avançadas", async () => {
+    const user = await registerTestUser("gami-financas-avancadas");
+
+    let last;
+    for (let i = 1; i <= 5; i++) {
+      last = await completeLesson(user.token, `financas-avancadas.alocacao-de-ativos.aula-${i}`);
+    }
+
+    // aula-5: lesson(20) + course_completed(50) + "5 aulas concluídas"(25) = 95
+    expect(last!.body.gamification.xpAwarded).toBe(95);
+    const ids = last!.body.gamification.newAchievements.map((a: { id: string }) => a.id);
+    expect(ids).toContain("cinco-aulas");
+    expect(ids).not.toContain("trilha-financas-avancadas"); // só 5 de 35 aulas da trilha
+
+    await cleanupUser(user.userId);
+  });
+
+  it("bônus de curso e trilha também funcionam para a trilha Crédito e dívidas", async () => {
+    const user = await registerTestUser("gami-credito-e-dividas");
+
+    let last;
+    for (let i = 1; i <= 5; i++) {
+      last = await completeLesson(user.token, `credito-e-dividas.score-de-credito.aula-${i}`);
+    }
+
+    // aula-5: lesson(20) + course_completed(50) + "5 aulas concluídas"(25) = 95
+    expect(last!.body.gamification.xpAwarded).toBe(95);
+    const ids = last!.body.gamification.newAchievements.map((a: { id: string }) => a.id);
+    expect(ids).toContain("cinco-aulas");
+    expect(ids).not.toContain("trilha-credito-e-dividas"); // só 5 de 25 aulas da trilha
+
+    await cleanupUser(user.userId);
+  });
+
+  it("bônus de curso e trilha também funcionam para a trilha Aposentadoria e independência financeira", async () => {
+    const user = await registerTestUser("gami-aposentadoria");
+
+    let last;
+    for (let i = 1; i <= 5; i++) {
+      last = await completeLesson(user.token, `aposentadoria-e-independencia.independencia-financeira.aula-${i}`);
+    }
+
+    // aula-5: lesson(20) + course_completed(50) + "5 aulas concluídas"(25) = 95
+    expect(last!.body.gamification.xpAwarded).toBe(95);
+    const ids = last!.body.gamification.newAchievements.map((a: { id: string }) => a.id);
+    expect(ids).toContain("cinco-aulas");
+    expect(ids).not.toContain("trilha-aposentadoria"); // só 5 de 25 aulas da trilha
+
+    await cleanupUser(user.userId);
+  });
+
   it("completar as 25 aulas de Fundamentos desbloqueia a conquista da trilha completa", async () => {
     const user = await registerTestUser("gami-trail-complete");
     const courseIds = [

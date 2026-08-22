@@ -63,6 +63,32 @@ const INVESTIMENTOS_COURSE_IDS = [
   "abrindo-conta-em-corretora",
 ];
 
+const FINANCAS_AVANCADAS_COURSE_IDS = [
+  "alocacao-de-ativos",
+  "risco-x-retorno",
+  "diversificacao-avancada",
+  "liquidez",
+  "rentabilidade-real",
+  "juros-reais",
+  "rebalanceamento-de-carteira",
+];
+
+const CREDITO_E_DIVIDAS_COURSE_IDS = [
+  "como-funciona-o-cartao-de-credito",
+  "score-de-credito",
+  "como-sair-das-dividas",
+  "renegociacao-de-dividas",
+  "emprestimos-e-financiamentos",
+];
+
+const APOSENTADORIA_COURSE_IDS = [
+  "inss-e-aposentadoria-publica",
+  "previdencia-privada",
+  "independencia-financeira",
+  "planejando-a-aposentadoria",
+  "sucessao-e-planejamento-patrimonial",
+];
+
 export const COURSE_LESSON_SETS: Record<string, string[]> = {
   ...Object.fromEntries(
     FUNDAMENTOS_COURSE_IDS.map((c) => [`fundamentos.${c}`, courseLessonIds("fundamentos", c, 5)])
@@ -76,6 +102,24 @@ export const COURSE_LESSON_SETS: Record<string, string[]> = {
   ...Object.fromEntries(
     INVESTIMENTOS_COURSE_IDS.map((c) => [`investimentos.${c}`, courseLessonIds("investimentos", c, 5)])
   ),
+  ...Object.fromEntries(
+    FINANCAS_AVANCADAS_COURSE_IDS.map((c) => [
+      `financas-avancadas.${c}`,
+      courseLessonIds("financas-avancadas", c, 5),
+    ])
+  ),
+  ...Object.fromEntries(
+    CREDITO_E_DIVIDAS_COURSE_IDS.map((c) => [
+      `credito-e-dividas.${c}`,
+      courseLessonIds("credito-e-dividas", c, 5),
+    ])
+  ),
+  ...Object.fromEntries(
+    APOSENTADORIA_COURSE_IDS.map((c) => [
+      `aposentadoria-e-independencia.${c}`,
+      courseLessonIds("aposentadoria-e-independencia", c, 5),
+    ])
+  ),
 };
 
 export const TRAIL_LESSON_SETS: Record<string, string[]> = {
@@ -84,6 +128,11 @@ export const TRAIL_LESSON_SETS: Record<string, string[]> = {
     courseLessonIds("organizacao-financeira", c, 5)
   ),
   investimentos: INVESTIMENTOS_COURSE_IDS.flatMap((c) => courseLessonIds("investimentos", c, 5)),
+  "financas-avancadas": FINANCAS_AVANCADAS_COURSE_IDS.flatMap((c) => courseLessonIds("financas-avancadas", c, 5)),
+  "credito-e-dividas": CREDITO_E_DIVIDAS_COURSE_IDS.flatMap((c) => courseLessonIds("credito-e-dividas", c, 5)),
+  "aposentadoria-e-independencia": APOSENTADORIA_COURSE_IDS.flatMap((c) =>
+    courseLessonIds("aposentadoria-e-independencia", c, 5)
+  ),
 };
 
 export interface Achievement {
@@ -128,6 +177,24 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: "Trilha Investimentos completa",
     emoji: "💹",
     description: "Complete todas as aulas da trilha Investimentos.",
+  },
+  {
+    id: "trilha-financas-avancadas",
+    title: "Trilha Finanças avançadas completa",
+    emoji: "🧭",
+    description: "Complete todas as aulas da trilha Finanças avançadas.",
+  },
+  {
+    id: "trilha-credito-e-dividas",
+    title: "Trilha Crédito e dívidas completa",
+    emoji: "🪜",
+    description: "Complete todas as aulas da trilha Crédito e dívidas.",
+  },
+  {
+    id: "trilha-aposentadoria",
+    title: "Trilha Aposentadoria e independência financeira completa",
+    emoji: "🕊️",
+    description: "Complete todas as aulas da trilha Aposentadoria e independência financeira.",
   },
   { id: "sequencia-3-dias", title: "Sequência de 3 dias", emoji: "🔥", description: "Estude 3 dias seguidos." },
 ];

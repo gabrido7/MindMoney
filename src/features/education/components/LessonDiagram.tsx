@@ -59,8 +59,9 @@ export default function LessonDiagram({ diagram }: { diagram: DiagramSpec }) {
               />
             </div>
             <span className="w-28 shrink-0 text-xs text-gray-600 dark:text-gray-300 text-right">
-              {formatCurrency(bar.value)}
-              {bar.suffix ?? ""}
+              {bar.suffix === "%"
+                ? `${bar.value.toLocaleString("pt-BR")}%`
+                : `${formatCurrency(bar.value)}${bar.suffix ?? ""}`}
             </span>
           </div>
         ))}

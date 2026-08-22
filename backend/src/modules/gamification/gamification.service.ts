@@ -84,6 +84,18 @@ async function evaluateAchievement(userId: number, achievementId: string): Promi
       const set = TRAIL_LESSON_SETS.investimentos;
       return (await gamificationRepository.countCompletedLessonsIn(userId, set)) >= set.length;
     }
+    case "trilha-financas-avancadas": {
+      const set = TRAIL_LESSON_SETS["financas-avancadas"];
+      return (await gamificationRepository.countCompletedLessonsIn(userId, set)) >= set.length;
+    }
+    case "trilha-credito-e-dividas": {
+      const set = TRAIL_LESSON_SETS["credito-e-dividas"];
+      return (await gamificationRepository.countCompletedLessonsIn(userId, set)) >= set.length;
+    }
+    case "trilha-aposentadoria": {
+      const set = TRAIL_LESSON_SETS["aposentadoria-e-independencia"];
+      return (await gamificationRepository.countCompletedLessonsIn(userId, set)) >= set.length;
+    }
     case "primeira-meta":
       return (await gamificationRepository.countAchievedObjectives(userId)) >= 1;
     case "investidor-consciente":
