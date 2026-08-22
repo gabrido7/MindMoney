@@ -1,8 +1,10 @@
 # Mind Money
 
 Plataforma de gestão e inteligência financeira pessoal: transações, categorias,
-metas de economia, score financeiro, relatórios, notificações e insights —
-tudo calculado a partir de dados reais, sem mock em nenhuma camada.
+metas de economia, objetivos de longo prazo, score financeiro, relatórios,
+notificações e insights, educação financeira gamificada (trilhas, XP,
+conquistas), calculadoras financeiras e busca — tudo calculado a partir de
+dados reais, sem mock em nenhuma camada.
 
 Três partes, cada uma com sua própria documentação técnica:
 
