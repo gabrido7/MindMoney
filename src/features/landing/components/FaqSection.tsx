@@ -1,5 +1,7 @@
 import { useState } from "react";
 import Icon from "../../../components/ui/Icon";
+import Eyebrow from "./Eyebrow";
+import Reveal from "./Reveal";
 
 const FAQS = [
   {
@@ -35,38 +37,43 @@ export default function FaqSection() {
   return (
     <section className="px-4 py-20 md:px-8">
       <div className="mx-auto max-w-3xl">
-        <div className="text-center">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-green-400">
-            <Icon name="shield" size={14} />
-            Dúvidas frequentes
-          </span>
-          <h2 className="mt-3 text-3xl font-extrabold text-white sm:text-4xl">Perguntas frequentes</h2>
-        </div>
+        <Reveal className="flex flex-col items-center text-center">
+          <Eyebrow align="center">dúvidas frequentes</Eyebrow>
+          <h2 className="font-display mt-4 text-3xl font-extrabold text-white sm:text-4xl">Perguntas frequentes</h2>
+        </Reveal>
 
-        <div className="mt-10 flex flex-col divide-y divide-white/10 rounded-2xl border border-white/10 bg-neutral-900/50">
+        <div className="mt-10 flex flex-col gap-2.5">
           {FAQS.map((faq, index) => {
             const isOpen = openIndex === index;
             return (
-              <div key={faq.question}>
-                <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? null : index)}
-                  aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+              <Reveal key={faq.question} delay={index * 50}>
+                <div
+                  className={`overflow-hidden rounded-2xl transition-colors duration-200 ${
+                    isOpen ? "bg-[var(--brand)]" : "bg-[var(--surface)] hover:bg-[var(--surface-raised)]"
+                  }`}
                 >
-                  <span className="text-sm font-semibold text-white sm:text-base">
-                    {faq.question}
-                  </span>
-                  <Icon
-                    name="chevronDown"
-                    size={18}
-                    className={`shrink-0 text-green-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {isOpen && (
-                  <p className="px-6 pb-5 text-sm leading-relaxed text-neutral-400">{faq.answer}</p>
-                )}
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenIndex(isOpen ? null : index)}
+                    aria-expanded={isOpen}
+                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+                  >
+                    <span
+                      className={`font-body text-sm font-semibold sm:text-base ${isOpen ? "text-[var(--ink)]" : "text-white"}`}
+                    >
+                      {faq.question}
+                    </span>
+                    <Icon
+                      name="chevronDown"
+                      size={18}
+                      className={`shrink-0 transition-transform ${isOpen ? "rotate-180 text-[var(--ink)]" : "text-[var(--brand)]"}`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <p className="font-body px-6 pb-5 text-sm leading-relaxed text-[rgba(49,49,49,0.8)]">{faq.answer}</p>
+                  )}
+                </div>
+              </Reveal>
             );
           })}
         </div>
