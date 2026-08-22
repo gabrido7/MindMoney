@@ -1,9 +1,14 @@
 # Banco de dados — Mind Money
 
-Schema MySQL/MariaDB definitivo (InnoDB, utf8mb4), aplicado e testado contra
-um MariaDB 10.4 real (XAMPP) rodando localmente. Ainda não existe backend
-neste repositório — isto é só o banco, criado e verificado, pronto para
-quando a API for construída.
+Schema MySQL/MariaDB (InnoDB, utf8mb4), aplicado e testado contra um
+MariaDB/MySQL real. Este README documenta o desenho original do schema
+(`schema.sql`, as 6 tabelas de base) e o raciocínio por trás dele — ainda
+válido e não revisado desde então. As 11 tabelas adicionadas depois via
+`database/migrations/001` a `010` (notificações, score, objetivos,
+educação financeira, gamificação, favoritos, tokens de sessão/reset,
+newsletter) **não** estão detalhadas aqui tabela a tabela; a lista completa
+e atualizada, com o papel de cada uma, está em
+**[`../DOCUMENTATION.md`](../DOCUMENTATION.md)** seção 4.
 
 ## Arquivos
 
@@ -39,28 +44,24 @@ erDiagram
 `category_templates`/`subcategory_templates` não têm relação com `users` —
 são a fonte fixa dos padrões, independentes de qualquer conta.
 
-**6 tabelas, nada mais.** `users`, `categories`, `subcategories`,
-`transactions`, `saving_goals`, e o par `category_templates`/
-`subcategory_templates`. Score financeiro, notificações, relatórios,
-perfil e configurações **ficaram de fora de propósito** — nenhuma dessas
-funcionalidades existe ainda em lugar nenhum do app, e criar as tabelas
-agora seria modelar dados para uma lógica que ainda não foi decidida. Cada
-uma entra numa migration própria quando a funcionalidade correspondente for
-realmente construída:
+**As 6 tabelas de base do `schema.sql`**: `users`, `categories`,
+`subcategories`, `transactions`, `saving_goals`, e o par
+`category_templates`/`subcategory_templates`. Na época em que este schema
+foi desenhado, score financeiro, notificações, relatórios, perfil e
+configurações ainda não tinham tabela **de propósito** — nenhuma dessas
+funcionalidades existia em lugar nenhum do app, e criar as tabelas antes da
+lógica estar decidida seria modelar no escuro. Cada uma entrou numa
+migration própria quando a funcionalidade correspondente foi de fato
+construída (todas já existem hoje — ver `DOCUMENTATION.md` seção 4):
 
-- **Score financeiro**: é dado 100% derivado de `transactions` +
-  `saving_goals` — dá para calcular sob demanda. Não existe ainda nenhuma
-  fórmula definida para o score, então não há o que persistir. Se um dia for
-  preciso mostrar "evolução do score ao longo do tempo" (que exige guardar o
-  valor de cada mês, já que recalcular do zero mudaria valores passados se
-  transações antigas forem editadas), aí sim entra uma tabela de histórico.
-- **Notificações e relatórios**: mesma lógica — nenhuma tela ou lógica de
-  geração existe hoje. Adicionar as tabelas agora seria puro palpite sobre
-  como essas features vão funcionar.
-- **Perfil e configurações**: nada no app usa avatar, telefone, data de
-  nascimento, moeda ou idioma configurável. O único "ajuste" real hoje é o
-  dark mode, que continua no browser — não há tela de configurações para
-  gerenciar isso via conta ainda.
+- **Score financeiro**: continua sendo dado derivado de `transactions` +
+  `saving_goals`, calculado sob demanda — mas hoje também é cacheado em
+  `financial_score_history` (migration 002), justamente para permitir
+  "evolução do score ao longo do tempo" sem recalcular tudo a cada consulta.
+- **Notificações**: `notifications` (migration 001), gerada como efeito
+  colateral real de transações/metas — nunca por um endpoint manual.
+- **Perfil e configurações**: ainda não ganhou tabela própria — segue como
+  antes (dark mode no browser, sem tela de configurações de conta).
 
 ## Decisões por tabela
 
@@ -139,10 +140,28 @@ meta, FK para categoria inexistente, exclusão de categoria em uso — mais o
 comportamento de `SET NULL` (subcategoria) e o `CASCADE` completo (usuário →
 categorias/subcategorias/transações/metas) na ordem correta.
 
-## Próximos passos
+## Migrations aplicadas depois deste desenho original
 
-Este banco existe de verdade agora (schema + seed aplicados), mas nenhum
-código de aplicação (backend) fala com ele ainda — o front continua em
-`localStorage`. A próxima etapa é o scaffolding do backend (Node + driver
-MySQL, endpoints de cadastro/login usando `mindmoney_app`, e então trocar o
-`localStorage` do front pela API).
+Em ordem, cada uma criando o que a funcionalidade correspondente precisava
+(detalhes de cada tabela em `DOCUMENTATION.md` seção 4):
+
+| # | O que adiciona |
+|---|---|
+| 001 | `notifications` |
+| 002 | `financial_score_history` |
+| 003 | `newsletter_subscribers` |
+| 004 | `password_reset_tokens` |
+| 005 | `refresh_tokens` |
+| 006 | `financial_objectives` / `objective_contributions` |
+| 007 | `priority` em `financial_objectives` |
+| 008 | `lesson_progress` (educação financeira) |
+| 009 | `xp_events` / `user_achievements` (gamificação) |
+| 010 | `favorites` |
+
+Aplicar tudo, em ordem, depois de `schema.sql` + `seed.sql`:
+
+```bash
+for f in database/migrations/*.sql; do
+  mysql -u root --default-character-set=utf8mb4 < "$f"
+done
+```
