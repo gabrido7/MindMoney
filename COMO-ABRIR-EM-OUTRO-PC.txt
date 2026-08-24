@@ -1,0 +1,132 @@
+MIND MONEY - COMO ABRIR O PROJETO EM OUTRO COMPUTADOR
+========================================================
+
+Guia passo a passo para rodar o projeto (frontend + backend + banco de
+dados) em um PC diferente do que foi usado para desenvolver. Feito para
+a apresentacao na escola.
+
+
+0. O QUE PRECISA ESTAR INSTALADO NO OUTRO PC
+---------------------------------------------
+- Node.js (versao 20 ou mais nova) -> https://nodejs.org
+- MySQL ou MariaDB rodando. Jeito mais facil: instalar o XAMPP
+  -> https://www.apachefriends.org  (ele ja vem com o MySQL/MariaDB)
+- Um editor/terminal para rodar comandos (o proprio Prompt de Comando
+  ou PowerShell do Windows resolve)
+
+Para conferir se o Node foi instalado direito, abra o PowerShell e rode:
+    node -v
+    npm -v
+Se aparecer um numero de versao em cada um, esta tudo certo.
+
+
+1. COPIAR O PROJETO PARA O NOVO PC
+------------------------------------
+Copie a pasta inteira do projeto (MindMoney) para o novo computador,
+por pen drive, GitHub ou qualquer outro jeito. Nao precisa levar as
+pastas "node_modules" nem "dist" se elas existirem — elas sao geradas
+de novo nos passos abaixo.
+
+Se for baixar do GitHub, o comando e:
+    git clone https://github.com/gabrido7/MindMoney.git
+
+
+2. CRIAR O BANCO DE DADOS
+----------------------------
+Abra o XAMPP e inicie o modulo "MySQL" (botao Start).
+
+Depois, abra o PowerShell DENTRO da pasta do projeto e rode os comandos
+abaixo, um de cada vez (caminho do mysql pode variar, no XAMPP padrao
+costuma ser C:\xampp\mysql\bin\mysql.exe — se o comando "mysql" nao for
+reconhecido, use o caminho completo):
+
+    Get-Content -Raw -Encoding UTF8 database\schema.sql | mysql -u root
+    Get-Content -Raw -Encoding UTF8 database\seed.sql | mysql -u root
+    Get-Content -Raw -Encoding UTF8 database\create_app_user.sql | mysql -u root
+
+    Get-ChildItem database\migrations\*.sql | ForEach-Object {
+      Get-Content -Raw -Encoding UTF8 $_.FullName | mysql -u root
+    }
+
+IMPORTANTE: use sempre "-Encoding UTF8" nesses comandos. Sem isso, os
+nomes de categoria com acento (Alimentacao, Educacao...) ficam
+corrompidos no banco.
+
+Isso cria o banco "mindmoney", as tabelas todas, os dados padrao de
+categoria e o usuario "mindmoney_app" que o backend vai usar (nunca o
+root).
+
+
+3. CONFIGURAR E RODAR O BACKEND (a API)
+-------------------------------------------
+No PowerShell, dentro da pasta do projeto:
+
+    cd backend
+    npm install
+    copy .env.example .env
+
+Nao precisa editar o arquivo .env se voce nao mudou a senha no passo 2
+(o valor padrao ja bate certinho entre o create_app_user.sql e o
+.env.example). So editar se quiser trocar a senha por segurança.
+
+Depois, para ligar o backend:
+
+    npm run dev
+
+Deixe essa janela do PowerShell aberta rodando. Ele vai mostrar algo
+como "Mind Money API rodando em http://localhost:3001" quando estiver
+pronto.
+
+
+4. CONFIGURAR E RODAR O FRONTEND (a tela)
+----------------------------------------------
+Abra uma SEGUNDA janela do PowerShell (a primeira precisa continuar
+aberta com o backend rodando). Nessa nova janela, va ate a pasta
+principal do projeto (nao a "backend") e rode:
+
+    npm install
+    npm run dev
+
+Vai aparecer um endereco tipo "Local: http://localhost:5173/" — esse e
+o site.
+
+
+5. ACESSAR O SITE
+--------------------
+Abra o navegador e entre em:
+
+    http://localhost:5173
+
+A pagina inicial (landing page) vai carregar. Para testar o sistema de
+verdade, clique em "Criar conta" e cadastre um usuario de teste — os
+dados vao direto para o banco MySQL local, nada e inventado/mockado.
+
+
+RESUMO RAPIDO (depois que tudo ja foi instalado uma vez)
+-------------------------------------------------------------
+Toda vez que for religar o projeto, so precisa disso (nao precisa
+repetir os passos de instalacao/banco de novo):
+
+  1. Iniciar o MySQL no XAMPP
+  2. Num terminal:  cd backend  ->  npm run dev
+  3. Noutro terminal, na pasta principal:  npm run dev
+  4. Abrir http://localhost:5173 no navegador
+
+
+PROBLEMAS COMUNS
+--------------------
+- "mysql nao e reconhecido como comando": o MySQL do XAMPP nao esta no
+  PATH do Windows. Use o caminho completo, exemplo:
+  C:\xampp\mysql\bin\mysql.exe -u root
+
+- Backend da erro "ECONNREFUSED" na porta 3306: o MySQL do XAMPP nao
+  esta rodando. Abra o painel do XAMPP e clique em "Start" ao lado de
+  MySQL.
+
+- Pagina abre mas fica "Carregando..." para sempre / erro de rede: o
+  backend nao esta rodando ou caiu. Confira a janela do PowerShell do
+  backend.
+
+- Acentos errados nos nomes de categoria: os arquivos .sql do banco de
+  dados foram aplicados sem "-Encoding UTF8". Tem que apagar o banco
+  "mindmoney" e repetir o passo 2 do jeito certo.
