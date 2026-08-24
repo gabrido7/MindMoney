@@ -23,13 +23,13 @@ export default function SearchDropdown() {
         onClick={() => setOpen((prev) => !prev)}
         aria-label="Buscar"
         aria-expanded={open}
-        className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+        className="p-2 rounded-lg text-ink-soft hover:bg-surface-alt"
       >
         <Icon name="search" size={18} />
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-[26rem] max-w-[90vw] max-h-[32rem] overflow-y-auto rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-4">
+        <div className="absolute right-0 mt-2 w-[26rem] max-w-[90vw] max-h-[32rem] overflow-y-auto rounded-2xl bg-surface shadow-card-lg border border-line z-50 p-4">
           <SmartSearch autoFocus onNavigate={() => setOpen(false)} />
         </div>
       )}

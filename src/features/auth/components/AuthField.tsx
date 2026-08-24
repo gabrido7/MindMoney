@@ -12,7 +12,7 @@ export default function AuthField({ label, id, className = "", ...rest }: Props)
       </label>
       <input
         id={id}
-        className={`rounded-xl border border-white/10 bg-neutral-800/60 px-4 py-3 text-sm text-white placeholder:text-neutral-500 focus:border-green-400 focus:outline-none focus:ring-1 focus:ring-green-400 ${className}`}
+        className={`rounded-xl border border-white/10 bg-neutral-800/60 px-4 py-3 text-sm text-white placeholder:text-neutral-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${className}`}
         {...rest}
       />
     </div>

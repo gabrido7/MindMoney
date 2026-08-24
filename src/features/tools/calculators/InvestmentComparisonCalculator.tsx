@@ -18,7 +18,7 @@ interface ScenarioState {
   color: string;
 }
 
-const COLORS = { a: "#0ca30c", b: "#b45309" };
+const COLORS = { a: "var(--brand)", b: "var(--warning)" };
 
 function ScenarioForm({
   scenario,
@@ -30,13 +30,13 @@ function ScenarioForm({
   idPrefix: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-100 dark:border-gray-700 p-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-line p-4">
       <div className="flex items-center gap-2">
         <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: scenario.color }} />
         <input
           value={scenario.name}
           onChange={(e) => onChange({ ...scenario, name: e.target.value })}
-          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-gray-900 dark:text-white focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-ink focus:outline-none"
         />
       </div>
       <NumberField
@@ -125,7 +125,7 @@ export default function InvestmentComparisonCalculator() {
               <div key={r.name} className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: i === 0 ? COLORS.a : COLORS.b }} />
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{r.name}</span>
+                  <span className="text-sm font-semibold text-ink-soft">{r.name}</span>
                 </div>
                 <ResultStat label="Valor final" value={formatCurrency(r.futureValue)} tone="positive" size="lg" />
                 <ResultStat label="Total em juros" value={formatCurrency(r.totalInterest)} />
@@ -133,12 +133,13 @@ export default function InvestmentComparisonCalculator() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )}
         {results && results[0].futureValue !== results[1].futureValue && (
-          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-4 text-sm text-ink-soft">
             {results[0].futureValue > results[1].futureValue ? results[0].name : results[1].name} rende{" "}
-            {formatCurrency(Math.abs(results[0].futureValue - results[1].futureValue))} a mais no período.
+            <span className="font-data">{formatCurrency(Math.abs(results[0].futureValue - results[1].futureValue))}</span> a mais no
+            período.
           </p>
         )}
       </Card>

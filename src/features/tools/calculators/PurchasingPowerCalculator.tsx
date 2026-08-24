@@ -48,14 +48,14 @@ export default function PurchasingPowerCalculator() {
             </div>
           </>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       chart={
         result && (
           <GrowthChart
             data={result.series.map((p) => ({ period: p.period, value: p.value }))}
-            series={[{ key: "value", name: "Poder de compra", color: "#b91c1c" }]}
+            series={[{ key: "value", name: "Poder de compra", color: "var(--negative)" }]}
           />
         )
       }

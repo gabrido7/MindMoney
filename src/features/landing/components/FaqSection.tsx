@@ -16,8 +16,7 @@ const FAQS = [
   },
   {
     question: "Preciso pagar alguma coisa para usar?",
-    answer:
-      "Não. A criação de conta e todas as funcionalidades descritas nesta página são gratuitas.",
+    answer: "Não. A criação de conta e todas as funcionalidades descritas nesta página são gratuitas.",
   },
   {
     question: "Posso apagar minha conta e meus dados?",
@@ -39,7 +38,7 @@ export default function FaqSection() {
       <div className="mx-auto max-w-3xl">
         <Reveal className="flex flex-col items-center text-center">
           <Eyebrow align="center">dúvidas frequentes</Eyebrow>
-          <h2 className="font-display mt-4 text-3xl font-extrabold text-white sm:text-4xl">Perguntas frequentes</h2>
+          <h2 className="font-display mt-4 text-3xl font-semibold text-ink sm:text-4xl">Perguntas frequentes</h2>
         </Reveal>
 
         <div className="mt-10 flex flex-col gap-2.5">
@@ -48,8 +47,8 @@ export default function FaqSection() {
             return (
               <Reveal key={faq.question} delay={index * 50}>
                 <div
-                  className={`overflow-hidden rounded-2xl transition-colors duration-200 ${
-                    isOpen ? "bg-[var(--brand)]" : "bg-[var(--surface)] hover:bg-[var(--surface-raised)]"
+                  className={`overflow-hidden rounded-2xl border transition-colors duration-200 ${
+                    isOpen ? "border-brand bg-brand-soft" : "border-line bg-surface hover:border-brand"
                   }`}
                 >
                   <button
@@ -58,20 +57,14 @@ export default function FaqSection() {
                     aria-expanded={isOpen}
                     className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
                   >
-                    <span
-                      className={`font-body text-sm font-semibold sm:text-base ${isOpen ? "text-[var(--ink)]" : "text-white"}`}
-                    >
-                      {faq.question}
-                    </span>
+                    <span className="text-sm font-semibold text-ink sm:text-base">{faq.question}</span>
                     <Icon
                       name="chevronDown"
                       size={18}
-                      className={`shrink-0 transition-transform ${isOpen ? "rotate-180 text-[var(--ink)]" : "text-[var(--brand)]"}`}
+                      className={`shrink-0 text-brand-deep transition-transform ${isOpen ? "rotate-180" : ""}`}
                     />
                   </button>
-                  {isOpen && (
-                    <p className="font-body px-6 pb-5 text-sm leading-relaxed text-[rgba(49,49,49,0.8)]">{faq.answer}</p>
-                  )}
+                  {isOpen && <p className="px-6 pb-5 text-sm leading-relaxed text-ink-soft">{faq.answer}</p>}
                 </div>
               </Reveal>
             );

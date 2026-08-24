@@ -14,16 +14,13 @@ export default function Select({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label
-          htmlFor={id}
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
+        <label htmlFor={id} className="text-sm font-medium text-ink-soft">
           {label}
         </label>
       )}
       <select
         id={id}
-        className={`p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${className}`}
+        className={`p-2.5 rounded-xl border border-line bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-brand ${className}`}
         {...rest}
       >
         {children}

@@ -30,8 +30,8 @@ export default function ConfirmDialog({
 
   return (
     <Modal title={title} onClose={onCancel} size="sm">
-      <p className="text-gray-600 dark:text-gray-300 mb-4">{message}</p>
-      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+      <p className="text-ink-soft mb-4">{message}</p>
+      {error && <p className="text-negative text-sm mb-4">{error}</p>}
       <div className="flex justify-end gap-3">
         <Button variant="secondary" onClick={onCancel} disabled={confirming}>
           Cancelar

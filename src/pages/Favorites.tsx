@@ -6,8 +6,8 @@ import FavoriteButton from "../features/favorites/components/FavoriteButton";
 import { findSearchDocument } from "../features/search/utils/searchIndex";
 
 const TYPE_BADGE: Record<"lesson" | "tool", string> = {
-  lesson: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-  tool: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  lesson: "bg-surface-alt text-ink-soft",
+  tool: "bg-brand-soft text-brand-deep",
 };
 
 const TYPE_LABEL: Record<"lesson" | "tool", string> = {
@@ -25,13 +25,13 @@ export default function Favorites() {
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-8 flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">⭐ Meus conteúdos salvos</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="font-display text-2xl font-semibold text-ink">⭐ Meus conteúdos salvos</h1>
+        <p className="text-sm text-ink-soft">
           Aulas e calculadoras que você marcou para acessar rápido depois.
         </p>
       </div>
 
-      {isLoading && <p className="text-gray-500 dark:text-gray-400">Carregando...</p>}
+      {isLoading && <p className="text-ink-soft">Carregando...</p>}
 
       {!isLoading && items.length === 0 && (
         <EmptyState
@@ -51,8 +51,8 @@ export default function Favorites() {
                   {TYPE_LABEL[item.type]}
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate font-medium text-gray-900 dark:text-white">{item.title}</span>
-                  <span className="block truncate text-xs text-gray-400">{item.subtitle}</span>
+                  <span className="block truncate font-medium text-ink">{item.title}</span>
+                  <span className="block truncate text-xs text-ink-soft">{item.subtitle}</span>
                 </span>
               </Link>
               <FavoriteButton contentType={item.type} contentId={item.id} />

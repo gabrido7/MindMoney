@@ -14,10 +14,10 @@ export default function RankingCard({ ranking }: { ranking: CategoryTotal[] }) {
         <ul className="space-y-3">
           {ranking.map((item, index) => (
             <li key={item.name} className="flex justify-between">
-              <span className="text-gray-700 dark:text-gray-200">
+              <span className="text-ink-soft">
                 {MEDALS[index]} {item.name}
               </span>
-              <span className="text-[#d03b3b] font-bold">
+              <span className="font-data text-negative font-bold">
                 {formatCurrency(item.value)}
               </span>
             </li>

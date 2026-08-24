@@ -36,7 +36,7 @@ export default function RealReturnCalculator() {
             <ResultStat label="Aproximação simples (nominal − inflação)" value={formatPercent(result.approxRealRatePercent, 2)} />
           </>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       note="A rentabilidade real usa a fórmula de Fisher: (1 + nominal) ÷ (1 + inflação) − 1. Ela é mais precisa que a aproximação simples (só subtrair a inflação do nominal), especialmente quando as taxas são mais altas."

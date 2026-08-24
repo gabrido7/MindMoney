@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Button from "../../../components/ui/Button";
 import Icon from "../../../components/ui/Icon";
+import ScoreArc from "../../../components/ui/ScoreArc";
 import type { QuizQuestion } from "../types";
 
 export default function LessonQuiz({
@@ -25,7 +26,7 @@ export default function LessonQuiz({
     <div className="flex flex-col gap-5">
       {questions.map((q, qi) => (
         <div key={qi}>
-          <p className="font-medium text-gray-900 dark:text-white mb-2">
+          <p className="font-medium text-ink mb-2">
             {qi + 1}. {q.question}
           </p>
           <div className="flex flex-col gap-2">
@@ -33,17 +34,17 @@ export default function LessonQuiz({
               const isSelected = answers[qi] === oi;
               const isCorrectOption = oi === q.correctIndex;
 
-              let stateClass = "border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700";
+              let stateClass = "border-line hover:bg-surface-alt";
               if (submitted) {
                 if (isCorrectOption) {
-                  stateClass = "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300";
+                  stateClass = "border-brand bg-brand-soft text-brand-deep";
                 } else if (isSelected) {
-                  stateClass = "border-red-500 bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300";
+                  stateClass = "border-negative bg-negative-soft text-negative";
                 } else {
-                  stateClass = "border-gray-200 dark:border-gray-600 opacity-60";
+                  stateClass = "border-line opacity-60";
                 }
               } else if (isSelected) {
-                stateClass = "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300";
+                stateClass = "border-brand bg-brand-soft text-brand-deep";
               }
 
               return (
@@ -61,7 +62,7 @@ export default function LessonQuiz({
             })}
           </div>
           {submitted && (
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 rounded-lg p-2.5">
+            <p className="mt-2 text-xs text-ink-soft bg-surface-alt rounded-lg p-2.5">
               💡 {q.explanation}
             </p>
           )}
@@ -73,9 +74,16 @@ export default function LessonQuiz({
           Corrigir respostas
         </Button>
       ) : (
-        <p className="font-semibold text-gray-900 dark:text-white">
-          Você acertou {score} de {questions.length} {questions.length === 1 ? "pergunta" : "perguntas"}.
-        </p>
+        <div className="flex items-center gap-4">
+          <ScoreArc value={score} max={questions.length} size="sm" color="var(--brand)">
+            <span className="font-data text-sm font-bold text-ink">
+              {score}/{questions.length}
+            </span>
+          </ScoreArc>
+          <p className="font-semibold text-ink">
+            Você acertou {score} de {questions.length} {questions.length === 1 ? "pergunta" : "perguntas"}.
+          </p>
+        </div>
       )}
     </div>
   );

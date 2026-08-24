@@ -44,8 +44,8 @@ function SingleSliceCircle({
           onClick={onClick}
         />
       </svg>
-      <span className="text-sm text-gray-700 dark:text-gray-200">
-        {item.name} (100,0%) — {formatCurrency(item.value)}
+      <span className="text-sm text-ink-soft">
+        {item.name} (100,0%) — <span className="font-data">{formatCurrency(item.value)}</span>
       </span>
     </div>
   );
@@ -99,8 +99,11 @@ export default function CategoryPieChart({
                     />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: unknown) => formatCurrency(Number(value) || 0)} />
-                <Legend />
+                <Tooltip
+                  formatter={(value: unknown) => formatCurrency(Number(value) || 0)}
+                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12 }}
+                />
+                <Legend wrapperStyle={{ color: "var(--ink-soft)" }} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -113,16 +116,16 @@ export default function CategoryPieChart({
                 <button
                   key={item.name}
                   onClick={() => onSelectCategory(item.name)}
-                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-surface-alt"
                 >
-                  <span className="flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                  <span className="flex items-center gap-2 text-ink-soft">
                     <span
                       className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: colorFor(item.name) }}
                     />
                     {item.name}
                   </span>
-                  <span className="font-medium text-gray-500 dark:text-gray-400">
+                  <span className="font-data font-medium text-ink-soft">
                     {formatCurrency(item.value)}
                   </span>
                 </button>
@@ -132,9 +135,9 @@ export default function CategoryPieChart({
       )}
 
       {selectedCategory && subcategoryData && (
-        <div className="mt-6 border-t border-gray-100 dark:border-gray-700 pt-6">
+        <div className="mt-6 border-t border-line pt-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-display font-semibold text-ink">
               Detalhamento de {selectedCategory}
             </h3>
             <Button variant="ghost" onClick={() => onSelectCategory(null)}>
@@ -158,8 +161,11 @@ export default function CategoryPieChart({
                     <Cell key={entry.name} fill={colorFor(entry.name)} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: unknown) => formatCurrency(Number(value) || 0)} />
-                <Legend />
+                <Tooltip
+                  formatter={(value: unknown) => formatCurrency(Number(value) || 0)}
+                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12 }}
+                />
+                <Legend wrapperStyle={{ color: "var(--ink-soft)" }} />
               </PieChart>
             </ResponsiveContainer>
           )}

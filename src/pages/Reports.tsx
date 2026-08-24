@@ -51,7 +51,7 @@ export default function Reports() {
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Relatórios</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">Relatórios</h1>
         <div className="flex items-end gap-3">
           <Input
             label="Mês de referência"
@@ -66,31 +66,31 @@ export default function Reports() {
         </div>
       </div>
 
-      {loading && <p className="text-gray-500 dark:text-gray-400">Carregando relatório...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {loading && <p className="text-ink-soft">Carregando relatório...</p>}
+      {error && <p className="text-negative">{error}</p>}
 
       {selected && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card>
-              <h3 className="text-gray-500 dark:text-gray-300 text-sm">Entradas</h3>
-              <p className="text-xl font-bold text-[#0ca30c]">{formatCurrency(selected.totals.entradas)}</p>
+              <h3 className="text-ink-soft text-sm">Entradas</h3>
+              <p className="text-xl font-bold text-brand font-data">{formatCurrency(selected.totals.entradas)}</p>
             </Card>
             <Card>
-              <h3 className="text-gray-500 dark:text-gray-300 text-sm">Saídas</h3>
-              <p className="text-xl font-bold text-[#d03b3b]">{formatCurrency(selected.totals.saidas)}</p>
+              <h3 className="text-ink-soft text-sm">Saídas</h3>
+              <p className="text-xl font-bold text-negative font-data">{formatCurrency(selected.totals.saidas)}</p>
             </Card>
             <Card>
-              <h3 className="text-gray-500 dark:text-gray-300 text-sm">Saldo</h3>
+              <h3 className="text-ink-soft text-sm">Saldo</h3>
               <p
-                className={`text-xl font-bold ${selected.totals.saldo >= 0 ? "text-[#0ca30c]" : "text-[#d03b3b]"}`}
+                className={`text-xl font-bold font-data ${selected.totals.saldo >= 0 ? "text-brand" : "text-negative"}`}
               >
                 {formatCurrency(selected.totals.saldo)}
               </p>
             </Card>
             <Card>
-              <h3 className="text-gray-500 dark:text-gray-300 text-sm">% de economia</h3>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-ink-soft text-sm">% de economia</h3>
+              <p className="text-xl font-bold text-ink font-data">
                 {selected.totals.entradas > 0
                   ? `${((selected.totals.saldo / selected.totals.entradas) * 100).toFixed(1)}%`
                   : "—"}
@@ -105,8 +105,8 @@ export default function Reports() {
                   className="h-3 w-3 rounded-full"
                   style={{ backgroundColor: maiorCategoria.color }}
                 />
-                <span className="font-medium text-gray-900 dark:text-white">{maiorCategoria.name}</span>
-                <span className="text-gray-500 dark:text-gray-400">
+                <span className="font-medium text-ink">{maiorCategoria.name}</span>
+                <span className="text-ink-soft font-data">
                   {formatCurrency(maiorCategoria.value)}
                 </span>
               </div>
@@ -118,22 +118,23 @@ export default function Reports() {
           <Card title={`Comparação — últimos ${MONTHS_IN_REPORT} meses`}>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={rows}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e1e0d9" />
-                <XAxis dataKey="month" tickFormatter={formatMonthBR} stroke="#898781" fontSize={12} />
-                <YAxis stroke="#898781" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                <XAxis dataKey="month" tickFormatter={formatMonthBR} stroke="var(--ink-soft)" fontSize={12} />
+                <YAxis stroke="var(--ink-soft)" fontSize={12} />
                 <Tooltip
                   formatter={(value: unknown) => formatCurrency(Number(value) || 0)}
                   labelFormatter={(label) => (typeof label === "string" ? formatMonthBR(label) : "")}
+                  contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12 }}
                 />
-                <Bar dataKey="entradas" name="Entradas" fill="#0ca30c" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="saidas" name="Saídas" fill="#d03b3b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="entradas" name="Entradas" fill="var(--brand)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="saidas" name="Saídas" fill="var(--negative)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
 
             <div className="overflow-x-auto mt-4">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                  <tr className="text-left text-ink-soft border-b border-line">
                     <th className="py-2 pr-4">Mês</th>
                     <th className="py-2 pr-4">Entradas</th>
                     <th className="py-2 pr-4">Saídas</th>
@@ -143,14 +144,14 @@ export default function Reports() {
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <tr key={r.month} className="border-b border-gray-50 dark:border-gray-700 last:border-0">
-                      <td className="py-2 pr-4 text-gray-900 dark:text-white">{formatMonthBR(r.month)}</td>
-                      <td className="py-2 pr-4 text-[#0ca30c]">{formatCurrency(r.entradas)}</td>
-                      <td className="py-2 pr-4 text-[#d03b3b]">{formatCurrency(r.saidas)}</td>
-                      <td className={`py-2 pr-4 ${r.saldo >= 0 ? "text-[#0ca30c]" : "text-[#d03b3b]"}`}>
+                    <tr key={r.month} className="border-b border-line last:border-0">
+                      <td className="py-2 pr-4 text-ink">{formatMonthBR(r.month)}</td>
+                      <td className="py-2 pr-4 text-brand font-data">{formatCurrency(r.entradas)}</td>
+                      <td className="py-2 pr-4 text-negative font-data">{formatCurrency(r.saidas)}</td>
+                      <td className={`py-2 pr-4 font-data ${r.saldo >= 0 ? "text-brand" : "text-negative"}`}>
                         {formatCurrency(r.saldo)}
                       </td>
-                      <td className="py-2 text-gray-700 dark:text-gray-200">
+                      <td className="py-2 text-ink font-data">
                         {r.entradas > 0 ? `${r.savingsRate.toFixed(1)}%` : "—"}
                       </td>
                     </tr>

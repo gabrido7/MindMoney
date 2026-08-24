@@ -65,20 +65,20 @@ function ToastCard({ toast, onClose }: { toast: ToastItem; onClose: () => void }
       }`}
     >
       <div
-        className={`flex items-start gap-3 rounded-2xl border shadow-lg p-4 bg-white dark:bg-gray-800 ${
-          isCelebration ? "border-amber-200 dark:border-amber-800" : "border-green-200 dark:border-green-800"
+        className={`flex items-start gap-3 rounded-2xl border shadow-card-lg p-4 bg-surface ${
+          isCelebration ? "border-warning" : "border-brand"
         }`}
       >
         {!isCelebration && (
-          <span className="mt-0.5 shrink-0 text-[#0ca30c]">
+          <span className="mt-0.5 shrink-0 text-brand">
             <Icon name="check" size={16} />
           </span>
         )}
-        <p className="text-sm font-medium text-gray-900 dark:text-white flex-1">{toast.message}</p>
+        <p className="text-sm font-medium text-ink flex-1">{toast.message}</p>
         <button
           onClick={close}
           aria-label="Fechar"
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shrink-0"
+          className="text-ink-soft hover:text-ink shrink-0"
         >
           <Icon name="close" size={16} />
         </button>

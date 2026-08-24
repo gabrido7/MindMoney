@@ -78,10 +78,10 @@ export default function ObjectiveFormModal({
   return (
     <Modal title={initial ? "Editar Meta" : "Nova Meta"} onClose={onClose}>
       <div className="flex flex-col gap-4">
-        {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+        {error && <p className="text-negative text-sm font-medium">{error}</p>}
 
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+          <label className="text-sm font-medium text-ink-soft mb-1.5 block">
             Categoria
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -92,8 +92,8 @@ export default function ObjectiveFormModal({
                 onClick={() => setCategory(c.value)}
                 className={`flex flex-col items-center gap-1 rounded-lg border p-2.5 text-xs transition-all active:scale-95 ${
                   category === c.value
-                    ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
-                    : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300"
+                    ? "border-brand bg-brand-soft text-brand-deep"
+                    : "border-line text-ink-soft hover:bg-surface-alt hover:border-ink-soft"
                 }`}
               >
                 <span className="text-lg">{c.icon}</span>
@@ -104,7 +104,7 @@ export default function ObjectiveFormModal({
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 block">
+          <label className="text-sm font-medium text-ink-soft mb-1.5 block">
             Prioridade
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -115,8 +115,8 @@ export default function ObjectiveFormModal({
                 onClick={() => setPriority(p.value)}
                 className={`flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-2 text-sm transition-all active:scale-95 ${
                   priority === p.value
-                    ? "border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300"
-                    : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300"
+                    ? "border-brand bg-brand-soft text-brand-deep"
+                    : "border-line text-ink-soft hover:bg-surface-alt hover:border-ink-soft"
                 }`}
               >
                 <span>{p.dot}</span>
@@ -133,7 +133,7 @@ export default function ObjectiveFormModal({
                 key={s}
                 type="button"
                 onClick={() => setName(s)}
-                className="rounded-full border border-gray-200 dark:border-gray-600 px-3 py-1 text-xs text-gray-600 dark:text-gray-300 hover:border-green-400 hover:text-green-600 transition-colors active:scale-95"
+                className="rounded-full border border-line px-3 py-1 text-xs text-ink-soft hover:border-brand hover:text-brand transition-colors active:scale-95"
               >
                 {s}
               </button>

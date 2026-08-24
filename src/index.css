@@ -2,11 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Barra de rolagem com a cor da marca (#0ca30c), em toda a aplicação --
-   não só na Landing, já que quem realmente rola a página é o <html>. */
+/* ---------------------------------------------------------------------
+   Tokens -- fonte única de verdade pro app inteiro (landing + plataforma).
+   :root = tema claro (padrão). .dark = tema escuro, ligado via toggle
+   (classe no <html>, ver useDarkMode) -- não @media prefers-color-scheme,
+   porque o app tem um botão de verdade pro usuário escolher.
+   O verde da marca (#0ca30c) não muda: é a mesma cor da logo e já testada
+   em produção. Só ganha um tom levemente mais claro no escuro, pra manter
+   contraste em fundo quase-preto.
+--------------------------------------------------------------------- */
+:root {
+  --bg: #f6f7f1;
+  --surface: #ffffff;
+  --surface-alt: #eceee2;
+  --ink: #14180f;
+  --ink-soft: #5c6455;
+  --line: #e1e5d6;
+
+  --brand: #0ca30c;
+  --brand-deep: #086b08;
+  --brand-soft: #e1f3de;
+
+  --negative: #dc2626;
+  --negative-soft: #fbe4e4;
+
+  --warning: #d97706;
+  --warning-soft: #faecd8;
+}
+
+.dark {
+  --bg: #0f130a;
+  --surface: #171c11;
+  --surface-alt: #1d2317;
+  --ink: #edf1e4;
+  --ink-soft: #9ba68c;
+  --line: #2a331f;
+
+  --brand: #22c022;
+  --brand-deep: #0ca30c;
+  --brand-soft: rgba(34, 192, 34, 0.14);
+
+  --negative: #ef4444;
+  --negative-soft: rgba(239, 68, 68, 0.14);
+
+  --warning: #f0a020;
+  --warning-soft: rgba(240, 160, 32, 0.14);
+}
+
 html {
-  scrollbar-color: #0ca30c transparent;
+  background-color: var(--bg);
+  scrollbar-color: var(--brand) transparent;
   scrollbar-width: thin;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
 }
 
 ::-webkit-scrollbar {
@@ -20,48 +71,27 @@ html {
 
 /* Borda transparente + background-clip cortando no content-box: encolhe a
    "pílula" visível pro centro da faixa, deixando um respiro dos dois lados
-   -- é esse respiro que dá o efeito de barra fina "flutuando", como a
-   referência (mesma técnica, só que com o verde da nossa marca). */
+   -- efeito de barra fina "flutuando". */
 ::-webkit-scrollbar-thumb {
-  background-color: #0ca30c;
+  background-color: var(--brand);
   border-radius: 9999px;
   border: 4px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #0a8b0a;
+  background-color: var(--brand-deep);
 }
 
-/* Identidade visual da Landing (espelhada no design da Guruja: fundo escuro +
-   accent vibrante) -- escopada em .landing-root pra não vazar tokens/fontes
-   pro resto do app. O accent usa o mesmo verde da marca (#0ca30c, o mesmo
-   da logo e do resto do app autenticado), não o lima da referência. */
-.landing-root {
-  --bg: #0d0f0a;
-  --surface: #14170f;
-  --surface-raised: #191c12;
-  --brand: #0ca30c;
-  --brand-dim: #0a8b0a;
-  --brand-soft: rgba(12, 163, 12, 0.16);
-  --ink: #313131;
-  --line: rgba(255, 255, 255, 0.08);
-  --muted: #9ca394;
-  --white: #ffffff;
+/* Números financeiros em toda a plataforma ganham a voz tipográfica de
+   dado medido (mono, tabular) -- não decoração, reforça "dado real". */
+.font-data {
+  font-variant-numeric: tabular-nums;
 }
 
-.landing-root .glow-blob {
-  position: absolute;
-  border-radius: 9999px;
-  background: radial-gradient(circle, var(--brand) 0%, transparent 70%);
-  filter: blur(90px);
-  pointer-events: none;
-}
-
-/* Reveal ao rolar a página: cada seção/card entra com fade + leve subida,
-   disparado por IntersectionObserver (ver Reveal.tsx) -- não por CSS puro,
-   porque precisa disparar uma vez só e não repetir a cada scroll. */
-.landing-root .reveal {
+/* Reveal ao rolar: fade + leve subida, disparado por IntersectionObserver
+   (ver Reveal.tsx) -- não CSS puro, porque precisa disparar uma vez só. */
+.reveal {
   opacity: 0;
   transform: translateY(28px);
   transition:
@@ -69,15 +99,22 @@ html {
     transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.landing-root .reveal.is-visible {
+.reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-root .reveal {
+  .reveal {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

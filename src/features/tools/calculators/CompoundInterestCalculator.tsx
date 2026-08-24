@@ -59,7 +59,7 @@ export default function CompoundInterestCalculator() {
             </div>
           </>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       chart={
@@ -67,8 +67,8 @@ export default function CompoundInterestCalculator() {
           <GrowthChart
             data={result.series}
             series={[
-              { key: "invested", name: "Total investido", color: "#898781" },
-              { key: "balance", name: "Saldo acumulado", color: "#0ca30c" },
+              { key: "invested", name: "Total investido", color: "var(--ink-soft)" },
+              { key: "balance", name: "Saldo acumulado", color: "var(--brand)" },
             ]}
           />
         )

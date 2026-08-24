@@ -7,7 +7,7 @@ function TrendBadge({ change }: { change: number }) {
   return (
     <span
       className={`inline-flex items-center gap-1 text-xs font-medium ${
-        isPositive ? "text-[#0ca30c]" : "text-[#d03b3b]"
+        isPositive ? "text-brand" : "text-negative"
       }`}
     >
       <Icon name={isPositive ? "trendUp" : "trendDown"} size={14} />
@@ -35,33 +35,31 @@ export default function SummaryCards({
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card>
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-gray-500 dark:text-gray-300 text-sm">Entradas</h3>
+          <h3 className="text-ink-soft text-sm">Entradas</h3>
           <TrendBadge change={entradasChange} />
         </div>
-        <p className="text-2xl font-bold text-[#0ca30c]">
+        <p className="font-data text-2xl font-bold text-brand">
           {formatCurrency(totalEntradas)}
         </p>
       </Card>
 
       <Card>
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-gray-500 dark:text-gray-300 text-sm">Saídas</h3>
+          <h3 className="text-ink-soft text-sm">Saídas</h3>
           <TrendBadge change={saidasChange} />
         </div>
-        <p className="text-2xl font-bold text-[#d03b3b]">
+        <p className="font-data text-2xl font-bold text-negative">
           {formatCurrency(totalSaidas)}
         </p>
       </Card>
 
       <Card>
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-gray-500 dark:text-gray-300 text-sm">Saldo</h3>
+          <h3 className="text-ink-soft text-sm">Saldo</h3>
           <TrendBadge change={saldoChange} />
         </div>
         <p
-          className={`text-2xl font-bold ${
-            saldo >= 0 ? "text-[#0ca30c]" : "text-[#d03b3b]"
-          }`}
+          className={`font-data text-2xl font-bold ${saldo >= 0 ? "text-brand" : "text-negative"}`}
         >
           {formatCurrency(saldo)}
         </p>

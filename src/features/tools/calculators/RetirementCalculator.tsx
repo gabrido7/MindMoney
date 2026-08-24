@@ -30,24 +30,24 @@ export default function RetirementCalculator() {
             placeholder="5000"
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Taxa de saque anual (regra dos 4%)</label>
+            <label className="text-sm font-medium text-ink-soft">Taxa de saque anual (regra dos 4%)</label>
             <div className="flex flex-wrap gap-1.5">
               {WITHDRAWAL_RATE_OPTIONS.map((rate) => (
                 <button
                   key={rate}
                   type="button"
                   onClick={() => setWithdrawalRate(rate)}
-                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-lg px-3 py-2 font-data text-sm font-medium transition-colors ${
                     withdrawalRate === rate
-                      ? "bg-green-600 text-white"
-                      : "border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "bg-brand text-white"
+                      : "border border-line text-ink-soft hover:bg-surface-alt"
                   }`}
                 >
                   {rate}%
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400">Taxas menores são mais conservadoras — exigem mais patrimônio, mas dão mais segurança.</p>
+            <p className="text-xs text-ink-soft">Taxas menores são mais conservadoras — exigem mais patrimônio, mas dão mais segurança.</p>
           </div>
         </>
       }
@@ -58,7 +58,7 @@ export default function RetirementCalculator() {
             <ResultStat label="Renda anual equivalente" value={formatCurrency(result.annualIncome)} />
           </>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       note="A regra dos 4% é uma heurística baseada em estudos históricos do mercado americano — uma referência prática, não uma garantia matemática. Veja a trilha 'Aposentadoria e independência financeira' na Educação Financeira para entender suas limitações."

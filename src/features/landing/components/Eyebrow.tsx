@@ -6,9 +6,11 @@ export default function Eyebrow({
   align?: "left" | "center";
 }) {
   return (
-    <div className={`flex flex-col gap-2 ${align === "center" ? "items-center" : "items-start"}`}>
-      <span className="font-script uppercase text-2xl leading-none text-[var(--brand)]">{children}</span>
-      <span className="h-1 w-14 rounded-full bg-[var(--brand)]" />
+    <div className={`flex items-center gap-2.5 ${align === "center" ? "justify-center" : "justify-start"}`}>
+      <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+      <span className="font-data text-xs font-semibold uppercase tracking-[0.18em] text-brand-deep">
+        {children}
+      </span>
     </div>
   );
 }

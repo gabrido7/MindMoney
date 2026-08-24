@@ -11,15 +11,15 @@ export default function ResultStat({
 }) {
   const toneClass =
     tone === "positive"
-      ? "text-green-600 dark:text-green-400"
+      ? "text-brand"
       : tone === "negative"
-        ? "text-red-600 dark:text-red-400"
-        : "text-gray-900 dark:text-white";
+        ? "text-negative"
+        : "text-ink";
 
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</span>
-      <span className={`font-bold tabular-nums ${toneClass} ${size === "lg" ? "text-3xl" : "text-xl"}`}>{value}</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-ink-soft">{label}</span>
+      <span className={`font-data font-bold ${toneClass} ${size === "lg" ? "text-3xl" : "text-xl"}`}>{value}</span>
     </div>
   );
 }

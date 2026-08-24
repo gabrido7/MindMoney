@@ -23,25 +23,26 @@ export default function EvolutionChart({
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e1e0d9" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
             <XAxis
               dataKey="month"
               tickFormatter={formatMonthBR}
-              stroke="#898781"
+              stroke="var(--ink-soft)"
               fontSize={12}
             />
-            <YAxis stroke="#898781" fontSize={12} />
+            <YAxis stroke="var(--ink-soft)" fontSize={12} />
             <Tooltip
               formatter={(value: unknown) => [formatCurrency(Number(value) || 0), "Saldo"]}
               labelFormatter={(label) =>
                 typeof label === "string" ? formatMonthBR(label) : ""
               }
+              contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12 }}
             />
             <Line
               type="monotone"
               dataKey="saldo"
               name="Saldo"
-              stroke="#16a34a"
+              stroke="var(--brand)"
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}

@@ -92,15 +92,15 @@ export default function FeaturesSection() {
   const selected = FEATURES.find((f) => f.id === selectedId) ?? FEATURES[0];
 
   return (
-    <section id="funcionalidades" className="px-4 py-20 md:px-8">
+    <section id="funcionalidades" className="bg-surface-alt px-4 py-20 md:px-8">
       <div className="mx-auto max-w-5xl">
         <Reveal className="text-center">
           <div className="mx-auto flex flex-col items-center">
             <Eyebrow align="center">nossa plataforma</Eyebrow>
-            <h2 className="font-display mt-4 text-3xl font-extrabold text-white sm:text-4xl">
-              O que você vai <span className="text-[var(--brand)]">receber</span> no Mind Money
+            <h2 className="font-display mt-4 text-3xl font-semibold text-ink sm:text-4xl">
+              O que você vai receber no <span className="italic text-brand-deep">Mind Money</span>
             </h2>
-            <p className="font-body mt-4 max-w-xl text-white/60">
+            <p className="mt-4 max-w-xl text-ink-soft">
               Tecnologia real, dados reais e recursos práticos pra você organizar sua vida financeira.
             </p>
           </div>
@@ -112,10 +112,10 @@ export default function FeaturesSection() {
               key={feature.id}
               type="button"
               onClick={() => setSelectedId(feature.id)}
-              className={`font-body rounded-full px-4 py-3 text-sm font-semibold transition-all duration-200 hover:scale-[1.03] ${
+              className={`rounded-full px-4 py-3 text-sm font-semibold transition-all duration-200 ${
                 selected.id === feature.id
-                  ? "bg-[var(--brand)] text-[var(--ink)] shadow-[0_0_24px_rgba(12,163,12,0.35)]"
-                  : "border border-[var(--line)] text-white/70 hover:border-[rgba(12,163,12,0.5)] hover:text-[var(--brand)]"
+                  ? "bg-brand text-white"
+                  : "border border-line bg-surface text-ink-soft hover:border-brand hover:text-brand-deep"
               }`}
             >
               {feature.label}
@@ -126,24 +126,24 @@ export default function FeaturesSection() {
         <Reveal delay={150} className="mt-4">
           <div
             key={selected.id}
-            className="animate-fade-in grid gap-8 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-8 md:grid-cols-2 md:p-10"
+            className="animate-fade-in grid gap-8 rounded-2xl border border-line bg-surface p-8 shadow-card md:grid-cols-2 md:p-10"
           >
             <div className="flex flex-col justify-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--brand-soft)] text-[var(--brand)]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-soft text-brand-deep">
                 <Icon name={selected.icon} size={22} />
               </div>
-              <h3 className="font-display mt-4 text-2xl font-bold text-white">{selected.title}</h3>
-              <p className="font-body mt-3 leading-relaxed text-white/60">{selected.description}</p>
+              <h3 className="font-display mt-4 text-2xl font-semibold text-ink">{selected.title}</h3>
+              <p className="mt-3 leading-relaxed text-ink-soft">{selected.description}</p>
             </div>
 
             <div className="flex flex-col justify-center gap-3">
               {selected.stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="flex items-center justify-between rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] px-5 py-4"
+                  className="flex items-center justify-between rounded-xl border border-line bg-surface-alt px-5 py-4"
                 >
-                  <span className="font-body text-sm text-white/50">{stat.label}</span>
-                  <span className="font-display text-lg font-bold text-[var(--brand)]">{stat.value}</span>
+                  <span className="text-sm text-ink-soft">{stat.label}</span>
+                  <span className="font-data text-lg font-bold text-brand-deep">{stat.value}</span>
                 </div>
               ))}
             </div>

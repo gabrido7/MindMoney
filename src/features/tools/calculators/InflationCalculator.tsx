@@ -45,14 +45,14 @@ export default function InflationCalculator() {
             <ResultStat label="Aumento nominal necessário" value={formatCurrency(result.totalIncrease)} tone="negative" />
           </>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       chart={
         result && (
           <GrowthChart
             data={result.series}
-            series={[{ key: "balance", name: "Valor nominal equivalente", color: "#b91c1c" }]}
+            series={[{ key: "balance", name: "Valor nominal equivalente", color: "var(--negative)" }]}
           />
         )
       }

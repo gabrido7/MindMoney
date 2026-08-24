@@ -10,11 +10,11 @@ export default function AppLayout() {
   const [darkMode, setDarkMode] = useDarkMode();
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-bg">
       <AppSidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-end gap-2 border-b border-gray-100 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 md:px-8">
+        <header className="flex items-center justify-end gap-2 border-b border-line bg-surface px-4 py-3 md:px-8">
           <SearchDropdown />
           <LevelPill />
           <button
@@ -22,7 +22,7 @@ export default function AppLayout() {
             onClick={() => setDarkMode((prev) => !prev)}
             aria-label={darkMode ? "Ativar modo claro" : "Ativar modo escuro"}
             title={darkMode ? "Modo claro" : "Modo escuro"}
-            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="rounded-lg p-2 text-ink-soft transition-colors hover:bg-surface-alt hover:text-ink"
           >
             <Icon name={darkMode ? "sun" : "moon"} size={18} />
           </button>

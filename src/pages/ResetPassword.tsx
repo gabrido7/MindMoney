@@ -18,13 +18,13 @@ export default function ResetPassword() {
   if (!token) {
     return (
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-white">Link inválido</h1>
+        <h1 className="font-display text-2xl font-bold text-white">Link inválido</h1>
         <p className="mt-2 text-sm text-neutral-400">
           Esse link de redefinição está incompleto ou já foi usado. Gere um novo para continuar.
         </p>
         <Link
           to="/esqueci-senha"
-          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:bg-green-400"
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:bg-brand-deep"
         >
           Gerar novo link
         </Link>
@@ -61,13 +61,13 @@ export default function ResetPassword() {
   if (done) {
     return (
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-white">Senha redefinida</h1>
+        <h1 className="font-display text-2xl font-bold text-white">Senha redefinida</h1>
         <p className="mt-2 text-sm text-neutral-400">
           Sua senha foi alterada com sucesso. Você já pode entrar com a nova senha.
         </p>
         <Link
           to="/login"
-          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:bg-green-400"
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:bg-brand-deep"
         >
           Ir para o login
           <Icon name="arrowRight" size={16} />
@@ -78,12 +78,12 @@ export default function ResetPassword() {
 
   return (
     <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-bold text-white">Redefinir senha</h1>
+      <h1 className="font-display text-2xl font-bold text-white">Redefinir senha</h1>
       <p className="mt-2 text-sm text-neutral-400">Escolha uma nova senha para sua conta.</p>
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
         {error && (
-          <p role="alert" className="text-sm font-medium text-red-400">
+          <p role="alert" className="text-sm font-medium text-negative">
             {error}
           </p>
         )}
@@ -111,7 +111,7 @@ export default function ResetPassword() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-colors hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Salvando..." : "Redefinir senha"}
         </button>
@@ -119,7 +119,7 @@ export default function ResetPassword() {
 
       <p className="mt-6 text-center text-sm text-neutral-400">
         Link expirado ou inválido?{" "}
-        <Link to="/esqueci-senha" className="font-medium text-green-400 hover:underline">
+        <Link to="/esqueci-senha" className="font-medium text-brand hover:underline">
           Gerar novo
         </Link>
       </p>

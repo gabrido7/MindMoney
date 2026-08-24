@@ -10,7 +10,7 @@ import NewsletterFooter from "../features/landing/components/NewsletterFooter";
 
 export default function Landing() {
   return (
-    <div className="landing-root min-h-screen bg-[var(--bg)] font-body text-white">
+    <div className="min-h-screen bg-bg text-ink">
       <LandingNavbar />
       <main>
         <HeroSection />

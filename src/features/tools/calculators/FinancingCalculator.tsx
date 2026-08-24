@@ -37,7 +37,7 @@ export default function FinancingCalculator() {
           <RateField id="fi-rate" label="Taxa de juros" value={rate} onChange={setRate} period={ratePeriod} onPeriodChange={setRatePeriod} placeholder="9" />
           <NumberField id="fi-months" label="Número de parcelas" value={months} onChange={setMonths} suffix="meses" placeholder="360" />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sistema de amortização</label>
+            <label className="text-sm font-medium text-ink-soft">Sistema de amortização</label>
             <div className="flex flex-col gap-1.5 sm:flex-row">
               {SYSTEM_OPTIONS.map((opt) => (
                 <button
@@ -46,8 +46,8 @@ export default function FinancingCalculator() {
                   onClick={() => setSystem(opt.id)}
                   className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     system === opt.id
-                      ? "bg-green-600 text-white"
-                      : "border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "bg-brand text-white"
+                      : "border border-line text-ink-soft hover:bg-surface-alt"
                   }`}
                 >
                   {opt.label}
@@ -73,12 +73,12 @@ export default function FinancingCalculator() {
             </div>
           </>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       chart={
         result && (
-          <GrowthChart data={result.schedule} series={[{ key: "installment", name: "Parcela", color: "#b91c1c" }]} />
+          <GrowthChart data={result.schedule} series={[{ key: "installment", name: "Parcela", color: "var(--negative)" }]} />
         )
       }
       note="No sistema Price, a parcela é sempre a mesma, mas a composição entre juros e amortização muda mês a mês. No SAC, a amortização é constante e a parcela (e os juros) diminuem ao longo do tempo — geralmente com menos juros totais pagos."

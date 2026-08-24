@@ -23,16 +23,16 @@ export default function DurationField({
       <div className="flex-1 min-w-0">
         <NumberField id={id} label={label} value={value} onChange={onChange} placeholder={placeholder} />
       </div>
-      <div className="flex shrink-0 rounded-lg border border-gray-200 dark:border-gray-600 p-0.5">
+      <div className="flex shrink-0 rounded-xl border border-line p-0.5">
         {(["months", "years"] as const).map((u) => (
           <button
             key={u}
             type="button"
             onClick={() => onUnitChange(u)}
-            className={`rounded-md px-2.5 py-2 text-xs font-medium transition-colors ${
+            className={`rounded-lg px-2.5 py-2 text-xs font-medium transition-colors ${
               unit === u
-                ? "bg-green-600 text-white"
-                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600"
+                ? "bg-brand text-white"
+                : "text-ink-soft hover:bg-surface-alt"
             }`}
           >
             {u === "months" ? "meses" : "anos"}

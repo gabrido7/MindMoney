@@ -26,8 +26,8 @@ export default function FavoriteButton({
         size === "sm" ? "p-1.5" : "p-2"
       } ${
         active
-          ? "text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950"
-          : "text-gray-400 hover:bg-gray-100 hover:text-amber-500 dark:hover:bg-gray-700"
+          ? "text-warning hover:bg-warning-soft"
+          : "text-ink-soft hover:bg-surface-alt hover:text-warning"
       }`}
     >
       <Icon name="star" size={size === "sm" ? 16 : 20} filled={active} />

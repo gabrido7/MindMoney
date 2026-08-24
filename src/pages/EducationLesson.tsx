@@ -131,29 +131,29 @@ function LessonView({
       <div>
         <Link
           to={`/educacao-financeira/${trail.id}/${course.id}`}
-          className="text-sm text-gray-400 hover:text-green-600 transition-colors"
+          className="text-sm text-ink-soft hover:text-brand transition-colors"
         >
           ← {course.title}
         </Link>
         <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{lesson.title}</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">{lesson.title}</h1>
           {isCompleted && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#0ca30c]/10 text-[#0ca30c] flex items-center gap-1">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-brand-soft text-brand-deep flex items-center gap-1">
               <Icon name="check" size={12} /> Concluída
             </span>
           )}
           <FavoriteButton contentType="lesson" contentId={lesson.id} />
         </div>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-ink-soft mt-1">
           Aula {lessonIndex + 1} de {course.lessons.length} — {course.title}
         </p>
       </div>
 
       <Card>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Explicação</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft mb-3">Explicação</h2>
         <div className="flex flex-col gap-3">
           {content.explanation.map((paragraph, i) => (
-            <p key={i} className="text-gray-700 dark:text-gray-200 leading-relaxed">
+            <p key={i} className="text-ink leading-relaxed">
               {paragraph}
             </p>
           ))}
@@ -162,11 +162,11 @@ function LessonView({
 
       {content.examples.length > 0 && (
         <Card>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Exemplos</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft mb-3">Exemplos</h2>
           <ul className="flex flex-col gap-2">
             {content.examples.map((example, i) => (
-              <li key={i} className="flex gap-2 text-gray-700 dark:text-gray-200">
-                <span className="text-green-600 shrink-0">✓</span>
+              <li key={i} className="flex gap-2 text-ink">
+                <span className="text-brand shrink-0">✓</span>
                 <span>{example}</span>
               </li>
             ))}
@@ -176,19 +176,19 @@ function LessonView({
 
       {content.diagram && (
         <Card>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Visualizando</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft mb-3">Visualizando</h2>
           <LessonDiagram diagram={content.diagram} />
         </Card>
       )}
 
       {content.keyConcepts.length > 0 && (
-        <Card className="bg-blue-50/60 dark:bg-blue-950/40 border-blue-100 dark:border-blue-900">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-3">
+        <Card className="bg-warning-soft border-warning">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-warning mb-3">
             Conceitos importantes
           </h2>
           <ul className="flex flex-col gap-1.5">
             {content.keyConcepts.map((concept, i) => (
-              <li key={i} className="text-sm text-gray-700 dark:text-gray-200">
+              <li key={i} className="text-sm text-ink">
                 • {concept}
               </li>
             ))}
@@ -197,8 +197,8 @@ function LessonView({
       )}
 
       {content.quiz.length > 0 && (
-        <Card className="border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-950/30">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300 mb-3">
+        <Card className="border-brand bg-brand-soft">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-brand-deep mb-3">
             🧠 Teste seus conhecimentos
           </h2>
           <LessonQuiz questions={content.quiz} onFinish={handleQuizFinish} />
@@ -206,7 +206,7 @@ function LessonView({
       )}
 
       <Card>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Exercício prático</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft mb-3">Exercício prático</h2>
         <LessonExercise
           prompt={content.exercise.prompt}
           placeholder={content.exercise.placeholder}

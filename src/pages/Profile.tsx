@@ -92,25 +92,25 @@ export default function Profile() {
 
   return (
     <div className="max-w-xl mx-auto p-4 md:p-8 flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Perfil</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">Perfil</h1>
 
       <Card>
-        {loading && <p className="text-gray-500 dark:text-gray-400">Carregando...</p>}
-        {error && <p className="text-red-500">{error}</p>}
+        {loading && <p className="text-ink-soft">Carregando...</p>}
+        {error && <p className="text-negative">{error}</p>}
 
         {data && (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-300">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-deep">
                 <Icon name="user" size={22} />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 dark:text-white">{data.user.name}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{data.user.email}</p>
+                <p className="font-semibold text-ink">{data.user.name}</p>
+                <p className="text-sm text-ink-soft">{data.user.email}</p>
               </div>
             </div>
 
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-ink-soft">
               Conta criada em {new Date(data.user.createdAt).toLocaleDateString("pt-BR")}
             </p>
 
@@ -125,11 +125,11 @@ export default function Profile() {
       <Card title="Editar dados">
         <form onSubmit={handleProfileSubmit} className="flex flex-col gap-4">
           {profileError && (
-            <p role="alert" className="text-red-500 text-sm">
+            <p role="alert" className="text-negative text-sm">
               {profileError}
             </p>
           )}
-          {profileSuccess && <p className="text-green-600 text-sm">Perfil atualizado com sucesso.</p>}
+          {profileSuccess && <p className="text-brand text-sm">Perfil atualizado com sucesso.</p>}
 
           <Input
             id="profile-name"
@@ -162,11 +162,11 @@ export default function Profile() {
       <Card title="Trocar senha">
         <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
           {passwordError && (
-            <p role="alert" className="text-red-500 text-sm">
+            <p role="alert" className="text-negative text-sm">
               {passwordError}
             </p>
           )}
-          {passwordSuccess && <p className="text-green-600 text-sm">Senha alterada com sucesso.</p>}
+          {passwordSuccess && <p className="text-brand text-sm">Senha alterada com sucesso.</p>}
 
           <Input
             id="current-password"
@@ -203,7 +203,7 @@ export default function Profile() {
       </Card>
 
       <Card title="Zona de risco">
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <p className="text-sm text-ink-soft mb-4">
           Excluir sua conta apaga permanentemente todos os seus dados financeiros. Essa ação não
           pode ser desfeita.
         </p>

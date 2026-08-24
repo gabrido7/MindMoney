@@ -8,8 +8,8 @@ import { insightsService, type Insight, type InsightSeverity } from "../../../se
 import { ApiError, errorMessage } from "../../../services/api";
 
 const SEVERITY_COLOR: Record<InsightSeverity, string> = {
-  success: "#0ca30c",
-  warning: "#fab219",
+  success: "var(--brand)",
+  warning: "var(--warning)",
   info: "#2a78d6",
 };
 
@@ -54,10 +54,10 @@ export default function AssistantCard({ month }: { month: string }) {
   return (
     <Card
       title="Assistente Financeiro"
-      action={<Icon name="sparkles" size={18} className="text-gray-400" />}
+      action={<Icon name="sparkles" size={18} className="text-ink-soft" />}
     >
-      {loading && <p className="text-gray-500 dark:text-gray-400">Analisando seus dados...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {loading && <p className="text-ink-soft">Analisando seus dados...</p>}
+      {error && <p className="text-negative">{error}</p>}
 
       {!loading && !error && (
         <>
@@ -74,16 +74,16 @@ export default function AssistantCard({ month }: { month: string }) {
                     <Icon name={SEVERITY_ICON[insight.severity]} size={18} />
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{insight.title}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{insight.message}</p>
+                    <p className="text-sm font-medium text-ink">{insight.title}</p>
+                    <p className="text-sm text-ink-soft">{insight.message}</p>
                   </div>
                 </li>
               ))}
             </ul>
           )}
 
-          <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-            <p className="text-xs text-gray-400 mb-3">
+          <div className="border-t border-line pt-4">
+            <p className="text-xs text-ink-soft mb-3">
               Pergunte sobre seus próprios dados — categorias, economia, meta ou score.
             </p>
 
@@ -91,14 +91,14 @@ export default function AssistantCard({ month }: { month: string }) {
               <ul className="flex flex-col gap-3 mb-3">
                 {conversation.map((turn, index) => (
                   <li key={index} className="text-sm">
-                    <p className="font-medium text-gray-700 dark:text-gray-200">Você: {turn.question}</p>
-                    <p className="text-gray-500 dark:text-gray-400">{turn.answer}</p>
+                    <p className="font-medium text-ink-soft">Você: {turn.question}</p>
+                    <p className="text-ink-soft">{turn.answer}</p>
                   </li>
                 ))}
               </ul>
             )}
 
-            {askError && <p className="text-red-500 text-sm mb-2">{askError}</p>}
+            {askError && <p className="text-negative text-sm mb-2">{askError}</p>}
 
             <form onSubmit={handleAsk} className="flex gap-2">
               <input
@@ -107,7 +107,7 @@ export default function AssistantCard({ month }: { month: string }) {
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="Ex: quanto gastei em alimentação?"
                 disabled={asking}
-                className="flex-1 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 p-2.5 rounded-xl border border-line bg-surface text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand"
               />
               <Button type="submit" disabled={asking || !question.trim()}>
                 <Icon name="send" size={16} />

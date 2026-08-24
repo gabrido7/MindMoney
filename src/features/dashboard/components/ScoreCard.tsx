@@ -2,6 +2,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 import { useQuery } from "@tanstack/react-query";
 import Card from "../../../components/ui/Card";
 import EmptyState from "../../../components/ui/EmptyState";
+import ScoreArc from "../../../components/ui/ScoreArc";
 import { scoreService } from "../../../services/scoreService";
 import { errorMessage } from "../../../services/api";
 import { formatMonthBR } from "../../../utils/formatters";
@@ -34,22 +35,16 @@ export default function ScoreCard({ month }: { month: string }) {
 
   return (
     <Card title="Score Financeiro">
-      {loading && <p className="text-gray-500 dark:text-gray-400">Calculando...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {loading && <p className="text-ink-soft">Calculando...</p>}
+      {error && <p className="text-negative">{error}</p>}
 
       {score && (
         <div className="grid md:grid-cols-[auto_1fr] gap-6 items-center">
           <div className="flex flex-col items-center justify-center">
-            <div
-              className="flex h-28 w-28 items-center justify-center rounded-full text-3xl font-bold text-white"
-              style={{ backgroundColor: LEVEL_COLOR[score.level] }}
-            >
-              {score.score}
-            </div>
-            <span
-              className="mt-2 text-sm font-semibold"
-              style={{ color: LEVEL_COLOR[score.level] }}
-            >
+            <ScoreArc value={score.score} color={LEVEL_COLOR[score.level]} size="lg">
+              <span className="font-data text-3xl font-bold text-ink">{score.score}</span>
+            </ScoreArc>
+            <span className="mt-2 text-sm font-semibold" style={{ color: LEVEL_COLOR[score.level] }}>
               {score.level}
             </span>
           </div>
@@ -57,19 +52,17 @@ export default function ScoreCard({ month }: { month: string }) {
           <div className="flex flex-col gap-2">
             {COMPONENT_LABELS.map(({ key, label, max }) => (
               <div key={key} className="flex items-center gap-3">
-                <span className="text-sm text-gray-600 dark:text-gray-300 w-44 shrink-0">
-                  {label}
-                </span>
-                <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                <span className="text-sm text-ink-soft w-44 shrink-0">{label}</span>
+                <div className="flex-1 bg-surface-alt rounded-full h-2">
                   <div
-                    className="h-2 rounded-full"
+                    className="h-2 rounded-full transition-all duration-700 ease-out"
                     style={{
                       width: `${(Number(score.breakdown[key]) / max) * 100}%`,
                       backgroundColor: LEVEL_COLOR[score.level],
                     }}
                   />
                 </div>
-                <span className="text-xs text-gray-400 w-12 text-right">
+                <span className="font-data text-xs text-ink-soft w-12 text-right">
                   {score.breakdown[key]}/{max}
                 </span>
               </div>
@@ -78,20 +71,19 @@ export default function ScoreCard({ month }: { month: string }) {
         </div>
       )}
 
-      <div className="mt-6 border-t border-gray-100 dark:border-gray-700 pt-4">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-          Evolução do score
-        </h3>
+      <div className="mt-6 border-t border-line pt-4">
+        <h3 className="font-display text-sm font-semibold text-ink mb-2">Evolução do score</h3>
         {history.length > 1 ? (
           <ResponsiveContainer width="100%" height={140}>
             <LineChart data={history}>
-              <XAxis dataKey="month" tickFormatter={formatMonthBR} stroke="#898781" fontSize={11} />
-              <YAxis domain={[0, 100]} stroke="#898781" fontSize={11} width={28} />
+              <XAxis dataKey="month" tickFormatter={formatMonthBR} stroke="var(--ink-soft)" fontSize={11} />
+              <YAxis domain={[0, 100]} stroke="var(--ink-soft)" fontSize={11} width={28} />
               <Tooltip
                 formatter={(value: unknown) => [Number(value) || 0, "Score"]}
                 labelFormatter={(label) => (typeof label === "string" ? formatMonthBR(label) : "")}
+                contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12 }}
               />
-              <Line type="monotone" dataKey="score" stroke="#16a34a" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="score" stroke="var(--brand)" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         ) : (

@@ -46,7 +46,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-bold text-white">Esqueci minha senha</h1>
+      <h1 className="font-display text-2xl font-bold text-white">Esqueci minha senha</h1>
       <p className="mt-2 text-sm text-neutral-400">
         Informe seu e-mail para gerar um link de redefinição.
       </p>
@@ -54,7 +54,7 @@ export default function ForgotPassword() {
       {!result ? (
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
           {error && (
-            <p role="alert" className="text-sm font-medium text-red-400">
+            <p role="alert" className="text-sm font-medium text-negative">
               {error}
             </p>
           )}
@@ -73,7 +73,7 @@ export default function ForgotPassword() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-colors hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Gerando link..." : "Gerar link de redefinição"}
           </button>
@@ -83,18 +83,18 @@ export default function ForgotPassword() {
           <p className="text-sm text-neutral-300">{result.message}</p>
 
           {resetLink ? (
-            <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4">
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-green-400">
+            <div className="rounded-xl border border-brand-soft bg-brand-soft p-4">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand">
                 <Icon name="shield" size={12} />
                 Modo demonstração — sem e-mail configurado
               </p>
-              <p className="mt-2 break-all rounded-lg bg-neutral-900 px-3 py-2 text-xs text-neutral-300">
+              <p className="mt-2 break-all rounded-lg bg-neutral-900 px-3 py-2 text-xs text-neutral-300 font-data">
                 {resetLink}
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <Link
                   to={`/redefinir-senha?token=${result.token}`}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-500 px-4 py-2 text-xs font-semibold text-neutral-950 hover:bg-green-400"
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-neutral-950 hover:bg-brand-deep"
                 >
                   Ir para redefinição
                   <Icon name="arrowRight" size={14} />
@@ -102,7 +102,7 @@ export default function ForgotPassword() {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-xs font-semibold text-white hover:border-green-400 hover:text-green-400"
+                  className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-xs font-semibold text-white hover:border-brand hover:text-brand"
                 >
                   {copied ? "Copiado!" : "Copiar link"}
                 </button>
@@ -115,7 +115,7 @@ export default function ForgotPassword() {
 
       <p className="mt-6 text-center text-sm text-neutral-400">
         Lembrou a senha?{" "}
-        <Link to="/login" className="font-medium text-green-400 hover:underline">
+        <Link to="/login" className="font-medium text-brand hover:underline">
           Entrar
         </Link>
       </p>

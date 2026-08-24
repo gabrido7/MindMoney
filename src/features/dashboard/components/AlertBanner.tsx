@@ -13,8 +13,8 @@ export default function AlertBanner({
 
   return (
     <div
-      className={`p-4 rounded-2xl shadow-sm flex gap-3 ${
-        isOver ? "bg-[#d03b3b] text-white" : "bg-[#fab219] text-gray-900"
+      className={`p-4 rounded-2xl shadow-card flex gap-3 ${
+        isOver ? "bg-negative text-white" : "bg-warning text-gray-900"
       }`}
     >
       <Icon name="alert" size={22} className="shrink-0 mt-0.5" />
@@ -23,7 +23,7 @@ export default function AlertBanner({
           {isOver ? "Limite ultrapassado!" : "Você está próximo do limite!"}
         </p>
         <p className="text-sm opacity-90">
-          Você utilizou {gastoPercentual.toFixed(1)}% das suas entradas.
+          Você utilizou <span className="font-data">{gastoPercentual.toFixed(1)}%</span> das suas entradas.
         </p>
         {suggestion && <p className="mt-1 text-sm">{suggestion}</p>}
       </div>

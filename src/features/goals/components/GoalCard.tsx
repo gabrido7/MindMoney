@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Card from "../../../components/ui/Card";
 import Input from "../../../components/ui/Input";
-import ProgressBar from "../../../components/ui/ProgressBar";
+import ScoreArc from "../../../components/ui/ScoreArc";
 import { formatCurrency, formatMonthBR } from "../../../utils/formatters";
 
 export default function GoalCard({
@@ -27,6 +27,8 @@ export default function GoalCard({
   }, [goal, month]);
 
   const savingPercent = goal > 0 ? (saldo / goal) * 100 : 0;
+  const arcColor =
+    savingPercent >= 100 ? "var(--brand)" : savingPercent >= 60 ? "var(--warning)" : "var(--negative)";
 
   const handleBlur = async () => {
     const value = Number(draft) || 0;
@@ -57,37 +59,42 @@ export default function GoalCard({
           onBlur={handleBlur}
           className="max-w-[200px]"
         />
-        <span className="text-gray-500 dark:text-gray-400 text-sm">
+        <span className="text-ink-soft text-sm font-data">
           Meta atual: {formatCurrency(goal)}
           {saving && " — salvando..."}
         </span>
       </div>
 
-      {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+      {error && <p className="text-negative text-sm mb-3">{error}</p>}
 
       {goal > 0 && (
-        <>
-          <ProgressBar percent={savingPercent} />
-          <p className="text-gray-700 dark:text-gray-200 mt-3">
-            Progresso: {savingPercent.toFixed(1)}%
-          </p>
+        <div className="grid sm:grid-cols-[auto_1fr] gap-5 items-center">
+          <ScoreArc value={savingPercent} color={arcColor} size="md">
+            <span className="font-data text-xl font-bold text-ink">{savingPercent.toFixed(0)}%</span>
+          </ScoreArc>
 
-          {savingPercent >= 100 && (
-            <p className="text-[#0ca30c] font-semibold mt-1">🏆 Meta atingida!</p>
-          )}
-
-          {savingPercent < 100 && saldo > 0 && (
-            <p className="text-[#fab219] mt-1">
-              Faltam {formatCurrency(goal - saldo)} para atingir sua meta.
+          <div className="flex flex-col gap-1">
+            <p className="text-ink font-data">
+              {formatCurrency(saldo)} <span className="text-ink-soft">/ {formatCurrency(goal)}</span>
             </p>
-          )}
 
-          {saldo <= 0 && (
-            <p className="text-[#d03b3b] mt-1">
-              Você precisa reduzir gastos para atingir sua meta.
-            </p>
-          )}
-        </>
+            {savingPercent >= 100 && (
+              <p className="text-brand font-semibold mt-1">🏆 Meta atingida!</p>
+            )}
+
+            {savingPercent < 100 && saldo > 0 && (
+              <p className="text-warning mt-1">
+                Faltam <span className="font-data">{formatCurrency(goal - saldo)}</span> para atingir sua meta.
+              </p>
+            )}
+
+            {saldo <= 0 && (
+              <p className="text-negative mt-1">
+                Você precisa reduzir gastos para atingir sua meta.
+              </p>
+            )}
+          </div>
+        </div>
       )}
     </Card>
   );

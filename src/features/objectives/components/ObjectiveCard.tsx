@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Icon from "../../../components/ui/Icon";
-import ProgressBar from "../../../components/ui/ProgressBar";
+import ScoreArc from "../../../components/ui/ScoreArc";
 import { objectivesService } from "../../../services/objectivesService";
 import { errorMessage } from "../../../services/api";
 import { useToast } from "../../../hooks/useToast";
@@ -34,6 +34,7 @@ export default function ObjectiveCard({
   const [showSimulator, setShowSimulator] = useState(false);
   const preset = CATEGORY_BY_VALUE[objective.category];
   const priorityPreset = PRIORITY_BY_VALUE[objective.priority];
+  const arcColor = objective.overdue ? "var(--negative)" : "var(--brand)";
 
   const { data, isLoading } = useQuery({
     queryKey: ["objectiveContributions", objective.id],
@@ -63,65 +64,66 @@ export default function ObjectiveCard({
         <div className="flex items-center gap-2">
           <span className="text-2xl">{preset.icon}</span>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+            <h3 className="font-display font-semibold text-ink flex items-center gap-1.5">
               <span title={`Prioridade ${priorityPreset.label}`}>{priorityPreset.dot}</span>
               {objective.name}
             </h3>
-            <p className="text-xs text-gray-400">{preset.label}</p>
+            <p className="text-xs text-ink-soft">{preset.label}</p>
           </div>
         </div>
         <div className="flex gap-1 shrink-0">
           <button
             onClick={onEdit}
             aria-label={`Editar meta ${objective.name}`}
-            className="p-2 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-950 transition-colors active:scale-90"
+            className="p-2 rounded-lg text-brand hover:bg-brand-soft transition-colors active:scale-90"
           >
             <Icon name="edit" size={16} />
           </button>
           <button
             onClick={onDelete}
             aria-label={`Excluir meta ${objective.name}`}
-            className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors active:scale-90"
+            className="p-2 rounded-lg text-negative hover:bg-negative-soft transition-colors active:scale-90"
           >
             <Icon name="trash" size={16} />
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            <strong className="text-base text-gray-900 dark:text-white">
+      <div className="grid grid-cols-[auto_1fr] gap-4 items-center">
+        <ScoreArc value={objective.progressPercent} color={arcColor} size="sm">
+          <span className="font-data text-xs font-bold text-ink">
+            {objective.progressPercent.toFixed(0)}%
+          </span>
+        </ScoreArc>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-sm text-ink-soft font-data">
+            <strong className="text-base text-ink">
               {formatCurrency(objective.currentAmount)}
             </strong>{" "}
             / {formatCurrency(objective.targetAmount)}
           </span>
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-            {objective.progressPercent.toFixed(1)}%
+
+          <span className="text-sm text-ink-soft font-data">
+            {objective.achieved
+              ? "Meta atingida"
+              : `${formatCurrency(objective.remainingAmount)} restantes`}
           </span>
         </div>
-
-        <ProgressBar percent={objective.progressPercent} />
-
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {objective.achieved
-            ? "Meta atingida"
-            : `${formatCurrency(objective.remainingAmount)} restantes`}
-        </span>
       </div>
 
       <div className="flex items-center gap-2 mt-3 text-sm">
-        <span className="text-gray-500 dark:text-gray-400">Meta: {formatMonthBR(objective.targetMonth)}</span>
+        <span className="text-ink-soft">Meta: {formatMonthBR(objective.targetMonth)}</span>
         {objective.achieved ? (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#0ca30c]/10 text-[#0ca30c]">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-brand-soft text-brand-deep">
             Concluída
           </span>
         ) : objective.overdue ? (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#d03b3b]/10 text-[#d03b3b]">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-negative-soft text-negative">
             Atrasada
           </span>
         ) : (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-ink-soft">
             {objective.monthsRemaining === 0
               ? "vence este mês"
               : `${objective.monthsRemaining} ${objective.monthsRemaining === 1 ? "mês restante" : "meses restantes"}`}
@@ -129,7 +131,7 @@ export default function ObjectiveCard({
         )}
       </div>
 
-      <p className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/40 rounded-lg text-sm text-gray-700 dark:text-gray-100">
+      <p className="mt-3 p-3 bg-warning-soft rounded-lg text-sm text-ink">
         {tipMessage(objective)}
       </p>
 
@@ -140,7 +142,7 @@ export default function ObjectiveCard({
         </Button>
         <button
           onClick={() => setShowContributions((v) => !v)}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 flex items-center gap-1 transition-colors"
+          className="text-sm text-ink-soft hover:text-brand flex items-center gap-1 transition-colors"
         >
           {showContributions ? "Ocultar aportes" : "Ver aportes"}
           <Icon
@@ -152,7 +154,7 @@ export default function ObjectiveCard({
         {!objective.achieved && (
           <button
             onClick={() => setShowSimulator((v) => !v)}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 flex items-center gap-1 transition-colors"
+            className="text-sm text-ink-soft hover:text-brand flex items-center gap-1 transition-colors"
           >
             <Icon name="sparkles" size={14} />
             {showSimulator ? "Ocultar simulador" : "E se...?"}
@@ -166,23 +168,23 @@ export default function ObjectiveCard({
       </div>
 
       {showSimulator && (
-        <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3 motion-safe:animate-fade-in">
+        <div className="mt-3 border-t border-line pt-3 motion-safe:animate-fade-in">
           <GoalSimulator objective={objective} />
         </div>
       )}
 
       {showContributions && (
-        <div className="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3 motion-safe:animate-fade-in">
-          {isLoading && <p className="text-xs text-gray-400">Carregando...</p>}
-          {removeError && <p className="text-xs text-red-500 mb-2">{removeError}</p>}
+        <div className="mt-3 border-t border-line pt-3 motion-safe:animate-fade-in">
+          {isLoading && <p className="text-xs text-ink-soft">Carregando...</p>}
+          {removeError && <p className="text-xs text-negative mb-2">{removeError}</p>}
           {data && data.contributions.length === 0 && (
-            <p className="text-xs text-gray-400">Nenhum aporte lançado ainda.</p>
+            <p className="text-xs text-ink-soft">Nenhum aporte lançado ainda.</p>
           )}
           {data && data.contributions.length > 0 && (
             <ul className="flex flex-col gap-2">
               {data.contributions.map((c) => (
                 <li key={c.id} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-300">
+                  <span className="text-ink-soft font-data">
                     {c.contributed_at.split("-").reverse().join("/")} · {formatCurrency(Number(c.amount))}
                     {c.note ? ` · ${c.note}` : ""}
                   </span>
@@ -190,7 +192,7 @@ export default function ObjectiveCard({
                     onClick={() => removeMutation.mutate(c.id)}
                     disabled={removeMutation.isPending}
                     aria-label="Remover aporte"
-                    className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors active:scale-90"
+                    className="p-1 rounded text-negative hover:bg-negative-soft transition-colors active:scale-90"
                   >
                     <Icon name="trash" size={14} />
                   </button>

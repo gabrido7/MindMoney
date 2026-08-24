@@ -18,18 +18,18 @@ export default function FinancialToolDetail() {
       <div>
         <Link
           to="/ferramentas"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400"
+          className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-brand"
         >
           <Icon name="arrowRight" size={14} className="rotate-180" />
           Ferramentas financeiras
         </Link>
         <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="font-display text-2xl font-semibold text-ink">
             {tool.emoji} {tool.title}
           </h1>
           <FavoriteButton contentType="tool" contentId={tool.id} />
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{tool.description}</p>
+        <p className="text-sm text-ink-soft">{tool.description}</p>
       </div>
 
       <Calculator />

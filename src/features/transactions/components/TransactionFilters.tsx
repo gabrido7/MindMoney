@@ -20,7 +20,7 @@ export default function TransactionFilters({
   return (
     <div className="flex flex-col md:flex-row gap-3 mb-4">
       <div className="relative flex-1">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft">
           <Icon name="search" size={16} />
         </span>
         <input
@@ -28,7 +28,7 @@ export default function TransactionFilters({
           placeholder="Buscar por descrição ou categoria..."
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
-          className="w-full pl-9 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full pl-9 p-2.5 rounded-xl border border-line bg-surface text-ink focus:outline-none focus:ring-2 focus:ring-brand"
         />
       </div>
 

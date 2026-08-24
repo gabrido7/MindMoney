@@ -26,13 +26,13 @@ export default function LessonExercise({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-gray-700 dark:text-gray-200">{prompt}</p>
+      <p className="text-sm text-ink">{prompt}</p>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={4}
-        className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm p-3 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+        className="w-full rounded-lg border border-line bg-surface text-ink text-sm p-3 focus:outline-none focus:ring-2 focus:ring-brand transition-colors"
       />
       <div className="flex items-center gap-3">
         <Button
@@ -44,7 +44,7 @@ export default function LessonExercise({
           {saving ? "Salvando..." : "Salvar resposta"}
         </Button>
         {savedFlash && (
-          <span className="text-xs text-[#0ca30c] font-medium motion-safe:animate-fade-in">✓ Resposta salva</span>
+          <span className="text-xs text-brand font-medium motion-safe:animate-fade-in">✓ Resposta salva</span>
         )}
       </div>
     </div>

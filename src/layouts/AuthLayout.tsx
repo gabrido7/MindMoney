@@ -8,7 +8,7 @@ export default function AuthLayout() {
       <div className="flex w-full flex-col px-6 py-10 sm:px-12 lg:w-[480px] lg:shrink-0 lg:px-16 lg:py-14">
         <Link to="/" className="flex items-center gap-2">
           <LogoMark size={40} />
-          <span className="text-lg font-bold text-white">Mind Money</span>
+          <span className="font-display text-lg font-semibold text-white">Mind Money</span>
         </Link>
 
         <div className="flex flex-1 items-center">

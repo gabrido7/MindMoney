@@ -25,7 +25,6 @@ import InsightsCard from "../features/dashboard/components/InsightsCard";
 import ScoreCard from "../features/dashboard/components/ScoreCard";
 import AssistantCard from "../features/dashboard/components/AssistantCard";
 
-import GoalCard from "../features/goals/components/GoalCard";
 
 import TransactionFormModal from "../features/transactions/components/TransactionFormModal";
 import TransactionFilters, {
@@ -70,8 +69,6 @@ export default function Dashboard() {
     goals: _goals,
     loading: goalsLoading,
     error: goalsError,
-    setGoalForMonth,
-    getGoalForMonth,
   } = useSavingGoals();
 
   /**
@@ -223,28 +220,28 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p className="text-gray-500 dark:text-gray-400">Carregando seus dados financeiros...</p>
+      <div className="min-h-screen flex items-center justify-center bg-bg">
+        <p className="text-ink-soft">Carregando seus dados financeiros...</p>
       </div>
     );
   }
 
   if (loadError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-bg p-4">
         <div className="max-w-md text-center">
-          <p className="text-red-500 font-medium mb-2">Não foi possível carregar o Dashboard.</p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">{loadError}</p>
+          <p className="text-negative font-medium mb-2">Não foi possível carregar o Dashboard.</p>
+          <p className="text-ink-soft text-sm">{loadError}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-bg">
       <main className="p-4 md:p-8 flex flex-col gap-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="font-display text-2xl font-bold text-ink">
             Dashboard Financeiro
           </h1>
 
@@ -291,13 +288,6 @@ export default function Dashboard() {
 
         <ScoreCard month={selectedMonth} />
 
-        <GoalCard
-          month={selectedMonth}
-          goal={getGoalForMonth(selectedMonth)}
-          saldo={currentSummary?.totals.saldo ?? 0}
-          onChangeGoal={(value) => setGoalForMonth(selectedMonth, value)}
-        />
-
         <div className="grid md:grid-cols-2 gap-6">
           <RankingCard ranking={currentSummary?.ranking ?? []} />
           {currentSummary && (
@@ -328,8 +318,8 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="bg-surface p-6 rounded-2xl shadow-card border border-line">
+          <h2 className="font-display text-lg font-semibold text-ink mb-4">
             Transações
           </h2>
           <TransactionFilters

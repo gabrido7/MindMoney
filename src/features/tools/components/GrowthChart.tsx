@@ -20,21 +20,27 @@ export default function GrowthChart({
   return (
     <ResponsiveContainer width="100%" height={260}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e1e0d9" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
         <XAxis
           dataKey="period"
-          stroke="#898781"
+          stroke="var(--ink-soft)"
           fontSize={12}
-          label={{ value: xLabel, position: "insideBottom", offset: -2, fontSize: 11, fill: "#898781" }}
+          label={{ value: xLabel, position: "insideBottom", offset: -2, fontSize: 11, fill: "var(--ink-soft)" }}
         />
         <YAxis
-          stroke="#898781"
+          stroke="var(--ink-soft)"
           fontSize={12}
           tickFormatter={(v: number) => formatCurrency(v).replace(",00", "")}
           width={72}
         />
-        <Tooltip formatter={(value: unknown) => formatCurrency(Number(value) || 0)} labelFormatter={(label) => `${xLabel} ${label}`} />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Tooltip
+          formatter={(value: unknown) => formatCurrency(Number(value) || 0)}
+          labelFormatter={(label) => `${xLabel} ${label}`}
+          contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 13 }}
+          labelStyle={{ color: "var(--ink-soft)" }}
+          itemStyle={{ color: "var(--ink)" }}
+        />
+        <Legend wrapperStyle={{ fontSize: 12, color: "var(--ink-soft)" }} />
         {series.map((s) => (
           <Area
             key={s.key}

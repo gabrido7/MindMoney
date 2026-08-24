@@ -29,8 +29,8 @@ const Favorites = lazy(() => import("./pages/Favorites"));
 
 function RouteFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white dark:bg-gray-900">
-      <p className="text-sm text-gray-400">Carregando...</p>
+    <div className="flex min-h-screen items-center justify-center bg-bg">
+      <p className="text-sm text-ink-soft">Carregando...</p>
     </div>
   );
 }

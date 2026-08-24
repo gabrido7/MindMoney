@@ -57,7 +57,7 @@ export default function LoanCalculator() {
             <ResultStat label="Custo total sobre o valor emprestado" value={formatPercent(result.effectiveTotalCostPercent, 1)} tone="negative" />
           </>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       note="O custo total inclui juros e tarifas — é o número mais próximo do CET (Custo Efetivo Total) que um empréstimo real informa. Compare sempre por esse número, não só pela taxa de juros anunciada."

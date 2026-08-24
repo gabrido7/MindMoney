@@ -44,13 +44,14 @@ export default function SimpleInterestCalculator() {
             <ResultStat label="Valor final" value={formatCurrency(simple.futureValue)} tone="positive" size="lg" />
             <ResultStat label="Total em juros" value={formatCurrency(simple.totalInterest)} tone="positive" />
             {compoundForComparison && (
-              <p className="text-xs text-gray-400 pt-1">
-                No mesmo período, a juros compostos esse valor seria {formatCurrency(compoundForComparison.futureValue)}.
+              <p className="text-xs text-ink-soft pt-1">
+                No mesmo período, a juros compostos esse valor seria{" "}
+                <span className="font-data">{formatCurrency(compoundForComparison.futureValue)}</span>.
               </p>
             )}
           </>
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       chart={
@@ -59,8 +60,8 @@ export default function SimpleInterestCalculator() {
           <GrowthChart
             data={simple.series.map((p, i) => ({ period: p.period, simples: p.balance, compostos: compoundForComparison.series[i].balance }))}
             series={[
-              { key: "simples", name: "Juros simples", color: "#898781" },
-              { key: "compostos", name: "Juros compostos", color: "#0ca30c" },
+              { key: "simples", name: "Juros simples", color: "var(--ink-soft)" },
+              { key: "compostos", name: "Juros compostos", color: "var(--brand)" },
             ]}
           />
         )

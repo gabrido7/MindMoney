@@ -33,16 +33,14 @@ export default function Modal({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className={`w-full ${widthClass} max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-800 shadow-xl`}
+        className={`w-full ${widthClass} max-h-[90vh] overflow-y-auto rounded-2xl bg-surface shadow-card-lg`}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {title}
-          </h2>
+        <div className="flex items-center justify-between border-b border-line px-6 py-4">
+          <h2 className="font-display text-lg font-semibold text-ink">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            className="rounded-lg p-1 text-ink-soft hover:bg-surface-alt hover:text-ink"
           >
             <Icon name="close" size={20} />
           </button>

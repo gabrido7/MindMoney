@@ -23,7 +23,7 @@ export default function CalculatorLayout({
         </Card>
       </div>
       {chart && <Card title="Evolução ao longo do tempo">{chart}</Card>}
-      {note && <p className="text-xs text-gray-400 leading-relaxed">{note}</p>}
+      {note && <p className="text-xs text-ink-soft leading-relaxed">{note}</p>}
     </div>
   );
 }

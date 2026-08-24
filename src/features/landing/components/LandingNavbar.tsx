@@ -5,7 +5,7 @@ import LogoMark from "../../../components/ui/LogoMark";
 import { useAuth } from "../../../hooks/useAuth";
 
 const NAV_LINKS = [
-  { href: "#plataforma", label: "Plataforma", pill: true },
+  { href: "#plataforma", label: "Plataforma" },
   { href: "#funcionalidades", label: "Funcionalidades" },
   { href: "#trilhas", label: "Trilhas" },
   { href: "#criadores", label: "Criadores" },
@@ -17,45 +17,35 @@ export default function LandingNavbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[rgba(13,15,10,0.9)] backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-line bg-bg">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 md:px-8">
         <Link to="/" className="flex items-center gap-2">
-          <LogoMark size={36} />
-          <span className="font-display text-lg font-extrabold text-[var(--white)]">Mind Money</span>
+          <LogoMark size={34} />
+          <span className="font-display text-lg font-semibold text-ink">Mind Money</span>
         </Link>
 
-        <nav className="hidden items-center gap-1.5 md:flex">
-          {NAV_LINKS.map((link) =>
-            link.pill ? (
-              <a
-                key={link.href}
-                href={link.href}
-                className="font-body rounded-full bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition-transform duration-200 hover:scale-105"
-              >
-                {link.label}
-              </a>
-            ) : (
-              <a
-                key={link.href}
-                href={link.href}
-                className="font-body rounded-full px-4 py-2 text-sm font-medium text-white/80 transition-colors duration-200 hover:bg-[var(--brand-soft)] hover:text-[var(--brand)]"
-              >
-                {link.label}
-              </a>
-            )
-          )}
+        <nav className="hidden items-center gap-1 md:flex">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="rounded-full px-4 py-2 text-sm font-medium text-ink-soft transition-colors duration-200 hover:bg-brand-soft hover:text-brand-deep"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
           <Link
             to="/login"
-            className="font-body rounded-full px-4 py-2 text-sm font-semibold text-white/80 transition-colors duration-200 hover:text-white"
+            className="rounded-full px-4 py-2 text-sm font-semibold text-ink-soft transition-colors duration-200 hover:text-ink"
           >
             Entrar
           </Link>
           <Link
             to={user ? "/dashboard" : "/cadastro"}
-            className="font-body inline-flex items-center gap-1.5 rounded-full bg-[var(--ink)] px-5 py-2 text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-[0_0_24px_rgba(12,163,12,0.35)]"
+            className="inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2 text-sm font-semibold text-bg transition-transform duration-200 hover:scale-105"
           >
             Acessar plataforma
             <Icon name="arrowRight" size={15} />
@@ -66,23 +56,21 @@ export default function LandingNavbar() {
           type="button"
           aria-label={open ? "Fechar menu" : "Abrir menu"}
           onClick={() => setOpen((v) => !v)}
-          className="p-2 text-white md:hidden"
+          className="p-2 text-ink md:hidden"
         >
           <Icon name={open ? "close" : "menu"} size={22} />
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-[var(--line)] bg-[var(--bg)] px-4 py-4 md:hidden">
+        <div className="border-t border-line bg-bg px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className={`font-body rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${
-                  link.pill ? "bg-[var(--brand)] text-[var(--ink)] font-semibold" : "text-white/80 hover:bg-white/5"
-                }`}
+                className="rounded-full px-4 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:bg-surface-alt hover:text-ink"
               >
                 {link.label}
               </a>
@@ -92,14 +80,14 @@ export default function LandingNavbar() {
             <Link
               to="/login"
               onClick={() => setOpen(false)}
-              className="font-body rounded-full border border-[var(--line)] px-4 py-2.5 text-center text-sm font-semibold text-white"
+              className="rounded-full border border-line px-4 py-2.5 text-center text-sm font-semibold text-ink"
             >
               Entrar
             </Link>
             <Link
               to={user ? "/dashboard" : "/cadastro"}
               onClick={() => setOpen(false)}
-              className="font-body rounded-full bg-[var(--brand)] px-4 py-2.5 text-center text-sm font-semibold text-[var(--ink)]"
+              className="rounded-full bg-brand px-4 py-2.5 text-center text-sm font-semibold text-white"
             >
               Acessar plataforma
             </Link>

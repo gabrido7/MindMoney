@@ -47,14 +47,14 @@ export default function Register() {
 
   return (
     <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-bold text-white">Criar conta</h1>
+      <h1 className="font-display text-2xl font-bold text-white">Criar conta</h1>
       <p className="mt-2 text-sm text-neutral-400">
         Insira seus dados para começar a organizar sua vida financeira.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
         {error && (
-          <p role="alert" className="text-sm font-medium text-red-400">
+          <p role="alert" className="text-sm font-medium text-negative">
             {error}
           </p>
         )}
@@ -102,7 +102,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-colors hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-neutral-950 shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Criando conta..." : "Continuar"}
           {!loading && <Icon name="arrowRight" size={16} />}
@@ -111,7 +111,7 @@ export default function Register() {
 
       <p className="mt-6 text-center text-sm text-neutral-400">
         Já tenho conta.{" "}
-        <Link to="/login" className="font-medium text-green-400 hover:underline">
+        <Link to="/login" className="font-medium text-brand hover:underline">
           Entrar
         </Link>
       </p>

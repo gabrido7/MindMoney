@@ -45,14 +45,14 @@ export default function MonthlyContributionCalculator() {
       results={
         result ? (
           result.alreadyReached ? (
-            <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+            <p className="text-sm text-brand font-medium">
               Com o valor já investido e o retorno esperado, você atinge o objetivo sem precisar de nenhum aporte novo.
             </p>
           ) : (
             <ResultStat label="Aporte mensal necessário" value={formatCurrency(result.requiredMonthlyContribution)} tone="positive" size="lg" />
           )
         ) : (
-          <p className="text-sm text-gray-400">Preencha os dados para calcular.</p>
+          <p className="text-sm text-ink-soft">Preencha os dados para calcular.</p>
         )
       }
       chart={
@@ -60,8 +60,8 @@ export default function MonthlyContributionCalculator() {
           <GrowthChart
             data={result.series}
             series={[
-              { key: "invested", name: "Total investido", color: "#898781" },
-              { key: "balance", name: "Saldo acumulado", color: "#0ca30c" },
+              { key: "invested", name: "Total investido", color: "var(--ink-soft)" },
+              { key: "balance", name: "Saldo acumulado", color: "var(--brand)" },
             ]}
           />
         )

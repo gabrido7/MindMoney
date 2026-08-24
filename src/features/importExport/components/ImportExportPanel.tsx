@@ -89,15 +89,15 @@ export default function ImportExportPanel({
     <Modal title="Exportar / Importar Dados" onClose={onClose}>
       <div className="flex flex-col gap-6">
         <div>
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Exportar</h3>
+          <h3 className="font-display font-semibold text-ink mb-2">Exportar</h3>
 
-          {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Preparando seus dados...</p>}
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {loading && <p className="text-sm text-ink-soft">Preparando seus dados...</p>}
+          {error && <p className="text-sm text-negative">{error}</p>}
 
           {!loading && !error && (
             <>
-              <p className="text-xs text-gray-400 mb-3">
-                {transactions.length} transações no total.
+              <p className="text-xs text-ink-soft mb-3">
+                <span className="font-data">{transactions.length}</span> transações no total.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -116,9 +116,9 @@ export default function ImportExportPanel({
           )}
         </div>
 
-        <div className="border-t border-gray-100 dark:border-gray-700 pt-6">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Importar transações (CSV)</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+        <div className="border-t border-line pt-6">
+          <h3 className="font-display font-semibold text-ink mb-2">Importar transações (CSV)</h3>
+          <p className="text-sm text-ink-soft mb-3">
             Use um arquivo no mesmo formato do CSV exportado acima. Categoria e subcategoria são
             reconhecidas pelo nome; linhas com uma categoria que você não tem são ignoradas (e
             listadas depois de importar), o resto é importado normalmente.
@@ -143,11 +143,11 @@ export default function ImportExportPanel({
           )}
 
           {fileName && rows.length > 0 && !result && (
-            <div className="rounded-lg border border-gray-200 dark:border-gray-600 p-4">
-              <p className="text-sm text-gray-700 dark:text-gray-200 mb-1">
+            <div className="rounded-xl border border-line p-4">
+              <p className="text-sm text-ink-soft mb-1">
                 <strong>{fileName}</strong> — {rows.length} transações prontas para importar.
               </p>
-              <ul className="text-xs text-gray-500 dark:text-gray-400 mb-3 list-disc ml-4">
+              <ul className="text-xs text-ink-soft mb-3 list-disc ml-4">
                 {rows.slice(0, 3).map((r, i) => (
                   <li key={i}>
                     {r.date} · {r.description} · {r.category} · {r.type} · {r.amount}
@@ -166,17 +166,17 @@ export default function ImportExportPanel({
             </div>
           )}
 
-          {parseError && <p className="text-sm text-red-500 mt-2">{parseError}</p>}
-          {importError && <p className="text-sm text-red-500 mt-2">{importError}</p>}
+          {parseError && <p className="text-sm text-negative mt-2">{parseError}</p>}
+          {importError && <p className="text-sm text-negative mt-2">{importError}</p>}
 
           {result && (
-            <div className="rounded-lg border border-gray-200 dark:border-gray-600 p-4">
-              <p className="text-sm font-medium text-green-600 mb-1">
+            <div className="rounded-xl border border-line p-4">
+              <p className="text-sm font-medium text-brand mb-1">
                 {result.imported} {result.imported === 1 ? "transação importada" : "transações importadas"}
                 {result.skipped.length > 0 && `, ${result.skipped.length} ignoradas`}.
               </p>
               {result.skipped.length > 0 && (
-                <ul className="text-xs text-gray-500 dark:text-gray-400 list-disc ml-4 mt-2">
+                <ul className="text-xs text-ink-soft list-disc ml-4 mt-2">
                   {result.skipped.map((s, i) => (
                     <li key={i}>
                       Linha {s.row}: {s.reason}

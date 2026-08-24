@@ -85,7 +85,7 @@ export default function TransactionFormModal({
   return (
     <Modal title={initial ? "Editar Transação" : "Nova Transação"} onClose={onClose}>
       <div className="flex flex-col gap-4">
-        {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+        {error && <p className="text-negative text-sm font-medium">{error}</p>}
 
         <Select
           label="Categoria"
@@ -125,6 +125,7 @@ export default function TransactionFormModal({
           placeholder="0,00"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
+          className="font-data"
         />
 
         <Input

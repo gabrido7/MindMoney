@@ -32,21 +32,21 @@ export default function TransactionList({
         {transactions.map((t) => (
           <li
             key={t.id}
-            className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-3"
+            className="flex justify-between items-center border-b border-line pb-3"
           >
             <div>
-              <p className="font-medium text-gray-900 dark:text-white">
+              <p className="font-medium text-ink">
                 {t.description}
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-ink-soft">
                 {formatDateBR(t.date)} · {t.category}
                 {t.subcategory ? ` · ${t.subcategory}` : ""}
               </p>
               <p
                 className={
                   t.type === "entrada"
-                    ? "text-green-600 font-medium"
-                    : "text-red-600 font-medium"
+                    ? "font-data text-brand font-medium"
+                    : "font-data text-negative font-medium"
                 }
               >
                 {formatCurrency(t.amount)}
@@ -57,14 +57,14 @@ export default function TransactionList({
               <button
                 onClick={() => onEdit(t)}
                 aria-label={`Editar transação ${t.description}`}
-                className="p-2 rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                className="p-2 rounded-lg text-brand hover:bg-brand-soft"
               >
                 <Icon name="edit" size={18} />
               </button>
               <button
                 onClick={() => onDeleteRequest(t)}
                 aria-label={`Excluir transação ${t.description}`}
-                className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                className="p-2 rounded-lg text-negative hover:bg-negative-soft"
               >
                 <Icon name="trash" size={18} />
               </button>
@@ -75,7 +75,7 @@ export default function TransactionList({
 
       {pagination && pagination.total > transactions.length && (
         <div className="flex flex-col items-center gap-2 pt-1">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-ink-soft">
             Mostrando {transactions.length} de {pagination.total} transações deste mês
           </p>
           {hasMore && (

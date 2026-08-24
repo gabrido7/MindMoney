@@ -45,7 +45,7 @@ export default function ContributionModal({
   return (
     <Modal title={`Novo aporte — ${objectiveName}`} onClose={onClose} size="sm">
       <div className="flex flex-col gap-4">
-        {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+        {error && <p className="text-negative text-sm font-medium">{error}</p>}
 
         <Input
           label="Valor (R$)"

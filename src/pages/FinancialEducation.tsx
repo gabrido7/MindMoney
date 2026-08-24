@@ -17,8 +17,8 @@ export default function FinancialEducation() {
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Educação Financeira</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h1 className="font-display text-2xl font-bold text-ink">Educação Financeira</h1>
+        <p className="text-sm text-ink-soft">
           Trilhas de aprendizado, do básico ao avançado — cada assunto é um curso completo, com aulas, exemplos, quiz e exercício prático.
         </p>
       </div>
@@ -32,8 +32,8 @@ export default function FinancialEducation() {
         </div>
       )}
 
-      {isLoading && <p className="text-gray-500 dark:text-gray-400">Carregando...</p>}
-      {error && <p className="text-red-500">Não foi possível carregar seu progresso agora.</p>}
+      {isLoading && <p className="text-ink-soft">Carregando...</p>}
+      {error && <p className="text-negative">Não foi possível carregar seu progresso agora.</p>}
 
       {!isLoading && (
         <div className="flex flex-col gap-4">
@@ -44,24 +44,24 @@ export default function FinancialEducation() {
 
             return (
               <Link key={trail.id} to={`/educacao-financeira/${trail.id}`}>
-                <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer">
+                <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-lg cursor-pointer">
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="flex items-start gap-3">
                       <span className="text-2xl leading-none mt-0.5">{TRAIL_COLOR_DOT[trail.color]}</span>
                       <div>
-                        <h2 className="font-semibold text-gray-900 dark:text-white">
+                        <h2 className="font-display font-semibold text-ink">
                           {trail.title}
-                          <span className="ml-2 text-xs font-normal text-gray-400">{trail.courses.length} cursos</span>
+                          <span className="ml-2 text-xs font-normal text-ink-soft">{trail.courses.length} cursos</span>
                         </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{trail.description}</p>
+                        <p className="text-sm text-ink-soft mt-0.5">{trail.description}</p>
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 shrink-0">{percent}%</span>
+                    <span className="font-data text-sm font-semibold text-ink-soft shrink-0">{percent}%</span>
                   </div>
 
                   <div className="mt-4">
                     <ProgressBar percent={percent} />
-                    <p className="text-xs text-gray-400 mt-1.5">
+                    <p className="text-xs text-ink-soft mt-1.5">
                       {completed} de {total} aulas concluídas
                     </p>
                   </div>

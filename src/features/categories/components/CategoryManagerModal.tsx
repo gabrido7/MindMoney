@@ -44,9 +44,9 @@ export default function CategoryManagerModal({
   return (
     <Modal title="Gerenciar Categorias" onClose={onClose} size="lg">
       <div className="flex flex-col gap-6">
-        {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+        {error && <p className="text-negative text-sm font-medium">{error}</p>}
 
-        <div className="flex flex-wrap gap-3 items-end border-b border-gray-100 dark:border-gray-700 pb-4">
+        <div className="flex flex-wrap gap-3 items-end border-b border-line pb-4">
           <Input
             label="Nova categoria"
             placeholder="Ex: Pets"
@@ -84,10 +84,10 @@ export default function CategoryManagerModal({
           {categories.map((category) => (
             <div
               key={category.name}
-              className="rounded-xl border border-gray-100 dark:border-gray-700 p-4"
+              className="rounded-xl border border-line p-4"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
+                <span className="flex items-center gap-2 font-medium text-ink">
                   <span
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: category.color }}
@@ -99,7 +99,7 @@ export default function CategoryManagerModal({
                     disabled={busy}
                     onClick={() => runAction(() => onRemoveCategory(category.name))}
                     aria-label={`Remover categoria ${category.name}`}
-                    className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950 p-1.5 rounded-lg disabled:opacity-50"
+                    className="text-negative hover:bg-negative-soft p-1.5 rounded-lg disabled:opacity-50"
                   >
                     <Icon name="trash" size={16} />
                   </button>
@@ -110,7 +110,7 @@ export default function CategoryManagerModal({
                 {category.subcategories.map((sub) => (
                   <span
                     key={sub.name}
-                    className="flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs text-gray-700 dark:text-gray-200"
+                    className="flex items-center gap-1.5 rounded-full bg-surface-alt px-3 py-1 text-xs text-ink-soft"
                   >
                     {sub.name}
                     <button
@@ -132,7 +132,7 @@ export default function CategoryManagerModal({
                   onChange={(e) =>
                     setSubInputs((prev) => ({ ...prev, [category.name]: e.target.value }))
                   }
-                  className="flex-1 p-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="flex-1 p-2 text-sm rounded-lg border border-line bg-surface text-ink"
                 />
                 <Button
                   variant="secondary"

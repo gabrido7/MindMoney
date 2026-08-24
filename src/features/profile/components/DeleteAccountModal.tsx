@@ -29,8 +29,8 @@ export default function DeleteAccountModal({
   return (
     <Modal title="Excluir conta" onClose={onClose} size="sm">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <p className="text-gray-600 dark:text-gray-300">
-          Essa ação é <strong>permanente</strong>: todas as suas transações, categorias, metas e
+        <p className="text-ink-soft">
+          Essa ação é <strong className="text-ink">permanente</strong>: todas as suas transações, categorias, metas e
           notificações serão apagadas para sempre. Digite sua senha para confirmar.
         </p>
 
@@ -45,7 +45,7 @@ export default function DeleteAccountModal({
         />
 
         {error && (
-          <p role="alert" className="text-red-500 text-sm">
+          <p role="alert" className="text-negative text-sm">
             {error}
           </p>
         )}

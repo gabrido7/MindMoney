@@ -5,10 +5,10 @@ function Row({ label, change }: { label: string; change: number }) {
   const isPositive = change >= 0;
   return (
     <div className="flex items-center justify-between">
-      <span className="text-gray-700 dark:text-gray-200">{label}</span>
+      <span className="text-ink-soft">{label}</span>
       <span
-        className={`inline-flex items-center gap-1 font-medium ${
-          isPositive ? "text-[#0ca30c]" : "text-[#d03b3b]"
+        className={`font-data inline-flex items-center gap-1 font-medium ${
+          isPositive ? "text-brand" : "text-negative"
         }`}
       >
         <Icon name={isPositive ? "trendUp" : "trendDown"} size={16} />

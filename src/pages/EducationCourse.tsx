@@ -25,15 +25,15 @@ export default function EducationCourse() {
       <div>
         <Link
           to={`/educacao-financeira/${trail.id}`}
-          className="text-sm text-gray-400 hover:text-green-600 transition-colors"
+          className="text-sm text-ink-soft hover:text-brand transition-colors"
         >
           ← {trail.title}
         </Link>
         <div className="flex items-center gap-2 mt-2">
           <span className="text-2xl">{course.icon}</span>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{course.title}</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{course.description}</p>
+            <h1 className="font-display text-2xl font-bold text-ink">{course.title}</h1>
+            <p className="text-sm text-ink-soft">{course.description}</p>
           </div>
         </div>
       </div>
@@ -48,7 +48,7 @@ export default function EducationCourse() {
       ) : (
         !isLoading && (
           <Card>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            <p className="text-sm text-ink-soft mb-3">
               {completedCount} de {course.lessons.length} aulas concluídas
             </p>
             {nextLesson && (
@@ -64,7 +64,7 @@ export default function EducationCourse() {
       )}
 
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
           {course.lessons.length} {course.lessons.length === 1 ? "aula" : "aulas"}
         </p>
         {course.lessons.map((lesson, index) => {
@@ -72,28 +72,28 @@ export default function EducationCourse() {
           const isNext = nextLesson?.id === lesson.id && !completed;
 
           const row = (
-            <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer">
+            <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card cursor-pointer">
               <div className="flex items-center gap-3">
                 <span
-                  className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                  className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                    completed ? "bg-brand-soft text-brand-deep" : isNext ? "" : "bg-surface-alt text-ink-soft"
+                  }`}
                   style={
-                    completed
-                      ? { backgroundColor: "#0ca30c1a", color: "#0ca30c" }
-                      : isNext
-                        ? { backgroundColor: `${TRAIL_COLOR_HEX[trail.color]}1a`, color: TRAIL_COLOR_HEX[trail.color] }
-                        : { backgroundColor: "#9ca3af1a", color: "#9ca3af" }
+                    isNext && !completed
+                      ? { backgroundColor: `${TRAIL_COLOR_HEX[trail.color]}1a`, color: TRAIL_COLOR_HEX[trail.color] }
+                      : undefined
                   }
                 >
                   {completed ? <Icon name="check" size={14} /> : index + 1}
                 </span>
-                <p className="flex-1 text-sm font-medium text-gray-900 dark:text-white">{lesson.title}</p>
+                <p className="flex-1 text-sm font-medium text-ink">{lesson.title}</p>
                 {isNext && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 shrink-0">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-brand-soft text-brand-deep shrink-0">
                     Continuar
                   </span>
                 )}
                 {!lesson.content && (
-                  <span className="text-xs text-gray-400 shrink-0">Em breve</span>
+                  <span className="text-xs text-ink-soft shrink-0">Em breve</span>
                 )}
               </div>
             </Card>
