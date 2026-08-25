@@ -3,6 +3,7 @@ import { hashPassword, comparePassword } from "../../utils/password";
 import { signToken } from "../../utils/jwt";
 import { generateResetToken, hashResetToken } from "../../utils/passwordResetToken";
 import { generateRefreshToken, hashRefreshToken } from "../../utils/refreshToken";
+import { describeUserAgent } from "../../utils/userAgent";
 import { usersRepository } from "../users/users.repository";
 import { toPublicUser, type PublicUser } from "../users/users.service";
 import { passwordResetRepository } from "./passwordReset.repository";
@@ -21,16 +22,25 @@ export interface AuthResult {
   user: PublicUser;
 }
 
+export interface SessionSummary {
+  id: number;
+  device: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  expiresAt: string;
+  current: boolean;
+}
+
 /** Emite o par de tokens e persiste o hash do refresh token -- usado em register/login/refresh. */
-async function issueTokens(userId: number): Promise<{ token: string; refreshToken: string }> {
+async function issueTokens(userId: number, userAgent: string | null): Promise<{ token: string; refreshToken: string }> {
   const token = signToken({ userId });
   const { token: refreshToken, tokenHash, expiresAt } = generateRefreshToken();
-  await refreshTokenRepository.create(userId, tokenHash, expiresAt);
+  await refreshTokenRepository.create(userId, tokenHash, expiresAt, userAgent);
   return { token, refreshToken };
 }
 
 export const authService = {
-  async register(input: RegisterInput): Promise<AuthResult> {
+  async register(input: RegisterInput, userAgent: string | null): Promise<AuthResult> {
     const existing = await usersRepository.findByEmail(input.email);
     if (existing) throw AppError.conflict("Já existe uma conta com esse e-mail.");
 
@@ -46,19 +56,19 @@ export const authService = {
     await usersRepository.seedDefaultCategories(userId);
 
     const user = await usersRepository.findById(userId);
-    const { token, refreshToken } = await issueTokens(userId);
+    const { token, refreshToken } = await issueTokens(userId, userAgent);
 
     return { token, refreshToken, user: toPublicUser(user!) };
   },
 
-  async login(input: LoginInput): Promise<AuthResult> {
+  async login(input: LoginInput, userAgent: string | null): Promise<AuthResult> {
     const user = await usersRepository.findByEmail(input.email);
     if (!user) throw AppError.unauthorized("E-mail ou senha inválidos.");
 
     const valid = await comparePassword(input.password, user.password_hash);
     if (!valid) throw AppError.unauthorized("E-mail ou senha inválidos.");
 
-    const { token, refreshToken } = await issueTokens(user.id);
+    const { token, refreshToken } = await issueTokens(user.id, userAgent);
     return { token, refreshToken, user: toPublicUser(user) };
   },
 
@@ -68,13 +78,36 @@ export const authService = {
    * token roubado e reusado depois do dono já ter renovado fica
    * imediatamente inválido (o dono já rotacionou pra outro hash).
    */
-  async refresh(input: RefreshInput): Promise<{ token: string; refreshToken: string }> {
+  async refresh(input: RefreshInput, userAgent: string | null): Promise<{ token: string; refreshToken: string }> {
     const tokenHash = hashRefreshToken(input.refreshToken);
     const record = await refreshTokenRepository.findValidByHash(tokenHash);
     if (!record) throw AppError.unauthorized("Sessão expirada. Faça login novamente.");
 
     await refreshTokenRepository.revoke(record.id);
-    return issueTokens(record.user_id);
+    return issueTokens(record.user_id, userAgent ?? record.user_agent);
+  },
+
+  /** Lista as sessões ativas (uma por refresh token válido) -- currentHash identifica qual é a desta requisição. */
+  async listSessions(userId: number, currentHash: string | null): Promise<SessionSummary[]> {
+    const rows = await refreshTokenRepository.listActiveForUser(userId);
+    return rows.map((row) => ({
+      id: row.id,
+      device: describeUserAgent(row.user_agent),
+      createdAt: row.created_at,
+      lastUsedAt: row.last_used_at,
+      expiresAt: row.expires_at,
+      current: currentHash !== null && row.token_hash === currentHash,
+    }));
+  },
+
+  async revokeSession(id: number, userId: number): Promise<void> {
+    const ok = await refreshTokenRepository.revokeForUserAndId(id, userId);
+    if (!ok) throw AppError.notFound("Sessão não encontrada.");
+  },
+
+  /** "Encerrar todas as outras sessões" -- mantém a sessão de onde a ação foi disparada. */
+  async revokeOtherSessions(userId: number, currentHash: string | null): Promise<void> {
+    await refreshTokenRepository.revokeAllForUserExceptHash(userId, currentHash);
   },
 
   /** Revogação real no servidor -- limpar o token só no navegador não impede reuso se ele vazou. */

@@ -1,7 +1,7 @@
 import type { RowDataPacket, ResultSetHeader } from "mysql2";
 import { pool } from "../../config/db";
 
-export type NotificationType = "limit_exceeded" | "goal_achieved";
+export type NotificationType = "limit_exceeded" | "goal_achieved" | "objective_deadline";
 
 export interface NotificationRow extends RowDataPacket {
   id: number;

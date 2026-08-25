@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
+import { MulterError } from "multer";
 import { AppError } from "../utils/AppError";
 import { logger } from "../utils/logger";
 
@@ -18,6 +19,12 @@ const MYSQL_STATUS_BY_CODE: Record<string, { status: number; message: string }> 
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({ error: { message: err.message } });
+  }
+
+  if (err instanceof MulterError) {
+    const message =
+      err.code === "LIMIT_FILE_SIZE" ? "Imagem muito grande (máximo 2MB)." : "Não foi possível enviar o arquivo.";
+    return res.status(400).json({ error: { message } });
   }
 
   if (err instanceof ZodError) {

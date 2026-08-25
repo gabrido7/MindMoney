@@ -11,6 +11,7 @@ export const uniqueEmail = (label: string) => {
 
 export interface TestUser {
   token: string;
+  refreshToken: string;
   userId: number;
   email: string;
 }
@@ -27,7 +28,7 @@ export async function registerTestUser(label: string): Promise<TestUser> {
     throw new Error(`Falha ao registrar usuário de teste: ${JSON.stringify(res.body)}`);
   }
 
-  return { token: res.body.token, userId: res.body.user.id, email };
+  return { token: res.body.token, refreshToken: res.body.refreshToken, userId: res.body.user.id, email };
 }
 
 export const authHeader = (token: string) => ({ Authorization: `Bearer ${token}` });

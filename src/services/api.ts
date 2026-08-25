@@ -2,6 +2,9 @@ import { getToken, setToken, clearToken, getRefreshToken, setRefreshToken, clear
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001/api";
 
+/** Origem "crua" do backend (sem o /api final) -- usada para montar a URL de arquivos estáticos, como avatar. */
+export const API_ORIGIN = BASE_URL.replace(/\/api\/?$/, "");
+
 export class ApiError extends Error {
   status: number;
   details?: Record<string, string[]>;
@@ -38,6 +41,7 @@ interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
   query?: QueryParams;
+  headers?: Record<string, string>;
 }
 
 function buildUrl(path: string, query?: QueryParams): string {
@@ -101,16 +105,20 @@ export async function apiRequest<T>(
   _isRetry = false
 ): Promise<T> {
   const token = getToken();
+  // FormData (upload de arquivo): o browser define o Content-Type com o
+  // boundary correto sozinho -- setar "application/json" quebraria o multipart.
+  const isFormData = options.body instanceof FormData;
 
   let response: Response;
   try {
     response = await fetch(buildUrl(path, options.query), {
       method: options.method ?? "GET",
       headers: {
-        "Content-Type": "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
       },
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body: isFormData ? (options.body as FormData) : options.body !== undefined ? JSON.stringify(options.body) : undefined,
     });
   } catch {
     throw new ApiError("Não foi possível conectar ao servidor.", 0);

@@ -2,6 +2,7 @@ import { AppError } from "../../utils/AppError";
 import { currentMonth, daysUntilEndOfMonth, monthsBetween } from "../../utils/month";
 import { objectivesRepository, type ObjectiveWithCurrentRow } from "./objectives.repository";
 import { gamificationService, type GamificationResult } from "../gamification/gamification.service";
+import { notificationsService } from "../notifications/notifications.service";
 import type { ContributionBodyInput, ObjectiveBodyInput } from "./objectives.validation";
 
 /** "Próxima do prazo" = falta atingir e o prazo está a até 3 meses (ou menos) de distância. */
@@ -159,6 +160,17 @@ export const objectivesService = {
       .filter((o) => !o.achieved && !o.overdue && o.monthsRemaining <= NEAR_DEADLINE_MONTHS)
       .sort((a, b) => a.daysRemaining - b.daysRemaining);
     const mostUrgent = nearDeadline[0];
+
+    // Efeito colateral real (mesmo padrão de checkAndNotify): dispara aqui
+    // porque é o único lugar que já calcula "objetivo mais urgente" -- não
+    // existe um cron job neste projeto, notificação nasce de uma ação real
+    // do usuário (aqui, consultar o resumo dos objetivos).
+    if (mostUrgent) {
+      await notificationsService.checkObjectiveDeadline(userId, {
+        name: mostUrgent.name,
+        daysRemaining: mostUrgent.daysRemaining,
+      });
+    }
 
     return {
       totalTarget,

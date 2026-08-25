@@ -28,6 +28,8 @@
 
   --warning: #d97706;
   --warning-soft: #faecd8;
+
+  --card-pad: 1.5rem;
 }
 
 .dark {
@@ -117,4 +119,45 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ---------------------------------------------------------------------
+   Preferências de Aparência (aba "Aparência" do Perfil) -- classes no
+   <html>, aplicadas por AppearanceContext. Independentes de
+   prefers-reduced-motion (acima): aquele respeita a config do sistema
+   operacional; isto é uma escolha explícita dentro do próprio app.
+--------------------------------------------------------------------- */
+
+/* Densidade compacta: encolhe o respiro interno dos Cards em toda a
+   plataforma -- --card-pad é consumido em Card.tsx. */
+.density-compact {
+  --card-pad: 1rem;
+}
+
+/* Desliga animação/transição do app inteiro, igual ao bloco de
+   prefers-reduced-motion acima, só que disparado por escolha do usuário
+   dentro do app em vez da preferência do sistema operacional. */
+.motion-reduced *,
+.motion-reduced *::before,
+.motion-reduced *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Efeitos de conquista (pulso verde ao bater uma meta) -- desligável à
+   parte da animação geral, pra quem só acha o "brilho" de conquista
+   chamativo demais mas quer manter as outras transições normais. */
+.achievements-effects-off .animate-goal-complete {
+  animation: none !important;
+}
+
+/* Tamanho de fonte: rem inteiro do app deriva do font-size do html,
+   então esta é a única regra necessária pra afetar tudo de uma vez. */
+html.text-size-small {
+  font-size: 15px;
+}
+
+html.text-size-large {
+  font-size: 18px;
 }

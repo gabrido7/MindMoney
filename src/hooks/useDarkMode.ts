@@ -1,17 +1,16 @@
-import { useEffect, useState } from "react";
+import { useAppearance } from "./useAppearance";
 
+/**
+ * Atalho binário, usado pelo botão de sol/lua no cabeçalho (AppLayout).
+ * Alternar aqui sempre define um tema explícito (claro/escuro), nunca
+ * "sistema" -- pra voltar em "acompanhar o sistema" o controle fica na
+ * aba Aparência do Perfil (useAppearance().setTheme("system")).
+ */
 export function useDarkMode() {
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark") return true;
-    if (saved === "light") return false;
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
-  });
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", darkMode);
-    localStorage.setItem("theme", darkMode ? "dark" : "light");
-  }, [darkMode]);
-
-  return [darkMode, setDarkMode] as const;
+  const { resolvedDark, setTheme } = useAppearance();
+  const setDarkMode = (updater: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof updater === "function" ? updater(resolvedDark) : updater;
+    setTheme(next ? "dark" : "light");
+  };
+  return [resolvedDark, setDarkMode] as const;
 }

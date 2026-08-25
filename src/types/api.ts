@@ -9,7 +9,48 @@ export interface PublicUser {
   id: number;
   name: string;
   email: string;
+  avatarUrl: string | null;
+  passwordChangedAt: string | null;
   createdAt: string;
+}
+
+export interface ApiSession {
+  id: number;
+  device: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  expiresAt: string;
+  current: boolean;
+}
+
+export type NotificationType = "limit_exceeded" | "goal_achieved" | "objective_deadline";
+
+export type NotificationPreferences = Record<NotificationType, boolean>;
+
+export type ExperienceLevel = "iniciante" | "intermediario" | "avancado";
+export type IncomeRange = "ate_2k" | "2k_5k" | "5k_10k" | "10k_20k" | "acima_20k";
+export type FinancialPriority =
+  | "reserva_emergencia"
+  | "quitar_dividas"
+  | "investir"
+  | "comprar_um_bem"
+  | "aposentadoria"
+  | "educacao";
+
+export interface FinancialRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  actionLabel: string;
+  actionPath: string;
+}
+
+export interface FinancialProfile {
+  experienceLevel: ExperienceLevel | null;
+  incomeRange: IncomeRange | null;
+  priorities: FinancialPriority[];
+  updatedAt: string | null;
+  recommendations: FinancialRecommendation[];
 }
 
 export interface AuthResponse {
@@ -83,7 +124,7 @@ export interface ApiGoal {
 export interface ApiNotification {
   id: number;
   user_id: number;
-  type: "limit_exceeded" | "goal_achieved";
+  type: NotificationType;
   title: string;
   message: string;
   read_at: string | null;

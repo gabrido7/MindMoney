@@ -1,5 +1,18 @@
 import { apiRequest } from "./api";
-import type { PublicUser } from "../types/api";
+import { getRefreshToken } from "../utils/token";
+import type {
+  ApiSession,
+  FinancialProfile,
+  NotificationPreferences,
+  NotificationType,
+  PublicUser,
+} from "../types/api";
+
+/** Identifica a sessão desta aba pro backend marcar `current` na lista -- nunca enviado a mais além disso. */
+const currentSessionHeader = (): Record<string, string> => {
+  const refreshToken = getRefreshToken();
+  return refreshToken ? { "X-Refresh-Token": refreshToken } : {};
+};
 
 export const usersService = {
   updateProfile: (input: { name: string; email: string }) =>
@@ -10,4 +23,38 @@ export const usersService = {
 
   deleteAccount: (input: { password: string }) =>
     apiRequest<void>("/users/me", { method: "DELETE", body: input }),
+
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    return apiRequest<{ user: PublicUser }>("/users/me/avatar", { method: "POST", body: formData });
+  },
+
+  removeAvatar: () => apiRequest<{ user: PublicUser }>("/users/me/avatar", { method: "DELETE" }),
+
+  listSessions: () =>
+    apiRequest<{ sessions: ApiSession[] }>("/users/me/sessions", { headers: currentSessionHeader() }),
+
+  revokeSession: (id: number) => apiRequest<void>(`/users/me/sessions/${id}`, { method: "DELETE" }),
+
+  revokeOtherSessions: () =>
+    apiRequest<void>("/users/me/sessions/other", { method: "DELETE", headers: currentSessionHeader() }),
+
+  getNotificationPreferences: () =>
+    apiRequest<{ preferences: NotificationPreferences }>("/users/me/notification-preferences"),
+
+  updateNotificationPreference: (type: NotificationType, enabled: boolean) =>
+    apiRequest<{ preferences: NotificationPreferences }>(`/users/me/notification-preferences/${type}`, {
+      method: "PUT",
+      body: { enabled },
+    }),
+
+  getFinancialProfile: () => apiRequest<{ profile: FinancialProfile }>("/users/me/financial-profile"),
+
+  updateFinancialProfile: (input: {
+    experienceLevel: FinancialProfile["experienceLevel"];
+    incomeRange: FinancialProfile["incomeRange"];
+    priorities: FinancialProfile["priorities"];
+  }) =>
+    apiRequest<{ profile: FinancialProfile }>("/users/me/financial-profile", { method: "PUT", body: input }),
 };

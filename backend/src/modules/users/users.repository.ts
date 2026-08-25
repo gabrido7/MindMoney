@@ -6,6 +6,8 @@ export interface UserRow extends RowDataPacket {
   name: string;
   email: string;
   password_hash: string;
+  avatar_path: string | null;
+  password_changed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -33,12 +35,20 @@ export const usersRepository = {
     await pool.query("CALL sp_seed_user_categories(?)", [userId]);
   },
 
+  /** password_changed_at anda sempre junto com o hash -- toda troca real de senha passa por aqui (comum ou reset). */
   async updatePassword(id: number, passwordHash: string): Promise<void> {
-    await pool.query("UPDATE users SET password_hash = ? WHERE id = ?", [passwordHash, id]);
+    await pool.query("UPDATE users SET password_hash = ?, password_changed_at = NOW() WHERE id = ?", [
+      passwordHash,
+      id,
+    ]);
   },
 
   async updateProfile(id: number, name: string, email: string): Promise<void> {
     await pool.query("UPDATE users SET name = ?, email = ? WHERE id = ?", [name, email, id]);
+  },
+
+  async updateAvatar(id: number, avatarPath: string | null): Promise<void> {
+    await pool.query("UPDATE users SET avatar_path = ? WHERE id = ?", [avatarPath, id]);
   },
 
   /**

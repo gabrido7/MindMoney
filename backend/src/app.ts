@@ -1,3 +1,4 @@
+import path from "node:path";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -60,6 +61,21 @@ app.get("/health", async (_req, res) => {
     });
   }
 });
+
+// Fotos de perfil: servidas como arquivo estático, não como binário no
+// banco. crossOriginResourcePolicy custom porque o helmet() acima já setou
+// "same-origin" por padrão, o que bloquearia o <img> do frontend (porta
+// 5173) de carregar um arquivo servido na porta 3001 -- não é uma questão
+// de CORS (imagens em <img> não passam por preflight), é esse header
+// específico que precisa liberar "cross-origin" só pra esta rota.
+app.use(
+  "/uploads",
+  (_req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
+  express.static(path.join(__dirname, "..", "uploads"))
+);
 
 app.use("/api", apiRateLimit);
 

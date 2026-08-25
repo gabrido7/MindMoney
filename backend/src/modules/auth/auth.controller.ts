@@ -3,12 +3,12 @@ import { authService } from "./auth.service";
 
 export const authController = {
   async register(req: Request, res: Response) {
-    const result = await authService.register(req.body);
+    const result = await authService.register(req.body, req.get("user-agent") ?? null);
     res.status(201).json(result);
   },
 
   async login(req: Request, res: Response) {
-    const result = await authService.login(req.body);
+    const result = await authService.login(req.body, req.get("user-agent") ?? null);
     res.json(result);
   },
 
@@ -23,7 +23,7 @@ export const authController = {
   },
 
   async refresh(req: Request, res: Response) {
-    const result = await authService.refresh(req.body);
+    const result = await authService.refresh(req.body, req.get("user-agent") ?? null);
     res.json(result);
   },
 

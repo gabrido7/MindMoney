@@ -3,11 +3,11 @@
 Schema MySQL/MariaDB (InnoDB, utf8mb4), aplicado e testado contra um
 MariaDB/MySQL real. Este README documenta o desenho original do schema
 (`schema.sql`, as 6 tabelas de base) e o raciocínio por trás dele — ainda
-válido e não revisado desde então. As 11 tabelas adicionadas depois via
-`database/migrations/001` a `010` (notificações, score, objetivos,
+válido e não revisado desde então. As 13 tabelas adicionadas depois via
+`database/migrations/001` a `011` (notificações, score, objetivos,
 educação financeira, gamificação, favoritos, tokens de sessão/reset,
-newsletter) **não** estão detalhadas aqui tabela a tabela; a lista completa
-e atualizada, com o papel de cada uma, está em
+newsletter, perfil) **não** estão detalhadas aqui tabela a tabela; a lista
+completa e atualizada, com o papel de cada uma, está em
 **[`../DOCUMENTATION.md`](../DOCUMENTATION.md)** seção 4.
 
 ## Arquivos
@@ -157,6 +157,7 @@ Em ordem, cada uma criando o que a funcionalidade correspondente precisava
 | 008 | `lesson_progress` (educação financeira) |
 | 009 | `xp_events` / `user_achievements` (gamificação) |
 | 010 | `favorites` |
+| 011 | `users.avatar_path`/`password_changed_at`, `refresh_tokens.user_agent`/`last_used_at`, `notification_preferences`, `user_financial_profiles` |
 
 Aplicar tudo, em ordem, depois de `schema.sql` + `seed.sql`:
 

@@ -4,8 +4,8 @@ API REST em Node.js + Express + TypeScript, conectada ao MySQL/MariaDB via
 `mysql2` (queries parametrizadas, nunca concatenação de string). Autenticação
 por JWT (access token curto + refresh token rotativo).
 
-> Lista completa dos 39 endpoints, das 18 tabelas e das regras de negócio
-> (score, notificações, gamificação) está em **[`../DOCUMENTATION.md`](../DOCUMENTATION.md)**
+> Lista completa dos 48 endpoints, das 20 tabelas e das regras de negócio
+> (score, notificações, gamificação, perfil) está em **[`../DOCUMENTATION.md`](../DOCUMENTATION.md)**
 > — este README cobre só a estrutura interna do backend, pra não duplicar (e
 > desatualizar) a mesma informação em dois lugares.
 
@@ -30,7 +30,9 @@ backend/src/
   utils/        AppError, asyncHandler, jwt, password (bcrypt), month
   modules/
     auth/           registro, login, refresh/logout, esqueci/redefinir senha
-    users/          perfil, troca de senha, exclusão de conta
+    users/          perfil, foto, troca de senha, sessões ativas, preferências
+                    de notificação, exclusão de conta
+    financialProfile/  experiência/renda/prioridades + recomendações por regra
     categories/     categorias/subcategorias por usuário (soft-delete)
     transactions/   CRUD de transações + importação em lote
     goals/          metas de economia mensais
@@ -70,5 +72,5 @@ categorias/subcategorias padrão.
 `npm test` roda os testes de integração (Vitest + Supertest) contra o MySQL
 real — nunca mockado. Cada teste cria e limpa seus próprios usuários
 (`tests/helpers.ts`), então a suíte pode rodar em qualquer ordem sem
-interferir entre testes. Ver `DOCUMENTATION.md` seção 12 para a contagem
+interferir entre testes. Ver `DOCUMENTATION.md` seção 13 para a contagem
 atual e a cobertura por módulo.

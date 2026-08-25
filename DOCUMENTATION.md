@@ -43,30 +43,32 @@ Ver `CLAUDE.md` para o mapa de onde cada coisa fica no código.
 | Testes | Vitest (frontend e backend), Supertest (API) |
 
 Nenhuma dependência de IA/LLM externa está configurada ou em uso — ver
-seção 11.
+seção 12.
 
 ## 4. Banco de dados
 
-18 tabelas + 1 stored procedure (detalhes, constraints e diagrama ER
+20 tabelas + 1 stored procedure (detalhes, constraints e diagrama ER
 completos em `database/README.md`). Base em `database/schema.sql`,
-evolução em `database/migrations/001` a `010`, aplicadas em ordem:
+evolução em `database/migrations/001` a `011`, aplicadas em ordem:
 
 | Tabela | Papel |
 |---|---|
-| `users` | Autenticação |
+| `users` | Autenticação — inclui `avatar_path` (arquivo em disco, nunca binário no banco) e `password_changed_at` (null até a primeira troca de senha) |
 | `category_templates` / `subcategory_templates` | Padrões copiados para cada usuário novo no cadastro (`sp_seed_user_categories`) |
 | `categories` / `subcategories` | Por usuário, soft-delete via `archived_at` |
 | `transactions` | Lançamentos financeiros |
 | `saving_goals` | Uma meta de economia por usuário/mês |
 | `financial_objectives` / `objective_contributions` | Objetivos de longo prazo (nome, valor-alvo, categoria, prioridade) e seus aportes |
 | `notifications` | Avisos gerados por eventos reais |
+| `notification_preferences` | Por usuário/tipo — ausência de linha equivale a "ativado" (ver seção 11) |
 | `financial_score_history` | Cache do score por mês, recalculado a cada consulta |
 | `newsletter_subscribers` | Cadastros da landing pública |
-| `password_reset_tokens` / `refresh_tokens` | Tokens de uso único, guardados só como hash (SHA-256) |
+| `password_reset_tokens` / `refresh_tokens` | Tokens de uso único, guardados só como hash (SHA-256); `refresh_tokens` também guarda `user_agent` e `last_used_at` — cada linha ativa é, na prática, uma sessão que aparece em "Sessões ativas" no Perfil |
 | `lesson_progress` | Progresso do usuário nas aulas da Educação Financeira (o conteúdo em si é estático, vive no frontend — `lesson_id` é uma slug, não FK) |
 | `xp_events` | Ledger de XP; `UNIQUE(user_id, reason, reference_id)` torna a concessão idempotente |
 | `user_achievements` | Conquistas desbloqueadas |
 | `favorites` | Aulas/calculadoras salvas pelo usuário |
+| `user_financial_profiles` | Experiência, faixa de renda e prioridades informadas pelo usuário — usadas só para gerar recomendações determinísticas (seção 11) |
 
 Decisões relevantes: valores monetários sempre `DECIMAL`, nunca
 `FLOAT`/`DOUBLE`; `transactions.category_id` é `ON DELETE RESTRICT` de
@@ -78,7 +80,7 @@ seção 8).
 
 ## 5. API REST
 
-Base: `/api`, 39 endpoints. Toda rota exceto `/health`, as de
+Base: `/api`, 48 endpoints. Toda rota exceto `/health`, as de
 `/api/auth/*` e `POST /api/newsletter` (captura de e-mail da landing
 pública) exige `Authorization: Bearer <token>`. Toda consulta filtra
 por `user_id` extraído do token — nunca por um id vindo do corpo da
@@ -98,6 +100,15 @@ requisição.
 | PUT | `/api/users/me` | Atualiza perfil |
 | PUT | `/api/users/me/password` | Troca de senha |
 | DELETE | `/api/users/me` | Exclui a conta (e os dados, na ordem correta) |
+| POST | `/api/users/me/avatar` | Envia foto de perfil (`multipart/form-data`, PNG/JPG/WEBP até 2MB) — substitui e apaga a anterior do disco |
+| DELETE | `/api/users/me/avatar` | Remove a foto de perfil |
+| GET | `/api/users/me/sessions` | Lista sessões ativas (refresh tokens válidos) — `X-Refresh-Token` no header identifica qual é a atual |
+| DELETE | `/api/users/me/sessions/other` | Encerra todas as outras sessões, preservando a atual |
+| DELETE | `/api/users/me/sessions/:id` | Encerra uma sessão específica |
+| GET | `/api/users/me/notification-preferences` | Preferências de notificação (tipo ausente = ativado) |
+| PUT | `/api/users/me/notification-preferences/:type` | Ativa/desativa um tipo de notificação |
+| GET | `/api/users/me/financial-profile` | Perfil financeiro + recomendações calculadas na hora |
+| PUT | `/api/users/me/financial-profile` | Atualiza experiência/renda/prioridades |
 
 **Transações e categorias**
 
@@ -192,7 +203,8 @@ corrigido nesta etapa (dependências vulneráveis, rate limiting ausente).
 - **Score financeiro**: 4 componentes, níveis, histórico com gráfico de
   evolução (seção 8).
 - **Notificações**: geradas automaticamente (limite excedido, meta
-  atingida), sino com contador de não lidas, marcar como lida.
+  atingida, objetivo próximo do prazo), sino com contador de não lidas,
+  marcar como lida, preferências por tipo controláveis no Perfil.
 - **Relatórios**: totais, % de economia, maior categoria, comparação dos
   últimos 6 meses, exportação em CSV.
 - **Objetivos de longo prazo**: metas nomeadas (viagem, compra,
@@ -216,8 +228,16 @@ corrigido nesta etapa (dependências vulneráveis, rate limiting ausente).
 - **Favoritos**: salvar aulas e calculadoras para acesso rápido depois.
 - **Assistente/insights**: observações automáticas (aumento de gasto,
   categoria recorrente, evolução, meta, recomendação geral) e resposta a
-  perguntas simples sobre os próprios dados (seção 11).
-- **Perfil**: dados da conta, troca de senha, exclusão de conta, logout.
+  perguntas simples sobre os próprios dados (seção 12).
+- **Perfil**: dados da conta, foto (upload/remoção, com iniciais como
+  fallback), troca de senha com data da última alteração, sessões
+  ativas com encerramento individual ou em massa, preferências de
+  notificação, aparência (tema claro/escuro/sistema, densidade, tamanho
+  de fonte, animações e efeitos de conquista — persistidos por
+  dispositivo), perfil financeiro com recomendações determinísticas,
+  visão consolidada de progresso (nível, sequência, aulas e objetivos
+  concluídos, conquistas), resumo de privacidade, exclusão de conta,
+  logout.
 
 ## 8. Regras de negócio — Score Financeiro
 
@@ -245,15 +265,24 @@ transação de um mês passado for editada depois).
 
 ## 9. Regras de negócio — Notificações
 
-Não existe endpoint para criar notificação manualmente. Elas nascem como
-efeito colateral real de duas regras, avaliadas a cada criação/edição de
-transação ou meta:
+Não existe endpoint para criar notificação manualmente nem cron job:
+todas nascem como efeito colateral real de uma ação que já acontece por
+outro motivo, avaliadas a cada vez:
 
-- `limit_exceeded`: gasto do mês passou de 70% das entradas.
-- `goal_achieved`: saldo do mês atingiu a meta definida.
+- `limit_exceeded`: gasto do mês passou de 70% das entradas — avaliado a
+  cada criação/edição de transação ou meta.
+- `goal_achieved`: saldo do mês atingiu a meta definida — mesmo gatilho.
+- `objective_deadline`: o objetivo de longo prazo mais urgente (não
+  atingido, dentro de 3 meses do prazo) está a poucos dias de vencer —
+  avaliado a cada `GET /api/objectives/summary`, reaproveitando o
+  cálculo de "próximo do prazo" que a tela de Metas já faz, sem
+  recalcular nada à parte.
 
 Sem duplicar: só cria uma nova se não houver outra do mesmo tipo ainda
-não lida pelo usuário.
+não lida pelo usuário. Cada tipo respeita a preferência do usuário
+(`notification_preferences` — ausência de linha para um tipo equivale a
+ativado, então todo mundo começa recebendo tudo sem precisar de uma
+migração de dados populando linha por usuário).
 
 ## 10. Regras de negócio — Gamificação
 
@@ -285,7 +314,29 @@ valor em pontos é decidido sempre no servidor
   detectar "curso/trilha 100% concluída" — precisam ser atualizados
   manualmente sempre que uma trilha nova é escrita.
 
-## 11. Recurso inteligente (etapa 15) — o que é e o que não é
+## 11. Regras de negócio — Perfil (sessões e recomendações financeiras)
+
+**Sessões ativas**: cada refresh token válido (`refresh_tokens`, seção
+4) já é, por definição, uma sessão logada — não existe uma tabela
+`sessions` separada. `GET /api/users/me/sessions` lista as linhas ainda
+não revogadas e não expiradas do usuário, com um rótulo de dispositivo
+derivado do `user_agent` guardado no login/cadastro/refresh (só
+navegador + sistema operacional; IP e geolocalização não são
+coletados). A sessão de onde a própria requisição partiu é identificada
+comparando o hash do refresh token enviado no header `X-Refresh-Token`
+com o hash guardado — nunca por cookie ou sessão de servidor.
+
+**Recomendações do perfil financeiro**: assim como o score e os
+insights (seções 8 e 12), são 100% regra determinística, nunca geradas
+por IA. Cada recomendação só aparece quando a resposta do usuário
+(experiência, prioridades) se combina com um dado real ausente no
+banco — por exemplo, "criar reserva de emergência" só é sugerido para
+quem marcou essa prioridade **e** ainda não tem nenhum objetivo da
+categoria `reserva`. Um perfil vazio (usuário que ainda não respondeu
+nada) gera lista vazia, não uma recomendação genérica de "preencha seu
+perfil".
+
+## 12. Recurso inteligente (etapa 15) — o que é e o que não é
 
 **Não há nenhuma integração de IA/LLM configurada neste projeto** —
 nenhuma chave de API, nenhuma variável de ambiente para isso. O
@@ -305,9 +356,9 @@ como uma etapa **depois** do cálculo determinístico (por exemplo, para
 redigir o texto de forma mais natural), nunca no lugar dele, e nunca sem
 uma credencial de verdade configurada.
 
-## 12. Testes
+## 13. Testes
 
-243 testes automatizados, executados e passando — 18 arquivos em
+261 testes automatizados, executados e passando — 19 arquivos em
 `backend/tests/` (integração via Supertest contra o MySQL real, cada
 teste cria e limpa seus próprios usuários) e 8 arquivos em
 `src/**/*.test.ts` (unitários — funções de cálculo puras: score,
@@ -317,15 +368,16 @@ cadastro, login, refresh/expiração de sessão, troca e redefinição de
 senha, transações, categorias, subcategorias, metas, objetivos e
 aportes, score, notificações, dashboard, educação financeira e
 gamificação (XP, nível, sequência, conquistas), favoritos, filtros,
-cálculos e — em praticamente todo módulo — isolamento entre usuários
-(IDOR).
+cálculos, foto de perfil, sessões ativas, preferências de notificação,
+perfil financeiro e — em praticamente todo módulo — isolamento entre
+usuários (IDOR).
 
-## 13. Limitações conhecidas
+## 14. Limitações conhecidas
 
 Registradas aqui de propósito, para não serem confundidas com
 funcionalidade quebrada:
 
-- **Recurso inteligente sem IA externa**: ver seção 11.
+- **Recurso inteligente sem IA externa**: ver seção 12.
 - **`useCategories` no frontend faz uma requisição por categoria** para
   buscar as subcategorias (N+1), em vez de um endpoint único que já
   devolva tudo aninhado. Com o número atual de categorias por usuário o
@@ -337,16 +389,18 @@ funcionalidade quebrada:
   por sessão, não afeta a experiência de forma perceptível hoje, mas é
   o próximo passo óbvio de performance se o app crescer mais.
 
-## 14. Auditoria final (etapa 20)
+## 15. Auditoria final (etapa 20)
 
 > Auditoria feita num ponto específico do projeto — antes de
 > gamificação, trilhas completas de educação financeira, ferramentas
-> financeiras, busca, favoritos e do redesign da landing/sidebar. Os
+> financeiras, busca, favoritos, do redesign global (landing, dashboard
+> e todas as páginas) e da expansão do Perfil (foto, sessões,
+> preferências de notificação, aparência, perfil financeiro). Os
 > achados abaixo continuam válidos para o núcleo que auditam (transações,
 > categorias, metas, autenticação), mas as funcionalidades adicionadas
 > depois não foram re-auditadas com este mesmo nível de detalhe —
 > receberam sua própria verificação ponta a ponta no momento em que
-> foram construídas (ver testes automatizados da seção 12), não uma
+> foram construídas (ver testes automatizados da seção 13), não uma
 > auditoria formal registrada aqui.
 
 Revisão completa do estado atual do sistema, feita depois de todas as

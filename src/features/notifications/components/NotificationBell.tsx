@@ -4,14 +4,16 @@ import EmptyState from "../../../components/ui/EmptyState";
 import { notificationsService } from "../../../services/notificationsService";
 import type { ApiNotification } from "../../../types/api";
 
-const TYPE_ICON: Record<ApiNotification["type"], "alert" | "trophy"> = {
+const TYPE_ICON: Record<ApiNotification["type"], "alert" | "trophy" | "target"> = {
   limit_exceeded: "alert",
   goal_achieved: "trophy",
+  objective_deadline: "target",
 };
 
 const TYPE_COLOR: Record<ApiNotification["type"], string> = {
   limit_exceeded: "var(--negative)",
   goal_achieved: "var(--brand)",
+  objective_deadline: "var(--warning)",
 };
 
 function timeAgo(isoDate: string): string {

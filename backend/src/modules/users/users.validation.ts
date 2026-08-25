@@ -14,6 +14,11 @@ export const deleteAccountSchema = z.object({
   password: z.string().min(1, "Senha é obrigatória para confirmar a exclusão"),
 });
 
+export const notificationPreferenceSchema = z.object({
+  enabled: z.boolean(),
+});
+
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+export type NotificationPreferenceInput = z.infer<typeof notificationPreferenceSchema>;
