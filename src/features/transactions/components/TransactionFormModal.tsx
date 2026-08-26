@@ -88,6 +88,7 @@ export default function TransactionFormModal({
         {error && <p className="text-negative text-sm font-medium">{error}</p>}
 
         <Select
+          id="transaction-category"
           label="Categoria"
           value={category}
           onChange={(e) => handleCategoryChange(e.target.value)}
@@ -99,6 +100,7 @@ export default function TransactionFormModal({
 
         {isOutros && (
           <Input
+            id="transaction-description"
             label="Descrição"
             placeholder="Descrição"
             value={description}
@@ -108,6 +110,7 @@ export default function TransactionFormModal({
 
         {!!selectedCategory?.subcategories.length && (
           <Select
+            id="transaction-subcategory"
             label="Subcategoria"
             value={subcategory}
             onChange={(e) => setSubcategory(e.target.value)}
@@ -120,6 +123,7 @@ export default function TransactionFormModal({
         )}
 
         <Input
+          id="transaction-amount"
           label="Valor"
           type="number"
           placeholder="0,00"
@@ -129,6 +133,7 @@ export default function TransactionFormModal({
         />
 
         <Input
+          id="transaction-date"
           label="Data"
           type="date"
           value={date}
@@ -136,6 +141,7 @@ export default function TransactionFormModal({
         />
 
         <Select
+          id="transaction-type"
           label="Tipo"
           value={type}
           disabled={!typeIsEditable}
