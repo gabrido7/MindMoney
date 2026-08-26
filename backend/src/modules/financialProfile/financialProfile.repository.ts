@@ -10,9 +10,11 @@ export interface FinancialProfileRow extends RowDataPacket {
   income_variable: number;
   income_min: string | null;
   income_max: string | null;
-  income_sources: string | null; // JSON, parseado pelo service
-  priorities: string | null; // JSON, parseado pelo service
-  habits: string | null; // JSON, parseado pelo service
+  // JSON -- string crua no MariaDB, já deserializado (array/objeto) no MySQL
+  // 8 nativo; parseJsonArray/parseHabits em financialProfile.service.ts tratam os dois casos.
+  income_sources: unknown;
+  priorities: unknown;
+  habits: unknown;
   updated_at: string;
 }
 

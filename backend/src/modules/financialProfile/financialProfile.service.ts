@@ -17,8 +17,20 @@ export interface BehaviorProfile {
   description: string;
 }
 
-function parseJsonArray<T>(raw: string | null): T[] {
+/**
+ * MySQL 8 (produção/CI) tem tipo JSON nativo -- o driver mysql2 já devolve
+ * a coluna deserializada (array/objeto), não como texto. MariaDB (usado no
+ * XAMPP local) trata JSON como alias de LONGTEXT, então devolve a string
+ * crua, que precisa de JSON.parse. Sem tratar os dois casos, um `raw` já
+ * deserializado quebra o JSON.parse (tenta fazer parse de "[object Object]"
+ * ou de um array convertido pra string por engano) e cai no catch, voltando
+ * silenciosamente vazio -- foi exatamente isso que passou no MariaDB local
+ * mas quebrou no MySQL real do CI.
+ */
+function parseJsonArray<T>(raw: unknown): T[] {
   if (!raw) return [];
+  if (Array.isArray(raw)) return raw as T[];
+  if (typeof raw !== "string") return [];
   try {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -27,8 +39,10 @@ function parseJsonArray<T>(raw: string | null): T[] {
   }
 }
 
-function parseHabits(raw: string | null): HabitsInput | null {
+function parseHabits(raw: unknown): HabitsInput | null {
   if (!raw) return null;
+  if (typeof raw === "object") return raw as HabitsInput;
+  if (typeof raw !== "string") return null;
   try {
     return JSON.parse(raw) as HabitsInput;
   } catch {
