@@ -8,6 +8,8 @@ export interface UserRow extends RowDataPacket {
   password_hash: string;
   avatar_path: string | null;
   password_changed_at: string | null;
+  onboarding_completed_at: string | null;
+  onboarding_skipped_steps: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -49,6 +51,14 @@ export const usersRepository = {
 
   async updateAvatar(id: number, avatarPath: string | null): Promise<void> {
     await pool.query("UPDATE users SET avatar_path = ? WHERE id = ?", [avatarPath, id]);
+  },
+
+  /** Idempotente de propósito -- concluir ou pular o onboarding chamam o mesmo método; repetir não é erro. */
+  async completeOnboarding(id: number, skippedSteps: string[]): Promise<void> {
+    await pool.query(
+      "UPDATE users SET onboarding_completed_at = NOW(), onboarding_skipped_steps = ? WHERE id = ? AND onboarding_completed_at IS NULL",
+      [JSON.stringify(skippedSteps), id]
+    );
   },
 
   /**

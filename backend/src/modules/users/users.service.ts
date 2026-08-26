@@ -4,6 +4,7 @@ import { AppError } from "../../utils/AppError";
 import { hashPassword, comparePassword } from "../../utils/password";
 import { usersRepository, type UserRow } from "./users.repository";
 import { refreshTokenRepository } from "../auth/refreshToken.repository";
+import { notificationsService } from "../notifications/notifications.service";
 import { AVATAR_UPLOAD_DIR } from "../../middlewares/upload";
 import type { ChangePasswordInput, DeleteAccountInput, UpdateProfileInput } from "./users.validation";
 
@@ -13,6 +14,7 @@ export interface PublicUser {
   email: string;
   avatarUrl: string | null;
   passwordChangedAt: string | null;
+  onboardingCompletedAt: string | null;
   createdAt: string;
 }
 
@@ -22,6 +24,7 @@ export const toPublicUser = (user: UserRow): PublicUser => ({
   email: user.email,
   avatarUrl: user.avatar_path ? `/uploads/avatars/${user.avatar_path}` : null,
   passwordChangedAt: user.password_changed_at,
+  onboardingCompletedAt: user.onboarding_completed_at,
   createdAt: user.created_at,
 });
 
@@ -93,6 +96,14 @@ export const usersService = {
 
     const updated = await usersRepository.findById(userId);
     return toPublicUser(updated!);
+  },
+
+  async completeOnboarding(userId: number, skippedSteps: string[]): Promise<PublicUser> {
+    await usersRepository.completeOnboarding(userId, skippedSteps);
+    await notificationsService.notifyOnboardingPending(userId, skippedSteps);
+    const user = await usersRepository.findById(userId);
+    if (!user) throw AppError.notFound("Usuário não encontrado.");
+    return toPublicUser(user);
   },
 
   async deleteAccount(userId: number, input: DeleteAccountInput): Promise<void> {

@@ -219,6 +219,8 @@ describe("Perfil -- preferências de notificação", () => {
       limit_exceeded: true,
       goal_achieved: true,
       objective_deadline: true,
+      category_budget_exceeded: true,
+      onboarding_pending: true,
     });
 
     await cleanupUser(user.userId);
@@ -304,6 +306,143 @@ describe("Perfil -- perfil financeiro", () => {
       .put("/api/users/me/financial-profile")
       .set(authHeader(user.token))
       .send({ experienceLevel: null, incomeRange: null, priorities: ["nao-existe"] });
+
+    expect(res.status).toBe(400);
+    await cleanupUser(user.userId);
+  });
+
+  it("salva o perfil aos pedaços -- um PUT parcial não apaga o que outro já salvou (onboarding v2)", async () => {
+    const user = await registerTestUser("finprofile-partial");
+
+    const step1 = await request(app)
+      .put("/api/users/me/financial-profile")
+      .set(authHeader(user.token))
+      .send({ priorities: ["organizar_financas", "controlar_gastos"] });
+    expect(step1.status).toBe(200);
+    expect(step1.body.profile.priorities).toEqual(["organizar_financas", "controlar_gastos"]);
+
+    const step2 = await request(app)
+      .put("/api/users/me/financial-profile")
+      .set(authHeader(user.token))
+      .send({ experienceLevel: "intermediario", financialSituation: "aperta_mas_consigo" });
+    expect(step2.status).toBe(200);
+    // O que o passo 1 salvou continua lá -- o passo 2 só mandou campos novos.
+    expect(step2.body.profile.priorities).toEqual(["organizar_financas", "controlar_gastos"]);
+    expect(step2.body.profile.experienceLevel).toBe("intermediario");
+    expect(step2.body.profile.financialSituation).toBe("aperta_mas_consigo");
+
+    await cleanupUser(user.userId);
+  });
+
+  it("salva renda variável, fontes de renda e hábitos, e calcula o perfil comportamental", async () => {
+    const user = await registerTestUser("finprofile-habits");
+
+    const res = await request(app)
+      .put("/api/users/me/financial-profile")
+      .set(authHeader(user.token))
+      .send({
+        incomeVariable: true,
+        incomeMin: 2000,
+        incomeMax: 4500,
+        incomeSources: ["Salário", "Freelance"],
+        habits: {
+          tracksSpending: "sim",
+          overspends: "nunca",
+          creditCardUsage: "nao",
+          investsRegularly: "regularmente",
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.profile).toMatchObject({
+      incomeVariable: true,
+      incomeMin: 2000,
+      incomeMax: 4500,
+      incomeSources: ["Salário", "Freelance"],
+    });
+    expect(res.body.profile.behaviorProfile).toMatchObject({ label: "Consciente" });
+
+    await cleanupUser(user.userId);
+  });
+
+  it("rejeita resposta de hábito fora do enum", async () => {
+    const user = await registerTestUser("finprofile-invalid-habit");
+
+    const res = await request(app)
+      .put("/api/users/me/financial-profile")
+      .set(authHeader(user.token))
+      .send({ habits: { tracksSpending: "sempre", overspends: "nunca", creditCardUsage: "nao", investsRegularly: "nunca" } });
+
+    expect(res.status).toBe(400);
+    await cleanupUser(user.userId);
+  });
+});
+
+describe("Onboarding -- conclusão e etapas puladas", () => {
+  it("conclui sem pular nada -- não gera notificação de pendência", async () => {
+    const user = await registerTestUser("onboarding-complete");
+
+    const res = await request(app)
+      .put("/api/users/me/onboarding")
+      .set(authHeader(user.token))
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.onboardingCompletedAt).toBeTruthy();
+
+    const notifications = await request(app).get("/api/notifications").set(authHeader(user.token));
+    expect(notifications.body.notifications.find((n: { type: string }) => n.type === "onboarding_pending")).toBeFalsy();
+
+    await cleanupUser(user.userId);
+  });
+
+  it("pular etapas gera uma notificação real listando o que falta", async () => {
+    const user = await registerTestUser("onboarding-skip");
+
+    const res = await request(app)
+      .put("/api/users/me/onboarding")
+      .set(authHeader(user.token))
+      .send({ skippedSteps: ["renda", "dividas"] });
+
+    expect(res.status).toBe(200);
+
+    const notifications = await request(app).get("/api/notifications").set(authHeader(user.token));
+    const found = notifications.body.notifications.find((n: { type: string }) => n.type === "onboarding_pending");
+    expect(found).toBeTruthy();
+    expect(found.message).toContain("Renda");
+    expect(found.message).toContain("Dívidas");
+
+    await cleanupUser(user.userId);
+  });
+
+  it("é idempotente -- concluir de novo não falha nem duplica notificação", async () => {
+    const user = await registerTestUser("onboarding-idempotent");
+
+    await request(app)
+      .put("/api/users/me/onboarding")
+      .set(authHeader(user.token))
+      .send({ skippedSteps: ["habitos"] });
+
+    const second = await request(app)
+      .put("/api/users/me/onboarding")
+      .set(authHeader(user.token))
+      .send({ skippedSteps: ["habitos"] });
+    expect(second.status).toBe(200);
+
+    const notifications = await request(app).get("/api/notifications").set(authHeader(user.token));
+    const matches = notifications.body.notifications.filter((n: { type: string }) => n.type === "onboarding_pending");
+    expect(matches).toHaveLength(1);
+
+    await cleanupUser(user.userId);
+  });
+
+  it("rejeita corpo com skippedSteps fora do formato esperado", async () => {
+    const user = await registerTestUser("onboarding-invalid");
+
+    const res = await request(app)
+      .put("/api/users/me/onboarding")
+      .set(authHeader(user.token))
+      .send({ skippedSteps: "renda" });
 
     expect(res.status).toBe(400);
     await cleanupUser(user.userId);

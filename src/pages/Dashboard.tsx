@@ -24,6 +24,7 @@ import MonthComparisonCard from "../features/dashboard/components/MonthCompariso
 import InsightsCard from "../features/dashboard/components/InsightsCard";
 import ScoreCard from "../features/dashboard/components/ScoreCard";
 import AssistantCard from "../features/dashboard/components/AssistantCard";
+import CategoryBudgetsCard from "../features/dashboard/components/CategoryBudgetsCard";
 
 
 import TransactionFormModal from "../features/transactions/components/TransactionFormModal";
@@ -298,6 +299,8 @@ export default function Dashboard() {
             />
           )}
         </div>
+
+        <CategoryBudgetsCard month={selectedMonth} categories={categories} />
 
         <InsightsCard
           biggestIncrease={biggestIncrease}

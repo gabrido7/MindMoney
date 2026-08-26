@@ -27,7 +27,7 @@ describe("Autenticação (cadastro, login, /me)", () => {
     const categories = await request(app)
       .get("/api/categories")
       .set(authHeader(res.body.token));
-    expect(categories.body.categories.length).toBe(11);
+    expect(categories.body.categories.length).toBe(14);
   });
 
   it("rejeita cadastro com e-mail já usado (409)", async () => {

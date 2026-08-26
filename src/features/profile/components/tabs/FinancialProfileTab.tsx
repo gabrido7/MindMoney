@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import Card from "../../../../components/ui/Card";
 import Button from "../../../../components/ui/Button";
 import Icon from "../../../../components/ui/Icon";
+import ChipGroup from "../../../../components/ui/ChipGroup";
 import { useFinancialProfile } from "../../hooks/useFinancialProfile";
+import DebtsSection from "../DebtsSection";
 import type { ExperienceLevel, FinancialPriority, IncomeRange } from "../../../../types/api";
 
 const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string }[] = [
@@ -27,6 +29,10 @@ const PRIORITY_OPTIONS: { value: FinancialPriority; label: string }[] = [
   { value: "comprar_um_bem", label: "Comprar um bem" },
   { value: "aposentadoria", label: "Aposentadoria" },
   { value: "educacao", label: "Educação" },
+  { value: "organizar_financas", label: "Organizar finanças" },
+  { value: "alcancar_objetivos", label: "Alcançar objetivos" },
+  { value: "controlar_gastos", label: "Controlar gastos" },
+  { value: "construir_patrimonio", label: "Construir patrimônio" },
 ];
 
 export default function FinancialProfileTab() {
@@ -64,71 +70,31 @@ export default function FinancialProfileTab() {
         <div className="flex flex-col gap-6">
           <div>
             <p className="text-sm font-medium text-ink mb-2">Experiência com finanças</p>
-            <div className="flex flex-wrap gap-2">
-              {EXPERIENCE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => {
-                    setExperienceLevel(opt.value);
-                    setSaved(false);
-                  }}
-                  aria-pressed={experienceLevel === opt.value}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    experienceLevel === opt.value
-                      ? "bg-brand text-white"
-                      : "border border-line text-ink-soft hover:border-brand hover:text-brand-deep"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <ChipGroup
+              options={EXPERIENCE_OPTIONS}
+              selected={experienceLevel ? [experienceLevel] : []}
+              onToggle={(value) => {
+                setExperienceLevel(value);
+                setSaved(false);
+              }}
+            />
           </div>
 
           <div>
             <p className="text-sm font-medium text-ink mb-2">Faixa de renda mensal</p>
-            <div className="flex flex-wrap gap-2">
-              {INCOME_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => {
-                    setIncomeRange(opt.value);
-                    setSaved(false);
-                  }}
-                  aria-pressed={incomeRange === opt.value}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    incomeRange === opt.value
-                      ? "bg-brand text-white"
-                      : "border border-line text-ink-soft hover:border-brand hover:text-brand-deep"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <ChipGroup
+              options={INCOME_OPTIONS}
+              selected={incomeRange ? [incomeRange] : []}
+              onToggle={(value) => {
+                setIncomeRange(value);
+                setSaved(false);
+              }}
+            />
           </div>
 
           <div>
             <p className="text-sm font-medium text-ink mb-2">Prioridades (escolha quantas fizerem sentido)</p>
-            <div className="flex flex-wrap gap-2">
-              {PRIORITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => togglePriority(opt.value)}
-                  aria-pressed={priorities.includes(opt.value)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    priorities.includes(opt.value)
-                      ? "bg-brand text-white"
-                      : "border border-line text-ink-soft hover:border-brand hover:text-brand-deep"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <ChipGroup options={PRIORITY_OPTIONS} selected={priorities} onToggle={togglePriority} />
           </div>
 
           <div className="flex items-center gap-3">
@@ -139,6 +105,15 @@ export default function FinancialProfileTab() {
           </div>
         </div>
       </Card>
+
+      {profile?.behaviorProfile && (
+        <Card title="Seu perfil comportamental">
+          <p className="text-sm font-semibold text-brand-deep">{profile.behaviorProfile.label}</p>
+          <p className="text-sm text-ink-soft mt-1">{profile.behaviorProfile.description}</p>
+        </Card>
+      )}
+
+      <DebtsSection />
 
       {profile && profile.recommendations.length > 0 && (
         <Card title="Recomendações para você">

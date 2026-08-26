@@ -1,8 +1,9 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function ProtectedRoute() {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -14,6 +15,16 @@ export default function ProtectedRoute() {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  const onOnboardingRoute = location.pathname === "/onboarding";
+
+  if (!user.onboardingCompletedAt && !onOnboardingRoute) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  if (user.onboardingCompletedAt && onOnboardingRoute) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;

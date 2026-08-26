@@ -6,6 +6,7 @@ import type {
   NotificationPreferences,
   NotificationType,
   PublicUser,
+  UpdateFinancialProfileInput,
 } from "../types/api";
 
 /** Identifica a sessão desta aba pro backend marcar `current` na lista -- nunca enviado a mais além disso. */
@@ -49,12 +50,11 @@ export const usersService = {
       body: { enabled },
     }),
 
+  completeOnboarding: (input: { skippedSteps: string[] } = { skippedSteps: [] }) =>
+    apiRequest<{ user: PublicUser }>("/users/me/onboarding", { method: "PUT", body: input }),
+
   getFinancialProfile: () => apiRequest<{ profile: FinancialProfile }>("/users/me/financial-profile"),
 
-  updateFinancialProfile: (input: {
-    experienceLevel: FinancialProfile["experienceLevel"];
-    incomeRange: FinancialProfile["incomeRange"];
-    priorities: FinancialProfile["priorities"];
-  }) =>
+  updateFinancialProfile: (input: UpdateFinancialProfileInput) =>
     apiRequest<{ profile: FinancialProfile }>("/users/me/financial-profile", { method: "PUT", body: input }),
 };

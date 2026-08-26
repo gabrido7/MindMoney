@@ -11,6 +11,7 @@ export interface PublicUser {
   email: string;
   avatarUrl: string | null;
   passwordChangedAt: string | null;
+  onboardingCompletedAt: string | null;
   createdAt: string;
 }
 
@@ -23,19 +24,41 @@ export interface ApiSession {
   current: boolean;
 }
 
-export type NotificationType = "limit_exceeded" | "goal_achieved" | "objective_deadline";
+export type NotificationType =
+  | "limit_exceeded"
+  | "goal_achieved"
+  | "objective_deadline"
+  | "category_budget_exceeded"
+  | "onboarding_pending";
 
 export type NotificationPreferences = Record<NotificationType, boolean>;
 
 export type ExperienceLevel = "iniciante" | "intermediario" | "avancado";
 export type IncomeRange = "ate_2k" | "2k_5k" | "5k_10k" | "10k_20k" | "acima_20k";
+export type FinancialSituation = "tudo_controle" | "aperta_mas_consigo" | "vivo_no_limite" | "endividado";
 export type FinancialPriority =
   | "reserva_emergencia"
   | "quitar_dividas"
   | "investir"
   | "comprar_um_bem"
   | "aposentadoria"
-  | "educacao";
+  | "educacao"
+  | "organizar_financas"
+  | "alcancar_objetivos"
+  | "controlar_gastos"
+  | "construir_patrimonio";
+
+export interface FinancialHabits {
+  tracksSpending: "sim" | "as_vezes" | "nao";
+  overspends: "nunca" | "as_vezes" | "frequentemente";
+  creditCardUsage: "nao" | "pouco" | "frequentemente";
+  investsRegularly: "nunca" | "as_vezes" | "regularmente";
+}
+
+export interface BehaviorProfile {
+  label: string;
+  description: string;
+}
 
 export interface FinancialRecommendation {
   id: string;
@@ -47,10 +70,54 @@ export interface FinancialRecommendation {
 
 export interface FinancialProfile {
   experienceLevel: ExperienceLevel | null;
+  financialSituation: FinancialSituation | null;
   incomeRange: IncomeRange | null;
+  incomeVariable: boolean;
+  incomeMin: number | null;
+  incomeMax: number | null;
+  incomeSources: string[];
   priorities: FinancialPriority[];
+  habits: FinancialHabits | null;
   updatedAt: string | null;
   recommendations: FinancialRecommendation[];
+  behaviorProfile: BehaviorProfile | null;
+}
+
+/** Payload parcial -- cada passo do onboarding manda só os campos que perguntou (ver financialProfile.validation.ts no backend). */
+export type UpdateFinancialProfileInput = Partial<{
+  experienceLevel: ExperienceLevel | null;
+  financialSituation: FinancialSituation | null;
+  incomeRange: IncomeRange | null;
+  incomeVariable: boolean;
+  incomeMin: number | null;
+  incomeMax: number | null;
+  incomeSources: string[];
+  priorities: FinancialPriority[];
+  habits: FinancialHabits | null;
+}>;
+
+export type DebtType = "cartao_credito" | "emprestimo" | "financiamento" | "cheque_especial" | "parcelamento" | "outro";
+
+export interface Debt {
+  id: number;
+  type: DebtType;
+  name: string;
+  totalAmount: number;
+  installmentAmount: number | null;
+  interestRate: number | null;
+  installmentsCount: number | null;
+  dueDay: number | null;
+  createdAt: string;
+}
+
+export interface DebtInput {
+  type: DebtType;
+  name: string;
+  totalAmount: number;
+  installmentAmount?: number | null;
+  interestRate?: number | null;
+  installmentsCount?: number | null;
+  dueDay?: number | null;
 }
 
 export interface AuthResponse {
@@ -272,4 +339,17 @@ export interface ApiContribution {
   contributed_at: string;
   note: string | null;
   created_at: string;
+}
+
+export type CategoryBudgetStatus = "ok" | "near" | "over";
+
+export interface CategoryBudget {
+  id: number;
+  categoryId: number;
+  categoryName: string;
+  categoryColor: string;
+  amount: number;
+  spent: number;
+  percent: number;
+  status: CategoryBudgetStatus;
 }

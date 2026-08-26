@@ -6,6 +6,7 @@ import { avatarUpload } from "../../middlewares/upload";
 import { usersController } from "./users.controller";
 import {
   changePasswordSchema,
+  completeOnboardingSchema,
   deleteAccountSchema,
   notificationPreferenceSchema,
   updateProfileSchema,
@@ -34,7 +35,7 @@ usersRouter.delete("/me/sessions/:id", asyncHandler(usersController.revokeSessio
 
 usersRouter.get("/me/notification-preferences", asyncHandler(usersController.getNotificationPreferences));
 usersRouter.put(
-  "/me/notification-preferences/:type(limit_exceeded|goal_achieved|objective_deadline)",
+  "/me/notification-preferences/:type(limit_exceeded|goal_achieved|objective_deadline|category_budget_exceeded)",
   validate(notificationPreferenceSchema),
   asyncHandler(usersController.updateNotificationPreference)
 );
@@ -44,4 +45,10 @@ usersRouter.put(
   "/me/financial-profile",
   validate(updateFinancialProfileSchema),
   asyncHandler(financialProfileController.update)
+);
+
+usersRouter.put(
+  "/me/onboarding",
+  validate(completeOnboardingSchema),
+  asyncHandler(usersController.completeOnboarding)
 );

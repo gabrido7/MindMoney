@@ -18,7 +18,12 @@ export const notificationPreferenceSchema = z.object({
   enabled: z.boolean(),
 });
 
+export const completeOnboardingSchema = z.object({
+  skippedSteps: z.array(z.string().max(40)).max(10).optional().default([]),
+});
+
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
 export type NotificationPreferenceInput = z.infer<typeof notificationPreferenceSchema>;
+export type CompleteOnboardingInput = z.infer<typeof completeOnboardingSchema>;

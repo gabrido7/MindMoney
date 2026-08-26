@@ -18,3 +18,6 @@ export const NEAR_ALERT_RATIO = 0.8;
 
 /** Sem meta definida, guardar essa fração (ou mais) das entradas já vale a nota cheia de capacidade de economia no score. */
 export const SAVINGS_RATE_FULL_SCORE = 0.2;
+
+/** Orçamento por categoria: % do valor orçado gasto a partir do qual o status vira "próximo do limite". */
+export const CATEGORY_BUDGET_NEAR_PERCENT = 80;

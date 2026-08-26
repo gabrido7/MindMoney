@@ -69,4 +69,9 @@ export const usersController = {
     const preferences = await notificationsService.getPreferences(req.userId!);
     res.json({ preferences });
   },
+
+  async completeOnboarding(req: Request, res: Response) {
+    const user = await usersService.completeOnboarding(req.userId!, req.body.skippedSteps ?? []);
+    res.json({ user });
+  },
 };

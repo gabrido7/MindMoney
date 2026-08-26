@@ -17,9 +17,9 @@ describe("Categorias e subcategorias", () => {
     await cleanupUser(userB.userId);
   });
 
-  it("lista as 11 categorias padrão seedadas no cadastro", async () => {
+  it("lista as 14 categorias padrão seedadas no cadastro", async () => {
     const res = await request(app).get("/api/categories").set(authHeader(userA.token));
-    expect(res.body.categories.length).toBe(11);
+    expect(res.body.categories.length).toBe(14);
     expect(res.body.categories.map((c: { name: string }) => c.name)).toContain("Salário");
   });
 
@@ -27,7 +27,7 @@ describe("Categorias e subcategorias", () => {
     const res = await request(app)
       .post("/api/categories")
       .set(authHeader(userA.token))
-      .send({ name: "Pets", type: "saida" });
+      .send({ name: "Viagens", type: "saida" });
 
     expect(res.status).toBe(201);
     expect(res.body.category.color).toMatch(/^#[0-9a-f]{6}$/i);

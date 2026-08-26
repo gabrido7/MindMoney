@@ -1,12 +1,30 @@
 import { AppError } from "../../utils/AppError";
 import { transactionsRepository } from "../transactions/transactions.repository";
 import { goalsRepository } from "../goals/goals.repository";
+import { categoryBudgetsService } from "../categoryBudgets/categoryBudgets.service";
 import { notificationsRepository, type NotificationType } from "./notifications.repository";
 import { notificationPreferencesRepository } from "./notificationPreferences.repository";
 import { formatMonthLabel } from "../../utils/month";
+import { formatCurrency } from "../../utils/formatCurrency";
 import { ALERT_PERCENT } from "../../config/rules";
 
-const PREFERENCE_TYPES: NotificationType[] = ["limit_exceeded", "goal_achieved", "objective_deadline"];
+const PREFERENCE_TYPES: NotificationType[] = [
+  "limit_exceeded",
+  "goal_achieved",
+  "objective_deadline",
+  "category_budget_exceeded",
+  "onboarding_pending",
+];
+
+/** Rótulos exibidos na notificação de onboarding pendente -- chaves espelham as etapas do wizard no frontend (src/pages/Onboarding.tsx). */
+const ONBOARDING_STEP_LABELS: Record<string, string> = {
+  motivacao: "Motivação",
+  perfil: "Perfil financeiro",
+  renda: "Renda",
+  despesas: "Despesas fixas",
+  dividas: "Dívidas",
+  habitos: "Hábitos financeiros",
+};
 
 export const notificationsService = {
   async list(userId: number) {
@@ -78,6 +96,21 @@ export const notificationsService = {
         }
       }
     }
+
+    const overBudget = await categoryBudgetsService.findFirstOverBudget(userId, month);
+    if (overBudget) {
+      const enabled = await notificationPreferencesRepository.isEnabled(userId, "category_budget_exceeded");
+      const alreadyNotified =
+        enabled && (await notificationsRepository.hasUnreadOfType(userId, "category_budget_exceeded"));
+      if (enabled && !alreadyNotified) {
+        await notificationsRepository.create(
+          userId,
+          "category_budget_exceeded",
+          "Orçamento de categoria estourado",
+          `Você já ultrapassou o orçamento de ${formatCurrency(overBudget.amount)} definido para ${overBudget.categoryName} em ${formatMonthLabel(month)}.`
+        );
+      }
+    }
   },
 
   /**
@@ -103,6 +136,30 @@ export const notificationsService = {
       "objective_deadline",
       "Meta próxima do prazo",
       `Sua meta "${urgentObjective.name}" vence em ${urgentObjective.daysRemaining} dia(s).`
+    );
+  },
+
+  /**
+   * Chamado uma única vez, dentro de usersService.completeOnboarding(), só
+   * quando o usuário pulou pelo menos uma etapa do wizard -- não é um
+   * checkAndNotify (não depende de mutação de transação), é efeito direto de
+   * concluir o onboarding. Mesmo padrão de dedupe dos outros tipos.
+   */
+  async notifyOnboardingPending(userId: number, skippedSteps: string[]): Promise<void> {
+    if (skippedSteps.length === 0) return;
+
+    const enabled = await notificationPreferencesRepository.isEnabled(userId, "onboarding_pending");
+    if (!enabled) return;
+
+    const alreadyNotified = await notificationsRepository.hasUnreadOfType(userId, "onboarding_pending");
+    if (alreadyNotified) return;
+
+    const labels = skippedSteps.map((step) => ONBOARDING_STEP_LABELS[step] ?? step).join(", ");
+    await notificationsRepository.create(
+      userId,
+      "onboarding_pending",
+      "Complete seu perfil financeiro",
+      `Você pulou algumas etapas do onboarding (${labels}). Complete quando quiser em Perfil > Financeiro pra receber recomendações mais precisas.`
     );
   },
 };

@@ -19,6 +19,16 @@ const OPTIONS: { type: NotificationType; title: string; description: string }[] 
     title: "Meta próxima do prazo",
     description: "Lembrar quando um dos seus objetivos financeiros estiver perto de vencer.",
   },
+  {
+    type: "category_budget_exceeded",
+    title: "Orçamento de categoria estourado",
+    description: "Avisar quando você ultrapassar o orçamento definido para uma categoria no mês.",
+  },
+  {
+    type: "onboarding_pending",
+    title: "Onboarding incompleto",
+    description: "Lembrar quando você pular etapas do assistente de boas-vindas, pra completar depois.",
+  },
 ];
 
 export default function NotificationsTab() {
