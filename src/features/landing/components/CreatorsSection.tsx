@@ -1,5 +1,6 @@
 import Eyebrow from "./Eyebrow";
 import Reveal from "./Reveal";
+import CreatorsCarousel from "./CreatorsCarousel";
 
 const STACK = ["React", "TypeScript", "Node.js", "Express", "MySQL", "Tailwind CSS"];
 
@@ -35,6 +36,10 @@ export default function CreatorsSection() {
             o mesmo rigor de um produto real: backend próprio, banco de dados de verdade e nenhum dado
             inventado na tela.
           </p>
+        </Reveal>
+
+        <Reveal delay={100} className="mt-12">
+          <CreatorsCarousel />
         </Reveal>
 
         <div className="mt-12 grid gap-4 md:grid-cols-3">
