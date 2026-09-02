@@ -34,7 +34,8 @@ export type IconName =
   | "camera"
   | "palette"
   | "lock"
-  | "monitor";
+  | "monitor"
+  | "creditCard";
 
 const PATHS: Record<IconName, string> = {
   sun: "M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-6.66 1.42-1.42M4.92 19.08l1.42-1.42M19.08 19.08l-1.42-1.42M4.92 4.92 6.34 6.34M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z",
@@ -76,6 +77,7 @@ const PATHS: Record<IconName, string> = {
     "M12 22a10 10 0 1 1 0-20 9 9 0 0 1 9 9c0 2-1.5 3-3.5 3H15a2 2 0 0 0-1.6 3.2c.5.6.1 1.6-.7 1.7-.2 0-.5.1-.7.1ZM6.5 11a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5ZM9.5 7a1.25 1.25 0 1 0 0-2.5A1.25 1.25 0 0 0 9.5 7ZM14.5 7a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5ZM17.5 11a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z",
   lock: "M6 11V8a6 6 0 0 1 12 0v3m-14 0h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9Z M12 15v3",
   monitor: "M3 4h18v12H3V4Zm5 16h8m-4-4v4",
+  creditCard: "M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z M2 10h20",
 };
 
 export default function Icon({

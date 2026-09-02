@@ -19,6 +19,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Goals = lazy(() => import("./pages/Goals"));
+const Debts = lazy(() => import("./pages/Debts"));
 const Reports = lazy(() => import("./pages/Reports"));
 const FinancialEducation = lazy(() => import("./pages/FinancialEducation"));
 const EducationTrail = lazy(() => import("./pages/EducationTrail"));
@@ -57,6 +58,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/perfil" element={<Profile />} />
               <Route path="/metas" element={<Goals />} />
+              <Route path="/dividas" element={<Debts />} />
               <Route path="/relatorios" element={<Reports />} />
               <Route path="/educacao-financeira" element={<FinancialEducation />} />
               <Route path="/educacao-financeira/:trailId" element={<EducationTrail />} />

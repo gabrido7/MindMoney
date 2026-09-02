@@ -17,4 +17,35 @@ export const debtsController = {
     await debtsService.remove(req.userId!, id);
     res.status(204).send();
   },
+
+  async listAllPayments(req: Request, res: Response) {
+    const payments = await debtsService.listAllPayments(req.userId!);
+    res.json({ payments });
+  },
+
+  async listPayments(req: Request, res: Response) {
+    const debtId = Number(req.params.id);
+    const payments = await debtsService.listPayments(req.userId!, debtId);
+    res.json({ payments });
+  },
+
+  async addPayment(req: Request, res: Response) {
+    const debtId = Number(req.params.id);
+    const debt = await debtsService.addPayment(req.userId!, debtId, req.body);
+    res.status(201).json({ debt });
+  },
+
+  async removePayment(req: Request, res: Response) {
+    const debtId = Number(req.params.id);
+    const paymentId = Number(req.params.paymentId);
+    const debt = await debtsService.removePayment(req.userId!, debtId, paymentId);
+    res.json({ debt });
+  },
+
+  async updatePayment(req: Request, res: Response) {
+    const debtId = Number(req.params.id);
+    const paymentId = Number(req.params.paymentId);
+    const debt = await debtsService.updatePayment(req.userId!, debtId, paymentId, req.body);
+    res.json({ debt });
+  },
 };

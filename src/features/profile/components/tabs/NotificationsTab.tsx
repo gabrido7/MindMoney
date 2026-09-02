@@ -29,6 +29,11 @@ const OPTIONS: { type: NotificationType; title: string; description: string }[] 
     title: "Onboarding incompleto",
     description: "Lembrar quando você pular etapas do assistente de boas-vindas, pra completar depois.",
   },
+  {
+    type: "debt_due_date",
+    title: "Vencimento de dívida próximo",
+    description: "Avisar quando o vencimento de uma dívida estiver chegando perto.",
+  },
 ];
 
 export default function NotificationsTab() {

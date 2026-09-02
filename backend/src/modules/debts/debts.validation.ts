@@ -19,5 +19,14 @@ export const createDebtSchema = z.object({
   dueDay: z.coerce.number().int().min(1).max(31).nullable().optional(),
 });
 
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+export const debtPaymentBodySchema = z.object({
+  amount: z.coerce.number().positive("O valor deve ser maior que zero"),
+  paidAt: z.string().regex(DATE_REGEX, "Data deve estar no formato YYYY-MM-DD"),
+  note: z.string().trim().max(255).optional(),
+});
+
 export type CreateDebtInput = z.infer<typeof createDebtSchema>;
 export type DebtType = (typeof DEBT_TYPES)[number];
+export type DebtPaymentBodyInput = z.infer<typeof debtPaymentBodySchema>;

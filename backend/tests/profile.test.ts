@@ -221,6 +221,7 @@ describe("Perfil -- preferências de notificação", () => {
       objective_deadline: true,
       category_budget_exceeded: true,
       onboarding_pending: true,
+      debt_due_date: true,
     });
 
     await cleanupUser(user.userId);

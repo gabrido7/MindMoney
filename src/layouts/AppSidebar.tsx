@@ -14,6 +14,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: "home" },
   { to: "/metas", label: "Metas", icon: "target" },
+  { to: "/dividas", label: "Dívidas", icon: "creditCard" },
   { to: "/relatorios", label: "Relatórios", icon: "chart" },
   { to: "/educacao-financeira", label: "Educação Financeira", icon: "book" },
   { to: "/ferramentas", label: "Ferramentas", icon: "wallet" },

@@ -5,7 +5,6 @@ import Button from "../../../../components/ui/Button";
 import Icon from "../../../../components/ui/Icon";
 import ChipGroup from "../../../../components/ui/ChipGroup";
 import { useFinancialProfile } from "../../hooks/useFinancialProfile";
-import DebtsSection from "../DebtsSection";
 import type { ExperienceLevel, FinancialPriority, IncomeRange } from "../../../../types/api";
 
 const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string }[] = [
@@ -112,8 +111,6 @@ export default function FinancialProfileTab() {
           <p className="text-sm text-ink-soft mt-1">{profile.behaviorProfile.description}</p>
         </Card>
       )}
-
-      <DebtsSection />
 
       {profile && profile.recommendations.length > 0 && (
         <Card title="Recomendações para você">

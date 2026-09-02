@@ -4,12 +4,13 @@ import EmptyState from "../../../components/ui/EmptyState";
 import { useNotifications } from "../hooks/useNotifications";
 import type { ApiNotification } from "../../../types/api";
 
-const TYPE_ICON: Record<ApiNotification["type"], "alert" | "trophy" | "target" | "wallet" | "sparkles"> = {
+const TYPE_ICON: Record<ApiNotification["type"], "alert" | "trophy" | "target" | "wallet" | "sparkles" | "creditCard"> = {
   limit_exceeded: "alert",
   goal_achieved: "trophy",
   objective_deadline: "target",
   category_budget_exceeded: "wallet",
   onboarding_pending: "sparkles",
+  debt_due_date: "creditCard",
 };
 
 const TYPE_COLOR: Record<ApiNotification["type"], string> = {
@@ -18,6 +19,7 @@ const TYPE_COLOR: Record<ApiNotification["type"], string> = {
   objective_deadline: "var(--warning)",
   category_budget_exceeded: "var(--negative)",
   onboarding_pending: "var(--brand)",
+  debt_due_date: "var(--warning)",
 };
 
 function timeAgo(isoDate: string): string {

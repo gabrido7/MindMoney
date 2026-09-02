@@ -14,6 +14,7 @@ const PREFERENCE_TYPES: NotificationType[] = [
   "objective_deadline",
   "category_budget_exceeded",
   "onboarding_pending",
+  "debt_due_date",
 ];
 
 /** Rótulos exibidos na notificação de onboarding pendente -- chaves espelham as etapas do wizard no frontend (src/pages/Onboarding.tsx). */
@@ -160,6 +161,32 @@ export const notificationsService = {
       "onboarding_pending",
       "Complete seu perfil financeiro",
       `Você pulou algumas etapas do onboarding (${labels}). Complete quando quiser em Perfil > Financeiro pra receber recomendações mais precisas.`
+    );
+  },
+
+  /**
+   * Chamado a partir de debtsService.checkDueDates() -- uma vez por marco
+   * (30/15/7/3/0 dias antes) que já foi confirmado como novo via
+   * debtsRepository.recordDueAlert (dedupe por dívida+marco+vencimento,
+   * não pelo dedupe genérico de "1 não lida por tipo" -- aqui várias
+   * notificações do mesmo tipo podem coexistir, uma por marco/dívida).
+   */
+  async checkDebtDueSoon(userId: number, urgentDebt: { name: string; daysRemaining: number } | null): Promise<void> {
+    if (!urgentDebt) return;
+
+    const enabled = await notificationPreferencesRepository.isEnabled(userId, "debt_due_date");
+    if (!enabled) return;
+
+    const when =
+      urgentDebt.daysRemaining <= 0
+        ? "vence hoje"
+        : `vence em ${urgentDebt.daysRemaining} dia${urgentDebt.daysRemaining === 1 ? "" : "s"}`;
+
+    await notificationsRepository.create(
+      userId,
+      "debt_due_date",
+      "Vencimento de dívida próximo",
+      `A dívida "${urgentDebt.name}" ${when}.`
     );
   },
 };

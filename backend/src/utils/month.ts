@@ -34,3 +34,36 @@ export const daysUntilEndOfMonth = (targetMonth: string): number => {
   const diffMs = endOfMonth.getTime() - startOfToday.getTime();
   return Math.round(diffMs / (1000 * 60 * 60 * 24));
 };
+
+/**
+ * Próxima ocorrência do dia `dueDay` (1-31) -- esse mês, se ainda não
+ * passou, senão o mês seguinte. Faz clamp pro último dia do mês quando o
+ * mês é mais curto que dueDay (ex: due_day=31 caindo em fevereiro vira o
+ * dia 28/29, não rola pra março -- rollover do JS Date daria uma data errada).
+ * Base de daysUntilNextDueDay/nextDueDateISO -- as duas precisam da mesma
+ * data, uma como contagem de dias, outra como string.
+ */
+function nextDueDate(dueDay: number): Date {
+  const now = new Date();
+  const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+  const clampedThisMonth = (year: number, month: number): Date => {
+    const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    return new Date(Date.UTC(year, month, Math.min(dueDay, daysInMonth)));
+  };
+
+  let nextDue = clampedThisMonth(now.getUTCFullYear(), now.getUTCMonth());
+  if (nextDue.getTime() < startOfToday.getTime()) {
+    nextDue = clampedThisMonth(now.getUTCFullYear(), now.getUTCMonth() + 1);
+  }
+  return nextDue;
+}
+
+export const daysUntilNextDueDay = (dueDay: number): number => {
+  const now = new Date();
+  const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return Math.round((nextDueDate(dueDay).getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+/** A mesma próxima ocorrência de daysUntilNextDueDay, como 'YYYY-MM-DD' -- usado pra identificar de forma única qual vencimento um alerta se refere (ver debt_due_alerts, migration 017). */
+export const nextDueDateISO = (dueDay: number): string => nextDueDate(dueDay).toISOString().slice(0, 10);

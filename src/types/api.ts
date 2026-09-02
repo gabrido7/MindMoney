@@ -29,7 +29,8 @@ export type NotificationType =
   | "goal_achieved"
   | "objective_deadline"
   | "category_budget_exceeded"
-  | "onboarding_pending";
+  | "onboarding_pending"
+  | "debt_due_date";
 
 export type NotificationPreferences = Record<NotificationType, boolean>;
 
@@ -108,6 +109,30 @@ export interface Debt {
   installmentsCount: number | null;
   dueDay: number | null;
   createdAt: string;
+  paidAmount: number;
+  remainingAmount: number;
+  progressPercent: number;
+  paidOff: boolean;
+  daysUntilDue: number | null;
+}
+
+export interface DebtPayment {
+  id: number;
+  amount: number;
+  paidAt: string;
+  note: string | null;
+  transactionId: number | null;
+  createdAt: string;
+}
+
+export interface DebtPaymentWithDebtName extends DebtPayment {
+  debtName: string;
+}
+
+export interface DebtPaymentInput {
+  amount: number;
+  paidAt: string;
+  note?: string;
 }
 
 export interface DebtInput {

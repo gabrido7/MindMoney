@@ -21,3 +21,9 @@ export const SAVINGS_RATE_FULL_SCORE = 0.2;
 
 /** Orçamento por categoria: % do valor orçado gasto a partir do qual o status vira "próximo do limite". */
 export const CATEGORY_BUDGET_NEAR_PERCENT = 80;
+
+/** Dívidas: marcos (dias antes do vencimento) em que o alerta de "vencimento próximo" dispara -- cada um notifica de forma independente (ver debt_due_alerts, migration 017). */
+export const DEBT_DUE_MILESTONES = [30, 15, 7, 3, 0];
+
+/** Nome fixo da categoria de sistema usada pra registrar pagamentos de dívida como transação real (ver migration 016). */
+export const DEBT_PAYMENT_CATEGORY_NAME = "Dívidas";
