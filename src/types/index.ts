@@ -2,6 +2,7 @@ export type TransactionType = "entrada" | "saida";
 
 export interface Transaction {
   id: string;
+  accountId?: number;
   description: string;
   amount: number;
   type: TransactionType;
@@ -21,8 +22,6 @@ export interface Category {
   /** categorias padrão (Salário/Outros) não podem ser removidas */
   builtin?: boolean;
 }
-
-export type SavingGoals = Record<string, number>; // "yyyy-mm" -> valor
 
 export interface CategoryTotal {
   name: string;

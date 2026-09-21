@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
-import { registerTestUser, cleanupUser, authHeader, getCategoryId, type TestUser } from "./helpers";
+import { registerTestUser, cleanupUser, authHeader, getCategoryId, getAccountId, type TestUser } from "./helpers";
 
 describe("Dashboard (agregação e cálculos)", () => {
   let user: TestUser;
 
   beforeAll(async () => {
     user = await registerTestUser("dashboard");
+    const accountId = await getAccountId(user.token);
     const salarioId = await getCategoryId(user.token, "Salário");
     const alimentacaoId = await getCategoryId(user.token, "Alimentação");
     const transporteId = await getCategoryId(user.token, "Transporte");
@@ -15,15 +16,15 @@ describe("Dashboard (agregação e cálculos)", () => {
     await request(app)
       .post("/api/transactions")
       .set(authHeader(user.token))
-      .send({ categoryId: salarioId, description: "Salário", amount: 5000, type: "entrada", transactionDate: "2026-08-05" });
+      .send({ accountId, categoryId: salarioId, description: "Salário", amount: 5000, type: "entrada", transactionDate: "2026-08-05" });
     await request(app)
       .post("/api/transactions")
       .set(authHeader(user.token))
-      .send({ categoryId: alimentacaoId, description: "Alimentação", amount: 1200, type: "saida", transactionDate: "2026-08-10" });
+      .send({ accountId, categoryId: alimentacaoId, description: "Alimentação", amount: 1200, type: "saida", transactionDate: "2026-08-10" });
     await request(app)
       .post("/api/transactions")
       .set(authHeader(user.token))
-      .send({ categoryId: transporteId, description: "Transporte", amount: 300, type: "saida", transactionDate: "2026-08-12" });
+      .send({ accountId, categoryId: transporteId, description: "Transporte", amount: 300, type: "saida", transactionDate: "2026-08-12" });
   });
 
   afterAll(async () => {

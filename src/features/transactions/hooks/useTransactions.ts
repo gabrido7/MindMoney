@@ -37,11 +37,13 @@ export function useTransactions(categories: Category[], month: string) {
   const resolveInput = (input: TransactionInput) => {
     const category = categories.find((c) => c.name === input.category);
     if (!category?.id) throw new Error(`Categoria "${input.category}" não encontrada.`);
+    if (!input.accountId) throw new Error("Selecione uma conta pra essa transação.");
     const subcategory = input.subcategory
       ? category.subcategories.find((s) => s.name === input.subcategory)
       : undefined;
 
     return {
+      accountId: input.accountId,
       categoryId: category.id,
       subcategoryId: subcategory?.id,
       description: input.description,

@@ -37,6 +37,13 @@ export const usersRepository = {
     await pool.query("CALL sp_seed_user_categories(?)", [userId]);
   },
 
+  /** Toda conta nova precisa de pelo menos uma conta bancária/carteira pra receber transações -- criada com saldo inicial zero, o usuário renomeia/ajusta depois se quiser (mesmo espírito do seed de categorias: começa com algo usável, não vazio). */
+  async seedDefaultAccount(userId: number): Promise<void> {
+    await pool.query("INSERT INTO accounts (user_id, type, name, initial_balance) VALUES (?, 'corrente', 'Conta Principal', 0)", [
+      userId,
+    ]);
+  },
+
   /** password_changed_at anda sempre junto com o hash -- toda troca real de senha passa por aqui (comum ou reset). */
   async updatePassword(id: number, passwordHash: string): Promise<void> {
     await pool.query("UPDATE users SET password_hash = ?, password_changed_at = NOW() WHERE id = ?", [

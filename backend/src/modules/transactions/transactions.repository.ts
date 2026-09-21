@@ -5,6 +5,7 @@ import type { TransactionBodyInput, TransactionListQuery } from "./transactions.
 export interface TransactionRow extends RowDataPacket {
   id: number;
   user_id: number;
+  account_id: number;
   category_id: number;
   subcategory_id: number | null;
   category_name: string;
@@ -20,7 +21,7 @@ export interface TransactionRow extends RowDataPacket {
 
 const SELECT_WITH_JOINS = `
   SELECT
-    t.id, t.user_id, t.category_id, t.subcategory_id,
+    t.id, t.user_id, t.account_id, t.category_id, t.subcategory_id,
     c.name AS category_name, c.color AS category_color,
     sc.name AS subcategory_name,
     t.description, t.amount, t.type, t.transaction_date, t.created_at, t.updated_at
@@ -45,6 +46,10 @@ function buildFilterConditions(userId: number, filters: TransactionListQuery) {
   if (filters.categoryId) {
     conditions.push("t.category_id = ?");
     params.push(filters.categoryId);
+  }
+  if (filters.accountId) {
+    conditions.push("t.account_id = ?");
+    params.push(filters.accountId);
   }
   if (filters.search) {
     conditions.push("(t.description LIKE ? OR c.name LIKE ?)");
@@ -89,10 +94,11 @@ export const transactionsRepository = {
 
   async create(userId: number, input: TransactionBodyInput): Promise<number> {
     const [result] = await pool.query<ResultSetHeader>(
-      `INSERT INTO transactions (user_id, category_id, subcategory_id, description, amount, type, transaction_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transactions (user_id, account_id, category_id, subcategory_id, description, amount, type, transaction_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
+        input.accountId,
         input.categoryId,
         input.subcategoryId ?? null,
         input.description,
@@ -107,9 +113,10 @@ export const transactionsRepository = {
   async update(id: number, userId: number, input: TransactionBodyInput): Promise<boolean> {
     const [result] = await pool.query<ResultSetHeader>(
       `UPDATE transactions
-       SET category_id = ?, subcategory_id = ?, description = ?, amount = ?, type = ?, transaction_date = ?
+       SET account_id = ?, category_id = ?, subcategory_id = ?, description = ?, amount = ?, type = ?, transaction_date = ?
        WHERE id = ? AND user_id = ?`,
       [
+        input.accountId,
         input.categoryId,
         input.subcategoryId ?? null,
         input.description,

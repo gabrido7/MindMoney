@@ -2,7 +2,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 import { useQuery } from "@tanstack/react-query";
 import Card from "../../../components/ui/Card";
 import EmptyState from "../../../components/ui/EmptyState";
-import ScoreArc from "../../../components/ui/ScoreArc";
+import Dial from "../../../components/ui/Dial";
 import { scoreService } from "../../../services/scoreService";
 import { errorMessage } from "../../../services/api";
 import { formatMonthBR } from "../../../utils/formatters";
@@ -40,14 +40,7 @@ export default function ScoreCard({ month }: { month: string }) {
 
       {score && (
         <div className="grid md:grid-cols-[auto_1fr] gap-6 items-center">
-          <div className="flex flex-col items-center justify-center">
-            <ScoreArc value={score.score} color={LEVEL_COLOR[score.level]} size="lg">
-              <span className="font-data text-3xl font-bold text-ink">{score.score}</span>
-            </ScoreArc>
-            <span className="mt-2 text-sm font-semibold" style={{ color: LEVEL_COLOR[score.level] }}>
-              {score.level}
-            </span>
-          </div>
+          <Dial value={score.score} color={LEVEL_COLOR[score.level]} size="lg" sublabel={score.level} />
 
           <div className="flex flex-col gap-2">
             {COMPONENT_LABELS.map(({ key, label, max }) => (

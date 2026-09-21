@@ -1,19 +1,23 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
-import { registerTestUser, cleanupUser, authHeader, getCategoryId, type TestUser } from "./helpers";
+import { registerTestUser, cleanupUser, authHeader, getCategoryId, getAccountId, type TestUser } from "./helpers";
 
 describe("Transações (CRUD, validação, filtros, permissões)", () => {
   let userA: TestUser;
   let userB: TestUser;
   let salarioId: number;
   let alimentacaoId: number;
+  let accountIdA: number;
+  let accountIdB: number;
 
   beforeAll(async () => {
     userA = await registerTestUser("transacoes-a");
     userB = await registerTestUser("transacoes-b");
     salarioId = await getCategoryId(userA.token, "Salário");
     alimentacaoId = await getCategoryId(userA.token, "Alimentação");
+    accountIdA = await getAccountId(userA.token);
+    accountIdB = await getAccountId(userB.token);
   });
 
   afterAll(async () => {
@@ -26,6 +30,7 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
       .post("/api/transactions")
       .set(authHeader(userA.token))
       .send({
+        accountId: accountIdA,
         categoryId: salarioId,
         description: "Salário",
         amount: 5000,
@@ -42,13 +47,13 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
     const negativo = await request(app)
       .post("/api/transactions")
       .set(authHeader(userA.token))
-      .send({ categoryId: alimentacaoId, description: "x", amount: -10, type: "saida", transactionDate: "2026-08-10" });
+      .send({ accountId: accountIdA, categoryId: alimentacaoId, description: "x", amount: -10, type: "saida", transactionDate: "2026-08-10" });
     expect(negativo.status).toBe(400);
 
     const zero = await request(app)
       .post("/api/transactions")
       .set(authHeader(userA.token))
-      .send({ categoryId: alimentacaoId, description: "x", amount: 0, type: "saida", transactionDate: "2026-08-10" });
+      .send({ accountId: accountIdA, categoryId: alimentacaoId, description: "x", amount: 0, type: "saida", transactionDate: "2026-08-10" });
     expect(zero.status).toBe(400);
   });
 
@@ -56,7 +61,7 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
     const res = await request(app)
       .post("/api/transactions")
       .set(authHeader(userA.token))
-      .send({ categoryId: 999999, description: "x", amount: 10, type: "saida", transactionDate: "2026-08-10" });
+      .send({ accountId: accountIdA, categoryId: 999999, description: "x", amount: 10, type: "saida", transactionDate: "2026-08-10" });
     expect(res.status).toBe(400);
   });
 
@@ -64,7 +69,7 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
     await request(app)
       .post("/api/transactions")
       .set(authHeader(userA.token))
-      .send({ categoryId: alimentacaoId, description: "Mercado", amount: 300, type: "saida", transactionDate: "2026-07-15" });
+      .send({ accountId: accountIdA, categoryId: alimentacaoId, description: "Mercado", amount: 300, type: "saida", transactionDate: "2026-07-15" });
 
     const agosto = await request(app)
       .get("/api/transactions")
@@ -83,13 +88,13 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
     const created = await request(app)
       .post("/api/transactions")
       .set(authHeader(userA.token))
-      .send({ categoryId: alimentacaoId, description: "Editar", amount: 100, type: "saida", transactionDate: "2026-08-12" });
+      .send({ accountId: accountIdA, categoryId: alimentacaoId, description: "Editar", amount: 100, type: "saida", transactionDate: "2026-08-12" });
     const id = created.body.transaction.id;
 
     const updated = await request(app)
       .put(`/api/transactions/${id}`)
       .set(authHeader(userA.token))
-      .send({ categoryId: alimentacaoId, description: "Editada", amount: 250, type: "saida", transactionDate: "2026-08-12" });
+      .send({ accountId: accountIdA, categoryId: alimentacaoId, description: "Editada", amount: 250, type: "saida", transactionDate: "2026-08-12" });
     expect(updated.status).toBe(200);
     expect(updated.body.transaction.amount).toBe(250);
 
@@ -104,7 +109,7 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
     const created = await request(app)
       .post("/api/transactions")
       .set(authHeader(userA.token))
-      .send({ categoryId: salarioId, description: "Só de A", amount: 999, type: "entrada", transactionDate: "2026-08-01" });
+      .send({ accountId: accountIdA, categoryId: salarioId, description: "Só de A", amount: 999, type: "entrada", transactionDate: "2026-08-01" });
     const id = created.body.transaction.id;
 
     const listB = await request(app).get("/api/transactions").set(authHeader(userB.token));
@@ -113,7 +118,10 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
     const editB = await request(app)
       .put(`/api/transactions/${id}`)
       .set(authHeader(userB.token))
-      .send({ categoryId: salarioId, description: "hack", amount: 1, type: "entrada", transactionDate: "2026-08-01" });
+      // accountId de A só pra passar da validação zod (número presente) --
+      // a checagem de posse da transação já barra antes de sequer olhar pra
+      // conta/categoria, então o valor exato aqui não importa pro teste.
+      .send({ accountId: accountIdA, categoryId: salarioId, description: "hack", amount: 1, type: "entrada", transactionDate: "2026-08-01" });
     expect(editB.status).toBe(404);
 
     const deleteB = await request(app).delete(`/api/transactions/${id}`).set(authHeader(userB.token));
@@ -127,19 +135,21 @@ describe("Transações (CRUD, validação, filtros, permissões)", () => {
     const res = await request(app)
       .post("/api/transactions")
       .set(authHeader(userB.token))
-      .send({ categoryId: salarioId, description: "hack", amount: 10, type: "entrada", transactionDate: "2026-08-01" });
+      .send({ accountId: accountIdB, categoryId: salarioId, description: "hack", amount: 10, type: "entrada", transactionDate: "2026-08-01" });
     expect(res.status).toBe(400);
   });
 
   it("pagina o resultado (limit define o tamanho da página, total reflete o total real)", async () => {
     const pagUser = await registerTestUser("paginacao");
     const catId = await getCategoryId(pagUser.token, "Alimentação");
+    const pagAccountId = await getAccountId(pagUser.token);
 
     for (let i = 0; i < 7; i++) {
       await request(app)
         .post("/api/transactions")
         .set(authHeader(pagUser.token))
         .send({
+          accountId: pagAccountId,
           categoryId: catId,
           description: `Transação ${i}`,
           amount: 10 + i,

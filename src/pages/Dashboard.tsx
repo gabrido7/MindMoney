@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTransactions } from "../features/transactions/hooks/useTransactions";
 import { useCategories } from "../features/categories/hooks/useCategories";
-import { useSavingGoals } from "../features/goals/hooks/useSavingGoals";
+import { useAccounts } from "../features/accounts/hooks/useAccounts";
 import { groupBySubcategory, compareCategoryBreakdowns } from "../features/transactions/utils/aggregations";
 import { toLocalTransaction } from "../features/transactions/utils/mapApiTransaction";
 import { limitSuggestion } from "../features/dashboard/utils/insights";
@@ -14,12 +14,14 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import Icon from "../components/ui/Icon";
+import Card from "../components/ui/Card";
 
 import SummaryCards from "../features/dashboard/components/SummaryCards";
 import AlertBanner from "../features/dashboard/components/AlertBanner";
 import CategoryPieChart from "../features/dashboard/components/CategoryPieChart";
 import EvolutionChart from "../features/dashboard/components/EvolutionChart";
 import RankingCard from "../features/dashboard/components/RankingCard";
+import NetWorthCard from "../features/dashboard/components/NetWorthCard";
 import MonthComparisonCard from "../features/dashboard/components/MonthComparisonCard";
 import InsightsCard from "../features/dashboard/components/InsightsCard";
 import ScoreCard from "../features/dashboard/components/ScoreCard";
@@ -54,6 +56,8 @@ export default function Dashboard() {
     getColor,
   } = useCategories();
 
+  const { accounts } = useAccounts();
+
   const {
     transactions,
     pagination: txPagination,
@@ -65,12 +69,6 @@ export default function Dashboard() {
     updateTransaction,
     deleteTransaction,
   } = useTransactions(categories, selectedMonth);
-
-  const {
-    goals: _goals,
-    loading: goalsLoading,
-    error: goalsError,
-  } = useSavingGoals();
 
   /**
    * Totais, comparativo com o mês anterior, ranking, evolução e alerta
@@ -93,8 +91,8 @@ export default function Dashboard() {
   const previousSummary = rangeData?.months[rangeData.months.length - 2] ?? null;
   const evolutionData = rangeData?.evolution ?? [];
 
-  const loading = categoriesLoading || transactionsLoading || goalsLoading || rangeLoading;
-  const loadError = categoriesError || transactionsError || goalsError || rangeError;
+  const loading = categoriesLoading || transactionsLoading || rangeLoading;
+  const loadError = categoriesError || transactionsError || rangeError;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -268,6 +266,8 @@ export default function Dashboard() {
           </div>
         </div>
 
+        <NetWorthCard />
+
         {currentSummary && currentSummary.alert.status !== "ok" && (
           <AlertBanner
             level={currentSummary.alert.status === "over" ? "over" : "near"}
@@ -302,13 +302,14 @@ export default function Dashboard() {
 
         <CategoryBudgetsCard month={selectedMonth} categories={categories} />
 
-        <InsightsCard
-          biggestIncrease={biggestIncrease}
-          biggestDecrease={biggestDecrease}
-          top3Increases={top3Increases}
-        />
-
-        <AssistantCard month={selectedMonth} />
+        <div className="grid lg:grid-cols-2 gap-6">
+          <InsightsCard
+            biggestIncrease={biggestIncrease}
+            biggestDecrease={biggestDecrease}
+            top3Increases={top3Increases}
+          />
+          <AssistantCard month={selectedMonth} />
+        </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
           <EvolutionChart data={evolutionData} />
@@ -321,10 +322,7 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="bg-surface p-6 rounded-2xl shadow-card border border-line">
-          <h2 className="font-display text-lg font-semibold text-ink mb-4">
-            Transações
-          </h2>
+        <Card title="Transações">
           <TransactionFilters
             categories={categories}
             filters={filters}
@@ -338,12 +336,13 @@ export default function Dashboard() {
             loadingMore={transactionsLoadingMore}
             onLoadMore={loadMoreTransactions}
           />
-        </div>
+        </Card>
       </main>
 
       {isFormOpen && (
         <TransactionFormModal
           categories={categories}
+          accounts={accounts}
           initial={editingTransaction ?? undefined}
           onSubmit={handleSubmitTransaction}
           onClose={() => setIsFormOpen(false)}
@@ -363,7 +362,6 @@ export default function Dashboard() {
 
       {isImportExportOpen && (
         <ImportExportPanel
-          savingGoals={_goals}
           categories={categories}
           onClose={() => setIsImportExportOpen(false)}
         />

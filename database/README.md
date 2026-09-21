@@ -37,14 +37,13 @@ erDiagram
     users ||--o{ transactions : "1:N"
     categories ||--o{ transactions : "1:N"
     subcategories ||--o{ transactions : "0:N"
-    users ||--o{ saving_goals : "1:N"
     category_templates ||--o{ subcategory_templates : "1:N"
 ```
 
 `category_templates`/`subcategory_templates` não têm relação com `users` —
 são a fonte fixa dos padrões, independentes de qualquer conta.
 
-**As 6 tabelas de base do `schema.sql`**: `users`, `categories`,
+**As 6 tabelas de base do `schema.sql`** (histórico): `users`, `categories`,
 `subcategories`, `transactions`, `saving_goals`, e o par
 `category_templates`/`subcategory_templates`. Na época em que este schema
 foi desenhado, score financeiro, notificações, relatórios, perfil e
@@ -54,14 +53,23 @@ lógica estar decidida seria modelar no escuro. Cada uma entrou numa
 migration própria quando a funcionalidade correspondente foi de fato
 construída (todas já existem hoje — ver `DOCUMENTATION.md` seção 4):
 
-- **Score financeiro**: continua sendo dado derivado de `transactions` +
-  `saving_goals`, calculado sob demanda — mas hoje também é cacheado em
+- **Score financeiro**: dado derivado de `transactions` + objetivos ativos
+  (`financial_objectives`, migration 006) — mas hoje também é cacheado em
   `financial_score_history` (migration 002), justamente para permitir
   "evolução do score ao longo do tempo" sem recalcular tudo a cada consulta.
 - **Notificações**: `notifications` (migration 001), gerada como efeito
-  colateral real de transações/metas — nunca por um endpoint manual.
+  colateral real de transações/objetivos — nunca por um endpoint manual.
 - **Perfil e configurações**: ainda não ganhou tabela própria — segue como
   antes (dark mode no browser, sem tela de configurações de conta).
+
+**`saving_goals` foi removida (migration 020)**: modelava "meta mensal, uma
+por mês", mas nunca ganhou tela nenhuma pra criar/editar/ver — ficou como
+tabela morta, consultada só no backend (score, notificações, insights),
+enquanto `financial_objectives` (abaixo) já era a única coisa real que o
+usuário usava sob o mesmo nome ("Meta"). A "meta do mês" que `saving_goals`
+representava agora é derivada em runtime, somando quanto cada objetivo ativo
+do usuário precisa guardar por mês (`requiredMonthlyAmount`, ver
+`backend/src/modules/objectives/objectiveMath.ts`) — sem tabela própria.
 
 ## Decisões por tabela
 
@@ -89,10 +97,6 @@ lista de opções sem quebrar o histórico.
 transações pode ser apagada, só arquivada — isso é uma proteção, não uma
 limitação. `subcategory_id` é `ON DELETE SET NULL`: apagar uma subcategoria
 não pode derrubar a transação inteira, só perder aquele detalhe.
-
-**`saving_goals`** — uma linha por usuário/mês (`UNIQUE(user_id,
-reference_month)`), com `CHECK` no formato `YYYY-MM`, no mesmo formato que
-`SavingGoals` já usa no front.
 
 ## Uma consequência real do `RESTRICT`, encontrada testando
 

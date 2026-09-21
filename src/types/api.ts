@@ -99,6 +99,8 @@ export type UpdateFinancialProfileInput = Partial<{
 
 export type DebtType = "cartao_credito" | "emprestimo" | "financiamento" | "cheque_especial" | "parcelamento" | "outro";
 
+export type DebtStatus = "ativa" | "atrasada" | "quitada";
+
 export interface Debt {
   id: number;
   type: DebtType;
@@ -113,6 +115,7 @@ export interface Debt {
   remainingAmount: number;
   progressPercent: number;
   paidOff: boolean;
+  status: DebtStatus;
   daysUntilDue: number | null;
 }
 
@@ -143,6 +146,60 @@ export interface DebtInput {
   interestRate?: number | null;
   installmentsCount?: number | null;
   dueDay?: number | null;
+  autoGenerateInstallments?: boolean;
+}
+
+export type AssetType = "investimento" | "imovel" | "veiculo" | "outro";
+
+export interface Asset {
+  id: number;
+  type: AssetType;
+  name: string;
+  currentValue: number;
+  valuedAt: string | null;
+  createdAt: string;
+}
+
+export interface AssetValueUpdate {
+  id: number;
+  value: number;
+  valuedAt: string;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface AssetValueUpdateWithAssetName extends AssetValueUpdate {
+  assetName: string;
+}
+
+export interface AssetValueUpdateInput {
+  value: number;
+  valuedAt: string;
+  note?: string;
+}
+
+export interface AssetInput {
+  type: AssetType;
+  name: string;
+  initialValue: number;
+  valuedAt: string;
+}
+
+export type AccountType = "corrente" | "poupanca" | "carteira" | "outro";
+
+export interface Account {
+  id: number;
+  type: AccountType;
+  name: string;
+  initialBalance: number;
+  balance: number;
+  createdAt: string;
+}
+
+export interface AccountInput {
+  type: AccountType;
+  name: string;
+  initialBalance: number;
 }
 
 export interface AuthResponse {
@@ -173,6 +230,7 @@ export interface ApiSubcategory {
 export interface ApiTransaction {
   id: number;
   user_id: number;
+  account_id: number;
   category_id: number;
   subcategory_id: number | null;
   category_name: string;
@@ -187,6 +245,7 @@ export interface ApiTransaction {
 }
 
 export interface ApiTransactionInput {
+  accountId: number;
   categoryId: number;
   subcategoryId?: number;
   description: string;
@@ -200,17 +259,6 @@ export interface Pagination {
   limit: number;
   total: number;
   totalPages: number;
-}
-
-export interface ApiGoal {
-  id: number;
-  user_id: number;
-  reference_month: string;
-  target_amount: number;
-  created_at: string;
-  updated_at: string;
-  saldo: number;
-  progressPercent: number;
 }
 
 export interface ApiNotification {
@@ -230,7 +278,6 @@ export interface DashboardMonthSummary {
   changes: { entradas: number; saidas: number; saldo: number };
   categoryBreakdown: { categoryId: number; name: string; color: string; value: number }[];
   ranking: { categoryId: number; name: string; color: string; value: number }[];
-  goal: { id: number; targetAmount: number; progressPercent: number } | null;
   alert: { status: "over" | "near" | "ok"; gastoPercentual: number; threshold: number };
 }
 

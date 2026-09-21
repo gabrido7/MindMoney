@@ -9,14 +9,12 @@ import { toLocalTransaction } from "../../transactions/utils/mapApiTransaction";
 import { useApiRequest } from "../../../hooks/useApiRequest";
 import { errorMessage } from "../../../services/api";
 import { invalidateFinancialData } from "../../../lib/invalidateFinancialData";
-import type { Category, SavingGoals } from "../../../types";
+import type { Category } from "../../../types";
 
 export default function ImportExportPanel({
-  savingGoals,
   categories,
   onClose,
 }: {
-  savingGoals: SavingGoals;
   categories: Category[];
   onClose: () => void;
 }) {
@@ -102,7 +100,7 @@ export default function ImportExportPanel({
               <div className="flex flex-wrap gap-3">
                 <Button
                   variant="secondary"
-                  onClick={() => exportBackupJSON({ transactions, savingGoals, categories })}
+                  onClick={() => exportBackupJSON({ transactions, categories })}
                 >
                   <Icon name="download" size={16} />
                   Backup completo (JSON)

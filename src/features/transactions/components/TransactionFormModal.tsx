@@ -4,15 +4,19 @@ import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import Button from "../../../components/ui/Button";
 import type { Category, Transaction, TransactionType } from "../../../types";
+import type { Account } from "../../../types/api";
 import type { TransactionInput } from "../hooks/useTransactions";
 
 export default function TransactionFormModal({
   categories,
+  accounts,
   initial,
   onSubmit,
   onClose,
 }: {
   categories: Category[];
+  /** Só um Select real quando o usuário tem 2+ contas -- com 1 conta só (o caso comum), o campo nem aparece, sem fricção nenhuma pra quem nunca vai precisar disso. */
+  accounts: Account[];
   initial?: Transaction;
   onSubmit: (input: TransactionInput) => Promise<void>;
   onClose: () => void;
@@ -29,6 +33,7 @@ export default function TransactionFormModal({
   const initialCategory = categories.find((c) => c.name === initialCategoryName);
 
   const [category, setCategory] = useState(initialCategoryName);
+  const [accountId, setAccountId] = useState<number | undefined>(initial?.accountId ?? accounts[0]?.id);
   const [subcategory, setSubcategory] = useState(initial?.subcategory ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [amount, setAmount] = useState(initial ? String(initial.amount) : "");
@@ -67,6 +72,7 @@ export default function TransactionFormModal({
 
     try {
       await onSubmit({
+        accountId,
         description: isOutros ? description || category : category,
         amount: numericAmount,
         type,
@@ -86,6 +92,21 @@ export default function TransactionFormModal({
     <Modal title={initial ? "Editar Transação" : "Nova Transação"} onClose={onClose}>
       <div className="flex flex-col gap-4">
         {error && <p className="text-negative text-sm font-medium">{error}</p>}
+
+        {accounts.length > 1 && (
+          <Select
+            id="transaction-account"
+            label="Conta"
+            value={accountId ?? ""}
+            onChange={(e) => setAccountId(Number(e.target.value))}
+          >
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </Select>
+        )}
 
         <Select
           id="transaction-category"

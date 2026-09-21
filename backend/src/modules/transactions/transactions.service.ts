@@ -1,5 +1,6 @@
 import { AppError } from "../../utils/AppError";
 import { categoriesRepository } from "../categories/categories.repository";
+import { accountsRepository } from "../accounts/accounts.repository";
 import { notificationsService } from "../notifications/notifications.service";
 import { transactionsRepository } from "./transactions.repository";
 import type { ImportRow, TransactionBodyInput, TransactionListQuery } from "./transactions.validation";
@@ -15,6 +16,9 @@ async function assertOwnedCategoryAndSubcategory(userId: number, input: Transact
     );
     if (!subcategory) throw AppError.badRequest("Subcategoria inválida para a categoria informada.");
   }
+
+  const account = await accountsRepository.findByIdAndUser(input.accountId, userId);
+  if (!account) throw AppError.badRequest("Conta inválida.");
 }
 
 export const transactionsService = {
@@ -66,13 +70,20 @@ export const transactionsService = {
    * chamada para todas as categorias + uma para todas as subcategorias
    * (mesmo princípio anti-N+1 de categories.service.ts), não uma consulta
    * por linha. Linhas com categoria desconhecida são puladas (reportadas
-   * em `skipped`), não derrubam a importação inteira.
+   * em `skipped`), não derrubam a importação inteira. O CSV não tem coluna
+   * de conta -- toda linha importada cai na conta padrão do usuário (a
+   * primeira criada, ver accountsRepository.findDefaultForUser), sem mudar
+   * o formato do arquivo.
    */
   async importBatch(
     userId: number,
     rows: ImportRow[]
   ): Promise<{ imported: number; skipped: { row: number; reason: string }[] }> {
-    const categories = await categoriesRepository.findAllByUser(userId);
+    const [categories, defaultAccount] = await Promise.all([
+      categoriesRepository.findAllByUser(userId),
+      accountsRepository.findDefaultForUser(userId),
+    ]);
+    if (!defaultAccount) throw AppError.badRequest("Nenhuma conta encontrada para importar as transações.");
     const categoryByName = new Map(categories.map((c) => [c.name, c]));
 
     const subcategories = await categoriesRepository.findSubcategoriesForCategories(
@@ -93,6 +104,7 @@ export const transactionsService = {
       }
 
       await transactionsRepository.create(userId, {
+        accountId: defaultAccount.id,
         categoryId: category.id,
         subcategoryId: row.subcategory ? subcategoryId.get(`${category.id}:${row.subcategory}`) : undefined,
         description: row.description,

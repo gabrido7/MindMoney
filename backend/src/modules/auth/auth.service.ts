@@ -52,8 +52,10 @@ export const authService = {
     });
 
     // Cada conta nova começa com as categorias/subcategorias padrão
-    // (mesma procedure testada na etapa do banco de dados).
+    // (mesma procedure testada na etapa do banco de dados) e uma conta
+    // bancária padrão, pra toda transação sempre ter um destino válido.
     await usersRepository.seedDefaultCategories(userId);
+    await usersRepository.seedDefaultAccount(userId);
 
     const user = await usersRepository.findById(userId);
     const { token, refreshToken } = await issueTokens(userId, userAgent);

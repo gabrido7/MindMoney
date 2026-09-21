@@ -44,8 +44,8 @@ export default function EvolutionChart({
               name="Saldo"
               stroke="var(--brand)"
               strokeWidth={2}
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              dot={{ r: 3, fill: "var(--brand)", strokeWidth: 0 }}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>

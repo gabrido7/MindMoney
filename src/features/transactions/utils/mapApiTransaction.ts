@@ -3,6 +3,7 @@ import type { ApiTransaction } from "../../../types/api";
 
 export const toLocalTransaction = (t: ApiTransaction): Transaction => ({
   id: String(t.id),
+  accountId: t.account_id,
   description: t.description,
   amount: t.amount,
   type: t.type,

@@ -4,6 +4,7 @@ const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export const transactionBodySchema = z.object({
+  accountId: z.coerce.number().int().positive(),
   categoryId: z.coerce.number().int().positive(),
   subcategoryId: z.coerce.number().int().positive().optional(),
   description: z.string().trim().min(1).max(255),
@@ -16,6 +17,7 @@ export const transactionListQuerySchema = z.object({
   month: z.string().regex(MONTH_REGEX, "month deve estar no formato YYYY-MM").optional(),
   type: z.enum(["entrada", "saida"]).optional(),
   categoryId: z.coerce.number().int().positive().optional(),
+  accountId: z.coerce.number().int().positive().optional(),
   search: z.string().trim().min(1).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(50),

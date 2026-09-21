@@ -103,10 +103,13 @@ describe("Perfil (editar dados, trocar senha, excluir conta)", () => {
 
     const catRes = await request(app).get("/api/categories").set(authHeader(token));
     const salario = catRes.body.categories.find((c: { name: string }) => c.name === "Salário");
-    await request(app)
+    const accountRes = await request(app).get("/api/accounts").set(authHeader(token));
+    const accountId = accountRes.body.accounts[0].id;
+    const createdTx = await request(app)
       .post("/api/transactions")
       .set(authHeader(token))
-      .send({ categoryId: salario.id, description: "Salário", amount: 1000, type: "entrada", transactionDate: "2026-08-05" });
+      .send({ accountId, categoryId: salario.id, description: "Salário", amount: 1000, type: "entrada", transactionDate: "2026-08-05" });
+    expect(createdTx.status).toBe(201);
 
     const del = await request(app)
       .delete("/api/users/me")

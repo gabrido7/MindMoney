@@ -139,7 +139,7 @@ export default function CategoryBudgetsCard({ month, categories }: { month: stri
       )}
 
       {budgets.length > 0 && (
-        <ul className="flex flex-col divide-y divide-line mb-4">
+        <ul className="mb-4 flex max-h-96 flex-col divide-y divide-line overflow-y-auto pr-1">
           {budgets.map((b) => (
             <BudgetRow
               key={b.id}

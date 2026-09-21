@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
-import { registerTestUser, cleanupUser, authHeader, getCategoryId } from "./helpers";
+import { registerTestUser, cleanupUser, authHeader, getCategoryId, getAccountId } from "./helpers";
 
 const MONTH = new Date().toISOString().slice(0, 7);
 
@@ -43,6 +43,7 @@ describe("Orçamento por categoria", () => {
   it("calcula percentual e status (ok/near/over) a partir de transações reais", async () => {
     const user = await registerTestUser("budget-status");
     const categoryId = await getCategoryId(user.token, "Alimentação");
+    const accountId = await getAccountId(user.token);
 
     await request(app)
       .put(`/api/category-budgets/${categoryId}`)
@@ -53,6 +54,7 @@ describe("Orçamento por categoria", () => {
       .post("/api/transactions")
       .set(authHeader(user.token))
       .send({
+        accountId,
         description: "Mercado",
         amount: 340,
         type: "saida",
@@ -74,6 +76,7 @@ describe("Orçamento por categoria", () => {
   it('marca status "over" quando o gasto ultrapassa o orçamento e gera notificação', async () => {
     const user = await registerTestUser("budget-over");
     const categoryId = await getCategoryId(user.token, "Alimentação");
+    const accountId = await getAccountId(user.token);
 
     await request(app)
       .put(`/api/category-budgets/${categoryId}`)
@@ -84,6 +87,7 @@ describe("Orçamento por categoria", () => {
       .post("/api/transactions")
       .set(authHeader(user.token))
       .send({
+        accountId,
         description: "Mercado grande",
         amount: 150,
         type: "saida",

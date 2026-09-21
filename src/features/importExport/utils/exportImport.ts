@@ -1,10 +1,9 @@
-import type { Category, SavingGoals, Transaction } from "../../../types";
+import type { Category, Transaction } from "../../../types";
 
 export interface BackupData {
   version: 1;
   exportedAt: string;
   transactions: Transaction[];
-  savingGoals: SavingGoals;
   categories: Category[];
 }
 
@@ -123,12 +122,7 @@ export function parseTransactionsCSV(text: string): ImportRow[] {
 export const parseBackupJSON = (text: string): BackupData | null => {
   try {
     const parsed = JSON.parse(text);
-    if (
-      parsed &&
-      Array.isArray(parsed.transactions) &&
-      typeof parsed.savingGoals === "object" &&
-      Array.isArray(parsed.categories)
-    ) {
+    if (parsed && Array.isArray(parsed.transactions) && Array.isArray(parsed.categories)) {
       return parsed as BackupData;
     }
     return null;

@@ -12,7 +12,7 @@ export default function AchievementsGrid({ achievements }: { achievements: Achie
           {unlockedCount} de {achievements.length}
         </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid max-h-80 grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3">
         {achievements.map((achievement) => (
           <div
             key={achievement.id}

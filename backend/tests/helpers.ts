@@ -40,6 +40,14 @@ export async function getCategoryId(token: string, name: string): Promise<number
   return category.id;
 }
 
+/** Conta padrão do usuário -- seedada automaticamente no cadastro (ver seedDefaultAccount), toda transação de teste precisa de uma. */
+export async function getAccountId(token: string): Promise<number> {
+  const res = await request(app).get("/api/accounts").set(authHeader(token));
+  const account = res.body.accounts[0];
+  if (!account) throw new Error("Nenhuma conta encontrada nos dados de teste.");
+  return account.id;
+}
+
 /** Apaga as transações do usuário antes de apagar o usuário (RESTRICT em transactions.category_id). */
 export async function cleanupUser(userId: number) {
   const { pool } = await import("../src/config/db");
