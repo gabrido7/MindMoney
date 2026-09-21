@@ -11,8 +11,8 @@ const OPTIONS: { type: NotificationType; title: string; description: string }[] 
   },
   {
     type: "goal_achieved",
-    title: "Meta de economia atingida",
-    description: "Avisar quando você bater a meta de economia definida para o mês.",
+    title: "Ritmo de economia em dia",
+    description: "Avisar quando você guardar o suficiente no mês pra ficar no ritmo das suas metas ativas.",
   },
   {
     type: "objective_deadline",

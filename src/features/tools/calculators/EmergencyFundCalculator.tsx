@@ -5,7 +5,7 @@ import { formatCurrency, formatPercent } from "../../../utils/formatters";
 import NumberField from "../components/NumberField";
 import ResultStat from "../components/ResultStat";
 import CalculatorLayout from "../components/CalculatorLayout";
-import ScoreArc from "../../../components/ui/ScoreArc";
+import Dial from "../../../components/ui/Dial";
 
 export default function EmergencyFundCalculator() {
   const [monthlyExpenses, setMonthlyExpenses] = useState("3000");
@@ -42,11 +42,13 @@ export default function EmergencyFundCalculator() {
         result ? (
           <>
             <div className="flex items-center gap-5">
-              <ScoreArc value={savingsNum} max={result.targetAmount} size="lg" color="var(--brand)">
-                <span className="font-data text-lg font-bold text-ink">
-                  {formatPercent(Math.min(100, (savingsNum / result.targetAmount) * 100), 0)}
-                </span>
-              </ScoreArc>
+              <Dial
+                value={savingsNum}
+                max={result.targetAmount}
+                size="lg"
+                color="var(--brand)"
+                center={formatPercent(Math.min(100, (savingsNum / result.targetAmount) * 100), 0)}
+              />
               <div className="flex flex-col gap-1">
                 <span className="text-xs font-medium uppercase tracking-wide text-ink-soft">Tamanho da reserva</span>
                 <span className="font-data text-2xl font-bold text-brand">{formatCurrency(result.targetAmount)}</span>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon, { type IconName } from "../../../components/ui/Icon";
+import InstrumentStrip from "../../../components/ui/InstrumentStrip";
 import Eyebrow from "./Eyebrow";
 import Reveal from "./Reveal";
 
@@ -136,16 +137,8 @@ export default function FeaturesSection() {
               <p className="mt-3 leading-relaxed text-ink-soft">{selected.description}</p>
             </div>
 
-            <div className="flex flex-col justify-center gap-3">
-              {selected.stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="flex items-center justify-between rounded-xl border border-line bg-surface-alt px-5 py-4"
-                >
-                  <span className="text-sm text-ink-soft">{stat.label}</span>
-                  <span className="font-data text-lg font-bold text-brand-deep">{stat.value}</span>
-                </div>
-              ))}
+            <div className="flex items-center">
+              <InstrumentStrip items={selected.stats} />
             </div>
           </div>
         </Reveal>

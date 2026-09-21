@@ -1,5 +1,5 @@
 import Icon, { type IconName } from "../../../components/ui/Icon";
-import ScoreArc from "../../../components/ui/ScoreArc";
+import Dial from "../../../components/ui/Dial";
 
 const BADGES: { icon: IconName; className: string }[] = [
   { icon: "target", className: "left-[12%] top-[18%] -rotate-6" },
@@ -35,9 +35,13 @@ export default function AuthShowcase() {
         <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-neutral-900/90 p-6 shadow-2xl shadow-black/60">
           <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Score financeiro</p>
           <div className="mt-3 flex items-center gap-4">
-            <ScoreArc value={87} color="var(--brand)" trackColor="rgba(255,255,255,0.08)" size="md">
-              <span className="font-data text-2xl font-bold text-white">87</span>
-            </ScoreArc>
+            <Dial
+              value={87}
+              color="var(--brand)"
+              trackColor="rgba(255,255,255,0.08)"
+              size="md"
+              center={<span className="font-data text-2xl font-bold text-white">87</span>}
+            />
             <div className="flex-1">
               <p className="font-display text-base font-semibold text-white">Excelente</p>
               <div className="mt-2 h-2 rounded-full bg-neutral-800">

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { transactionsService } from "../../../services/transactionsService";
 import { usersService } from "../../../services/usersService";
 import { debtsService } from "../../../services/debtsService";
+import { accountsService } from "../../../services/accountsService";
 import { errorMessage } from "../../../services/api";
 import { invalidateFinancialData } from "../../../lib/invalidateFinancialData";
 import { useAuth } from "../../../hooks/useAuth";
@@ -18,6 +19,12 @@ import type {
 } from "../../../types/api";
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+/** A conta seedada no cadastro (ver seedDefaultAccount no backend) -- onboarding lança renda/despesas nela, sem perguntar conta nenhuma (usuário recém-criado só tem essa). */
+async function getDefaultAccountId(): Promise<number> {
+  const { accounts } = await accountsService.list();
+  return accounts[0].id;
+}
 
 function resolveCategory(categories: Category[], name: string, subcategoryName?: string) {
   const category = categories.find((c) => c.name === name);
@@ -85,7 +92,9 @@ export function useOnboarding(categories: Category[]) {
     mutationFn: async (input: IncomeDraft) => {
       const resolved = resolveCategory(categories, "Salário");
       if (input.amount > 0 && resolved) {
+        const accountId = await getDefaultAccountId();
         await transactionsService.create({
+          accountId,
           categoryId: resolved.categoryId,
           description: "Renda mensal",
           amount: input.amount,
@@ -106,10 +115,13 @@ export function useOnboarding(categories: Category[]) {
 
   const expensesMutation = useMutation({
     mutationFn: async (expenses: FixedExpenseDraft[]) => {
+      if (expenses.length === 0) return;
+      const accountId = await getDefaultAccountId();
       for (const expense of expenses) {
         const resolved = resolveCategory(categories, expense.categoryName, expense.subcategoryName);
         if (!resolved) continue;
         await transactionsService.create({
+          accountId,
           categoryId: resolved.categoryId,
           subcategoryId: resolved.subcategoryId,
           description: expense.periodicity === "anual" ? `${expense.label} (anual)` : expense.label,

@@ -1,5 +1,5 @@
 import Card from "../../../components/ui/Card";
-import ScoreArc from "../../../components/ui/ScoreArc";
+import Dial from "../../../components/ui/Dial";
 import type { GamificationSummary } from "../../../types/api";
 
 export default function LevelCard({ summary }: { summary: GamificationSummary }) {
@@ -7,9 +7,7 @@ export default function LevelCard({ summary }: { summary: GamificationSummary })
     <Card>
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <ScoreArc value={summary.xpIntoLevel} max={summary.xpForNextLevel} size="md">
-            <span className="font-data text-xl font-bold text-ink">{summary.level}</span>
-          </ScoreArc>
+          <Dial value={summary.xpIntoLevel} max={summary.xpForNextLevel} size="md" center={summary.level} />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Nível financeiro</p>
             <p className="font-display text-lg font-semibold text-ink">LVL {summary.level}</p>

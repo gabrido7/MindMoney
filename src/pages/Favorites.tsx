@@ -41,7 +41,7 @@ export default function Favorites() {
       )}
 
       {!isLoading && items.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex max-h-[36rem] flex-col gap-3 overflow-y-auto pr-1">
           {items.map((item) => (
             <Card key={`${item.type}-${item.id}`} className="flex items-center justify-between gap-3">
               <Link to={item.href} className="flex min-w-0 flex-1 items-center gap-3">

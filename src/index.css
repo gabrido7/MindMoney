@@ -29,6 +29,14 @@
   --warning: #d97706;
   --warning-soft: #faecd8;
 
+  /* Painel de instrumento (InstrumentStrip) -- deliberadamente distinto de
+     --ink/--bg: é uma superfície de destaque fixa (não inverte com o tema
+     do jeito que --ink/--bg invertem), pensada pra ler como um mostrador
+     verde-terminal por trás dos números-chave, não mais um card branco. */
+  --panel-bg: #101c0f;
+  --panel-ink: #f4f8ef;
+  --panel-line: rgba(255, 255, 255, 0.14);
+
   --card-pad: 1.5rem;
 }
 
@@ -49,6 +57,13 @@
 
   --warning: #f0a020;
   --warning-soft: rgba(240, 160, 32, 0.14);
+
+  /* Painel um tom mais claro e mais verde que o fundo quase-preto do tema
+     escuro (--bg: #0f130a) -- se fosse ainda mais escuro desapareceria
+     contra a página; assim lê como um mostrador elevado, não um buraco. */
+  --panel-bg: #17281a;
+  --panel-ink: #eef5e8;
+  --panel-line: rgba(255, 255, 255, 0.12);
 }
 
 html {

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import Card from "../../../../components/ui/Card";
-import ScoreArc from "../../../../components/ui/ScoreArc";
+import Dial from "../../../../components/ui/Dial";
 import LevelCard from "../../../gamification/components/LevelCard";
 import AchievementsGrid from "../../../gamification/components/AchievementsGrid";
 import { useGamification } from "../../../gamification/hooks/useGamification";
@@ -37,9 +37,7 @@ export default function ProgressTab() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <div className="flex items-center gap-4">
-            <ScoreArc value={lessonsCompleted} max={Math.max(TOTAL_LESSONS, 1)} size="md">
-              <span className="font-data text-lg font-bold text-ink">{lessonsCompleted}</span>
-            </ScoreArc>
+            <Dial value={lessonsCompleted} max={Math.max(TOTAL_LESSONS, 1)} size="md" center={lessonsCompleted} />
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Educação financeira</p>
               <p className="font-data text-sm text-ink mt-1">
@@ -51,9 +49,7 @@ export default function ProgressTab() {
 
         <Card>
           <div className="flex items-center gap-4">
-            <ScoreArc value={objectivesAchieved} max={Math.max(objectives.length, 1)} size="md">
-              <span className="font-data text-lg font-bold text-ink">{objectivesAchieved}</span>
-            </ScoreArc>
+            <Dial value={objectivesAchieved} max={Math.max(objectives.length, 1)} size="md" center={objectivesAchieved} />
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Objetivos financeiros</p>
               <p className="font-data text-sm text-ink mt-1">

@@ -26,7 +26,7 @@ export default function SessionsCard() {
         <EmptyState icon="monitor" message="Nenhuma sessão ativa encontrada." />
       )}
 
-      <ul className="flex flex-col gap-2">
+      <ul className="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1">
         {sessions.map((session) => (
           <li
             key={session.id}

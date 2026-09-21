@@ -34,6 +34,11 @@ export default {
           DEFAULT: "var(--warning)",
           soft: "var(--warning-soft)",
         },
+        panel: {
+          DEFAULT: "var(--panel-bg)",
+          ink: "var(--panel-ink)",
+          line: "var(--panel-line)",
+        },
       },
       boxShadow: {
         card: "0 1px 2px rgba(20,24,15,0.04), 0 8px 24px -12px rgba(20,24,15,0.10)",
