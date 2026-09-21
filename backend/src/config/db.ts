@@ -12,4 +12,8 @@ export const pool = mysql.createPool({
   charset: "utf8mb4",
   dateStrings: true, // DATE/DATETIME voltam como string 'YYYY-MM-DD', não Date do JS
   decimalNumbers: true, // DECIMAL volta como number, não string
+  // Aiven (e a maioria dos MySQL gerenciados) recusa conexão sem TLS. Em
+  // dev local (XAMPP) DB_SSL_CA não existe, então isso vira `undefined` e o
+  // driver conecta sem TLS como sempre conectou.
+  ssl: env.DB_SSL_CA ? { ca: env.DB_SSL_CA, rejectUnauthorized: true } : undefined,
 });

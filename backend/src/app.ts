@@ -1,4 +1,5 @@
 import path from "node:path";
+import fs from "node:fs";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -14,10 +15,12 @@ import { authRouter } from "./modules/auth/auth.routes";
 import { usersRouter } from "./modules/users/users.routes";
 import { transactionsRouter } from "./modules/transactions/transactions.routes";
 import { categoriesRouter } from "./modules/categories/categories.routes";
-import { goalsRouter } from "./modules/goals/goals.routes";
 import { categoryBudgetsRouter } from "./modules/categoryBudgets/categoryBudgets.routes";
 import { debtsRouter } from "./modules/debts/debts.routes";
 import { debtAdviceRouter } from "./modules/debtAdvice/debtAdvice.routes";
+import { assetsRouter } from "./modules/assets/assets.routes";
+import { accountsRouter } from "./modules/accounts/accounts.routes";
+import { netWorthRouter } from "./modules/netWorth/netWorth.routes";
 import { objectivesRouter } from "./modules/objectives/objectives.routes";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { scoreRouter } from "./modules/score/score.routes";
@@ -33,7 +36,22 @@ export const app = express();
 if (process.env.NODE_ENV !== "test") {
   app.use(requestLogger);
 }
-app.use(helmet());
+// A CSP padrão do helmet ("default-src 'self'") bloquearia o CSS/fonte do
+// Google Fonts que o index.html carrega externamente -- só passou
+// despercebido até agora porque em dev o frontend nunca foi servido por
+// este processo (Vite roda separado, sem helmet no meio). Libera
+// explicitamente os dois domínios usados, mantém o resto do padrão.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "font-src": ["'self'", "https://fonts.gstatic.com"],
+      },
+    },
+  })
+);
 app.use(cors({ origin: env.CORS_ORIGIN }));
 app.use(express.json());
 
@@ -86,10 +104,12 @@ app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/categories", categoriesRouter);
-app.use("/api/goals", goalsRouter);
 app.use("/api/category-budgets", categoryBudgetsRouter);
 app.use("/api/debts", debtsRouter);
 app.use("/api/debt-advice", debtAdviceRouter);
+app.use("/api/assets", assetsRouter);
+app.use("/api/accounts", accountsRouter);
+app.use("/api/net-worth", netWorthRouter);
 app.use("/api/objectives", objectivesRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/score", scoreRouter);
@@ -99,6 +119,27 @@ app.use("/api/newsletter", newsletterRouter);
 app.use("/api/education", educationRouter);
 app.use("/api/gamification", gamificationRouter);
 app.use("/api/favorites", favoritesRouter);
+
+/**
+ * Serve o build de produção do frontend (dist/ na raiz do repo, gerado por
+ * `npm run build`) direto do mesmo processo/porta do backend -- só pra
+ * demonstração (ex: expor via túnel público numa apresentação), não é o
+ * modo de desenvolvimento normal (Vite roda separado, porta 5173). Mesma
+ * origem pro front e pro back elimina CORS por completo aqui, o que
+ * importa de verdade quando o acesso vem de um domínio de túnel que muda a
+ * cada execução. __dirname aqui é backend/src (rodando via tsx, não
+ * compilado) -- "../../dist" sobe pra backend/, depois pra raiz do repo.
+ * Só ativa se a pasta existir, pra não quebrar o dev normal quando dist/
+ * não foi gerado ainda.
+ */
+const frontendDist = path.join(__dirname, "..", "..", "dist");
+if (fs.existsSync(path.join(frontendDist, "index.html"))) {
+  app.use(express.static(frontendDist));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) return next();
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+}
 
 app.use(notFoundHandler);
 app.use(errorHandler);
