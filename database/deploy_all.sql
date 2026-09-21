@@ -967,6 +967,8 @@ ALTER TABLE notification_preferences
 -- goal_achieved, o insight de meta e o assistente passam a derivar a meta
 -- do mês da soma de requiredMonthlyAmount dos objetivos ativos, em vez de
 -- consultar esta tabela -- ver backend/src/modules/objectives/objectiveMath.ts.
+USE mindmoney;
+
 DROP TABLE IF EXISTS saving_goals;
 
 -- ===== migrations/021_debt_auto_installments.sql =====
