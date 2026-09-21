@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { pool } from "../src/config/db";
@@ -14,11 +14,26 @@ describe("Objetivos financeiros (metas de longo prazo)", () => {
   let userB: TestUser;
 
   beforeAll(async () => {
+    // Todo o arquivo assume "hoje" em agosto/2026 -- metas com alvo em
+    // 2026-11/2026-12 esperando 3/4 meses restantes, aportes em
+    // "2026-08-10", objetivo "criado" em "2026-06-15" (via
+    // backdateCreatedAt) esperando exatamente 2 meses decorridos, meta em
+    // "2026-01" esperando estar vencida. objectives.service.ts calcula tudo
+    // isso a partir de currentMonth()/new Date() reais -- sem congelar o
+    // relógio, esses números derivam conforme o tempo real passa (mesmo
+    // problema já resolvido corretamente no frontend por
+    // simulateGoal.test.ts). toFake: ["Date"] -- só o relógio é congelado,
+    // setTimeout/etc. continuam reais, então a conexão de verdade com o
+    // MySQL não é afetada.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-15T12:00:00Z"));
+
     userA = await registerTestUser("objectives-a");
     userB = await registerTestUser("objectives-b");
   });
 
   afterAll(async () => {
+    vi.useRealTimers();
     await cleanupUser(userA.userId);
     await cleanupUser(userB.userId);
   });

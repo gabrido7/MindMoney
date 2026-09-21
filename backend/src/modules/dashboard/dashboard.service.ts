@@ -1,5 +1,4 @@
 import { transactionsRepository } from "../transactions/transactions.repository";
-import { goalsRepository } from "../goals/goals.repository";
 import { calcPercentChange, currentMonth, getPreviousMonth } from "../../utils/month";
 import { ALERT_PERCENT, NEAR_ALERT_RATIO } from "../../config/rules";
 
@@ -20,11 +19,10 @@ function alertFor(totals: Totals) {
 async function buildMonthSummary(userId: number, month: string) {
   const previousMonth = getPreviousMonth(month);
 
-  const [totals, previousTotals, categoryBreakdown, goal] = await Promise.all([
+  const [totals, previousTotals, categoryBreakdown] = await Promise.all([
     transactionsRepository.sumByTypeForMonth(userId, month),
     transactionsRepository.sumByTypeForMonth(userId, previousMonth),
     transactionsRepository.categoryBreakdownForMonth(userId, month),
-    goalsRepository.findByMonth(userId, month),
   ]);
 
   const saldo = totals.entradas - totals.saidas;
@@ -41,13 +39,6 @@ async function buildMonthSummary(userId: number, month: string) {
     },
     categoryBreakdown,
     ranking: categoryBreakdown.slice(0, 3) as CategoryBreakdown,
-    goal: goal
-      ? {
-          id: goal.id,
-          targetAmount: goal.target_amount,
-          progressPercent: goal.target_amount > 0 ? (saldo / goal.target_amount) * 100 : 0,
-        }
-      : null,
     alert: alertFor(totals),
   };
 }

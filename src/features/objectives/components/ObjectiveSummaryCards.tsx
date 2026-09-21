@@ -1,5 +1,5 @@
 import Card from "../../../components/ui/Card";
-import ScoreArc from "../../../components/ui/ScoreArc";
+import Dial from "../../../components/ui/Dial";
 import { formatCurrency } from "../../../utils/formatters";
 import { CATEGORY_BY_VALUE } from "../data/categoryPresets";
 import type { ObjectiveSummary } from "../../../types/api";
@@ -27,11 +27,7 @@ export default function ObjectiveSummaryCards({ summary }: { summary: ObjectiveS
       <Card>
         <h3 className="text-ink-soft text-sm mb-1">Progresso geral</h3>
         <div className="flex items-center gap-3">
-          <ScoreArc value={summary.overallProgressPercent} size="sm">
-            <span className="font-data text-xs font-bold text-ink">
-              {summary.overallProgressPercent.toFixed(0)}%
-            </span>
-          </ScoreArc>
+          <Dial value={summary.overallProgressPercent} size="sm" center={`${summary.overallProgressPercent.toFixed(0)}%`} />
         </div>
       </Card>
       <Card>

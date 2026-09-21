@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Icon from "../../../components/ui/Icon";
-import ScoreArc from "../../../components/ui/ScoreArc";
+import Dial from "../../../components/ui/Dial";
 import { objectivesService } from "../../../services/objectivesService";
 import { errorMessage } from "../../../services/api";
 import { useToast } from "../../../hooks/useToast";
@@ -90,11 +90,7 @@ export default function ObjectiveCard({
       </div>
 
       <div className="grid grid-cols-[auto_1fr] gap-4 items-center">
-        <ScoreArc value={objective.progressPercent} color={arcColor} size="sm">
-          <span className="font-data text-xs font-bold text-ink">
-            {objective.progressPercent.toFixed(0)}%
-          </span>
-        </ScoreArc>
+        <Dial value={objective.progressPercent} color={arcColor} size="sm" center={`${objective.progressPercent.toFixed(0)}%`} />
 
         <div className="flex flex-col gap-1">
           <span className="text-sm text-ink-soft font-data">
@@ -181,7 +177,7 @@ export default function ObjectiveCard({
             <p className="text-xs text-ink-soft">Nenhum aporte lançado ainda.</p>
           )}
           {data && data.contributions.length > 0 && (
-            <ul className="flex flex-col gap-2">
+            <ul className="flex max-h-48 flex-col gap-2 overflow-y-auto pr-1">
               {data.contributions.map((c) => (
                 <li key={c.id} className="flex items-center justify-between text-sm">
                   <span className="text-ink-soft font-data">

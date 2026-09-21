@@ -1,7 +1,5 @@
 import { financialProfileRepository, type FinancialProfileRow } from "./financialProfile.repository";
-import { goalsRepository } from "../goals/goals.repository";
 import { objectivesRepository } from "../objectives/objectives.repository";
-import { currentMonth } from "../../utils/month";
 import type { UpdateFinancialProfileInput, PriorityOption, HabitsInput } from "./financialProfile.validation";
 
 export interface Recommendation {
@@ -114,21 +112,8 @@ async function computeRecommendations(userId: number, profile: EnrichedFinancial
     return recommendations;
   }
 
-  const [objectives, currentGoal] = await Promise.all([
-    objectivesRepository.listByUser(userId),
-    goalsRepository.findByMonth(userId, currentMonth()),
-  ]);
+  const objectives = await objectivesRepository.listByUser(userId);
   const objectiveCategories = new Set(objectives.map((o) => o.category));
-
-  if (profile.experienceLevel === "iniciante") {
-    recommendations.push({
-      id: "trilha-fundamentos",
-      title: "Comece pela trilha Fundamentos",
-      description: "Como você se descreveu iniciante, essa trilha cobre o básico antes das outras ficarem mais fáceis de aproveitar.",
-      actionLabel: "Ver trilha",
-      actionPath: "/educacao-financeira/fundamentos",
-    });
-  }
 
   if (profile.priorities.includes("reserva_emergencia") && !objectiveCategories.has("reserva")) {
     recommendations.push({
@@ -153,16 +138,6 @@ async function computeRecommendations(userId: number, profile: EnrichedFinancial
     });
   }
 
-  if (profile.priorities.includes("investir")) {
-    recommendations.push({
-      id: "trilha-investimentos",
-      title: "Aprofunde em investimentos",
-      description: "A trilha de Investimentos cobre o que você precisa saber antes de comparar onde colocar seu dinheiro.",
-      actionLabel: "Ver trilha",
-      actionPath: "/educacao-financeira/investimentos",
-    });
-  }
-
   if (profile.priorities.includes("aposentadoria") && !objectiveCategories.has("patrimonio")) {
     recommendations.push({
       id: "simular-aposentadoria",
@@ -183,12 +158,12 @@ async function computeRecommendations(userId: number, profile: EnrichedFinancial
     });
   }
 
-  if (!currentGoal) {
+  if (objectives.length === 0) {
     recommendations.push({
-      id: "definir-meta-mensal",
-      title: "Você ainda não definiu uma meta de economia este mês",
-      description: "Uma meta mensal é o jeito mais direto de o score financeiro medir sua capacidade de economia.",
-      actionLabel: "Definir meta",
+      id: "criar-primeira-meta",
+      title: "Você ainda não tem nenhuma meta cadastrada",
+      description: "Uma meta é o jeito mais direto de o score financeiro medir sua capacidade de economia.",
+      actionLabel: "Criar meta",
       actionPath: "/metas",
     });
   }

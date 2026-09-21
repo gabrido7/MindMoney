@@ -1,10 +1,11 @@
 import { AppError } from "../../utils/AppError";
 import { transactionsRepository } from "../transactions/transactions.repository";
-import { goalsRepository } from "../goals/goals.repository";
+import { objectivesRepository } from "../objectives/objectives.repository";
+import { monthlySavingsTarget } from "../objectives/objectiveMath";
 import { categoryBudgetsService } from "../categoryBudgets/categoryBudgets.service";
 import { notificationsRepository, type NotificationType } from "./notifications.repository";
 import { notificationPreferencesRepository } from "./notificationPreferences.repository";
-import { formatMonthLabel } from "../../utils/month";
+import { currentMonth, formatMonthLabel } from "../../utils/month";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { ALERT_PERCENT } from "../../config/rules";
 
@@ -15,6 +16,8 @@ const PREFERENCE_TYPES: NotificationType[] = [
   "category_budget_exceeded",
   "onboarding_pending",
   "debt_due_date",
+  "debt_paid_off",
+  "net_worth_positive",
 ];
 
 /** Rótulos exibidos na notificação de onboarding pendente -- chaves espelham as etapas do wizard no frontend (src/pages/Onboarding.tsx). */
@@ -56,9 +59,9 @@ export const notificationsService = {
 
   /**
    * Reavalia o mês e cria notificações reais quando um evento acontece
-   * (limite de gastos estourado / meta atingida). Chamado depois de criar
-   * ou editar uma transação e depois de criar/editar uma meta — nunca
-   * fabricado à parte, sempre a partir do estado real do banco.
+   * (limite de gastos estourado / ritmo de economia das metas atingido).
+   * Chamado depois de criar ou editar uma transação — nunca fabricado à
+   * parte, sempre a partir do estado real do banco.
    * Evita duplicar: só cria se não houver outra do mesmo tipo ainda não lida.
    * Cada criação respeita a preferência do usuário para aquele tipo.
    */
@@ -81,18 +84,22 @@ export const notificationsService = {
       }
     }
 
-    const goal = await goalsRepository.findByMonth(userId, month);
-    if (goal) {
+    // requiredMonthlyAmount (e portanto a meta do mês derivada) é sempre "a
+    // partir de hoje" -- só faz sentido avaliar pro mês corrente, mesmo
+    // raciocínio de score.service.calculate.
+    if (month === currentMonth()) {
+      const objectiveRows = await objectivesRepository.listByUser(userId);
+      const monthlyTarget = monthlySavingsTarget(objectiveRows);
       const saldo = totals.entradas - totals.saidas;
-      if (saldo >= goal.target_amount) {
+      if (monthlyTarget > 0 && saldo >= monthlyTarget) {
         const enabled = await notificationPreferencesRepository.isEnabled(userId, "goal_achieved");
         const alreadyNotified = enabled && (await notificationsRepository.hasUnreadOfType(userId, "goal_achieved"));
         if (enabled && !alreadyNotified) {
           await notificationsRepository.create(
             userId,
             "goal_achieved",
-            "Meta de economia atingida",
-            `Você atingiu sua meta de economia de ${formatMonthLabel(month)}. 🏆`
+            "Ritmo de economia em dia",
+            `Você já guardou o suficiente este mês pra ficar no ritmo das suas metas ativas. 🏆`
           );
         }
       }
@@ -187,6 +194,43 @@ export const notificationsService = {
       "debt_due_date",
       "Vencimento de dívida próximo",
       `A dívida "${urgentDebt.name}" ${when}.`
+    );
+  },
+
+  /**
+   * Chamado a partir de debtsService.addPayment() só quando o próprio
+   * pagamento faz o progresso cruzar 100% -- essa condição já garante que
+   * isso dispara uma vez só por dívida (um pagamento extra numa dívida já
+   * quitada nunca cruza o marco de novo), sem precisar do dedupe genérico
+   * de "1 não lida por tipo".
+   */
+  async notifyDebtPaidOff(userId: number, debtName: string): Promise<void> {
+    const enabled = await notificationPreferencesRepository.isEnabled(userId, "debt_paid_off");
+    if (!enabled) return;
+
+    await notificationsRepository.create(
+      userId,
+      "debt_paid_off",
+      "Dívida quitada!",
+      `Você quitou a dívida "${debtName}" por completo. 🎉`
+    );
+  },
+
+  /**
+   * Chamado só quando a conquista "patrimonio-no-azul" acabou de ser
+   * desbloqueada pela primeira vez (unlockAchievement já garante isso é
+   * idempotente) -- mesmo raciocínio de notifyDebtPaidOff, o dedupe já
+   * acontece antes de chegar aqui.
+   */
+  async notifyNetWorthPositive(userId: number): Promise<void> {
+    const enabled = await notificationPreferencesRepository.isEnabled(userId, "net_worth_positive");
+    if (!enabled) return;
+
+    await notificationsRepository.create(
+      userId,
+      "net_worth_positive",
+      "Patrimônio líquido positivo!",
+      "Seu patrimônio líquido (ativos menos dívidas) ficou positivo pela primeira vez. 💎"
     );
   },
 };

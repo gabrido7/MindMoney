@@ -1,15 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
-import { registerTestUser, cleanupUser, authHeader, getCategoryId, type TestUser } from "./helpers";
+import { registerTestUser, cleanupUser, authHeader, getCategoryId, getAccountId, type TestUser } from "./helpers";
 
 describe("Notificações", () => {
   let userA: TestUser;
   let userB: TestUser;
+  let accountIdA: number;
 
   beforeAll(async () => {
     userA = await registerTestUser("notif-a");
     userB = await registerTestUser("notif-b");
+    accountIdA = await getAccountId(userA.token);
   });
 
   afterAll(async () => {
@@ -24,11 +26,11 @@ describe("Notificações", () => {
     await request(app)
       .post("/api/transactions")
       .set(authHeader(userA.token))
-      .send({ categoryId: salarioId, description: "Salário", amount: 1000, type: "entrada", transactionDate: "2026-08-05" });
+      .send({ accountId: accountIdA, categoryId: salarioId, description: "Salário", amount: 1000, type: "entrada", transactionDate: "2026-08-05" });
     await request(app)
       .post("/api/transactions")
       .set(authHeader(userA.token))
-      .send({ categoryId: alimentacaoId, description: "Alimentação", amount: 900, type: "saida", transactionDate: "2026-08-10" });
+      .send({ accountId: accountIdA, categoryId: alimentacaoId, description: "Alimentação", amount: 900, type: "saida", transactionDate: "2026-08-10" });
 
     const list = await request(app).get("/api/notifications").set(authHeader(userA.token));
     const notif = list.body.notifications.find((n: { type: string }) => n.type === "limit_exceeded");

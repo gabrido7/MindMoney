@@ -1,6 +1,8 @@
 import { AppError } from "../../utils/AppError";
 import { currentMonth, daysUntilEndOfMonth, monthsBetween } from "../../utils/month";
+import { computeMilestone } from "../../utils/milestones";
 import { objectivesRepository, type ObjectiveWithCurrentRow } from "./objectives.repository";
+import { computeObjectiveStatus } from "./objectiveMath";
 import { gamificationService, type GamificationResult } from "../gamification/gamification.service";
 import { notificationsService } from "../notifications/notifications.service";
 import type { ContributionBodyInput, ObjectiveBodyInput } from "./objectives.validation";
@@ -11,21 +13,7 @@ const NEAR_DEADLINE_MONTHS = 3;
 /** Ritmo dentro de +-10% do necessário conta como "no ritmo certo", não atrasado/adiantado. */
 const PACE_TOLERANCE = 0.1;
 
-/** Marcos de progresso que disparam uma pequena celebração na tela quando um aporte cruza um deles. */
-const PROGRESS_MILESTONES = [25, 50, 75, 100] as const;
-
 export type PaceStatus = "on_track" | "behind" | "ahead" | "insufficient_data" | null;
-
-/**
- * Qual marco (se algum) esse aporte específico cruzou -- compara o progresso
- * antes e depois do aporte, não só o valor final, senão um objetivo que já
- * estava em 80% "celebraria" 25%/50% de novo a cada aporte novo. Quando um
- * aporte cruza mais de um marco de uma vez, celebra o mais alto.
- */
-function computeMilestone(previousProgressPercent: number, newProgressPercent: number): number | null {
-  const crossed = PROGRESS_MILESTONES.filter((m) => previousProgressPercent < m && newProgressPercent >= m);
-  return crossed.length > 0 ? Math.max(...crossed) : null;
-}
 
 /**
  * Ritmo real de economia: a média de quanto o usuário guardou por mês desde
@@ -94,14 +82,10 @@ function computePace(
 function enrich(row: ObjectiveWithCurrentRow) {
   const currentAmount = Number(row.current_amount);
   const targetAmount = Number(row.target_amount);
-  const achieved = currentAmount >= targetAmount;
-  const remainingAmount = Math.max(targetAmount - currentAmount, 0);
   const progressPercent = targetAmount > 0 ? Math.min((currentAmount / targetAmount) * 100, 100) : 0;
 
-  const rawMonthsRemaining = monthsBetween(currentMonth(), row.target_month);
-  const overdue = !achieved && rawMonthsRemaining < 0;
-  const monthsRemaining = Math.max(rawMonthsRemaining, 0);
-  const requiredMonthlyAmount = achieved || overdue ? 0 : remainingAmount / Math.max(monthsRemaining, 1);
+  const { achieved, overdue, monthsRemaining, remainingAmount, requiredMonthlyAmount } =
+    computeObjectiveStatus(row);
 
   const pace = computePace(
     row,

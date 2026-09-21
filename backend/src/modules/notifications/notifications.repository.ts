@@ -7,7 +7,9 @@ export type NotificationType =
   | "objective_deadline"
   | "category_budget_exceeded"
   | "onboarding_pending"
-  | "debt_due_date";
+  | "debt_due_date"
+  | "debt_paid_off"
+  | "net_worth_positive";
 
 export interface NotificationRow extends RowDataPacket {
   id: number;

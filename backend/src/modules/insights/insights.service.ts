@@ -1,5 +1,4 @@
 import { transactionsRepository } from "../transactions/transactions.repository";
-import { goalsRepository } from "../goals/goals.repository";
 import { scoreService } from "../score/score.service";
 import { objectivesService } from "../objectives/objectives.service";
 import { currentMonth, getPreviousMonth, formatMonthLabel } from "../../utils/month";
@@ -29,11 +28,16 @@ export const insightsService = {
     const insights: Insight[] = [];
     const previousMonth = getPreviousMonth(month);
 
+    // requiredMonthlyAmount (e a meta do mês derivada dela) é sempre "a partir
+    // de hoje" -- só faz sentido misturar com o saldo do mês quando `month` é
+    // o mês corrente (mesmo raciocínio de score.service.calculate).
+    const isCurrentMonth = month === currentMonth();
+
     // ---- cálculo financeiro (dados reais, sem interpretação ainda) ----
-    const [breakdown, previousBreakdown, goal, score, last3] = await Promise.all([
+    const [breakdown, previousBreakdown, objectives, score, last3] = await Promise.all([
       transactionsRepository.categoryBreakdownForMonth(userId, month),
       transactionsRepository.categoryBreakdownForMonth(userId, previousMonth),
-      goalsRepository.findByMonth(userId, month),
+      objectivesService.list(userId),
       scoreService.calculate(userId, month),
       Promise.all(
         [0, 1, 2].map(async (offset) => {
@@ -98,25 +102,32 @@ export const insightsService = {
       });
     }
 
-    // 4) análise de meta
-    if (goal) {
-      const totals = await transactionsRepository.sumByTypeForMonth(userId, month);
-      const saldo = totals.entradas - totals.saidas;
-      const progress = (saldo / goal.target_amount) * 100;
-      if (progress >= 100) {
-        insights.push({
-          type: "meta",
-          severity: "success",
-          title: "Meta do mês atingida",
-          message: `Você já alcançou ${progress.toFixed(0)}% da sua meta de ${formatCurrency(goal.target_amount)} para ${month}.`,
-        });
-      } else if (progress < 50) {
-        insights.push({
-          type: "meta",
-          severity: "warning",
-          title: "Meta do mês em risco",
-          message: `Você está em ${Math.max(progress, 0).toFixed(0)}% da meta de ${formatCurrency(goal.target_amount)}. Faltam ${formatCurrency(Math.max(goal.target_amount - saldo, 0))} até o fim do mês.`,
-        });
+    // 4) análise de meta: soma do que falta guardar por mês em cada objetivo
+    // ativo (não atingido, não atrasado) -- só avaliada no mês corrente, ver
+    // isCurrentMonth acima.
+    if (isCurrentMonth) {
+      const activeObjectives = objectives.filter((o) => !o.achieved && !o.overdue);
+      const monthlyTarget = activeObjectives.reduce((sum, o) => sum + o.requiredMonthlyAmount, 0);
+
+      if (monthlyTarget > 0) {
+        const totals = await transactionsRepository.sumByTypeForMonth(userId, month);
+        const saldo = totals.entradas - totals.saidas;
+        const progress = (saldo / monthlyTarget) * 100;
+        if (progress >= 100) {
+          insights.push({
+            type: "meta",
+            severity: "success",
+            title: "Ritmo de economia em dia",
+            message: `Você já guardou ${formatCurrency(saldo)} este mês -- o suficiente pra cobrir os ${formatCurrency(monthlyTarget)} que suas metas ativas precisam por mês.`,
+          });
+        } else if (progress < 50) {
+          insights.push({
+            type: "meta",
+            severity: "warning",
+            title: "Ritmo de economia abaixo do necessário",
+            message: `Suas metas ativas precisam de ${formatCurrency(monthlyTarget)} guardados este mês, e você está em ${Math.max(progress, 0).toFixed(0)}% disso. Faltam ${formatCurrency(Math.max(monthlyTarget - saldo, 0))} até o fim do mês.`,
+          });
+        }
       }
     }
 
@@ -144,9 +155,7 @@ export const insightsService = {
     // (atrasados ou abaixo do ritmo necessário) e reforça os que estão indo bem --
     // usa os mesmos campos já calculados pelo módulo de objetivos (overdue,
     // paceStatus), nunca recalcula nada aqui.
-    const highPriorityObjectives = (await objectivesService.list(userId)).filter(
-      (o) => o.priority === "alta" && !o.achieved
-    );
+    const highPriorityObjectives = objectives.filter((o) => o.priority === "alta" && !o.achieved);
     for (const objective of highPriorityObjectives) {
       if (objective.overdue) {
         insights.push({
@@ -212,12 +221,15 @@ export const insightsService = {
     }
 
     if (/meta/.test(q)) {
-      const goal = await goalsRepository.findByMonth(userId, month);
-      if (!goal) return `Você não definiu uma meta para ${month}.`;
-      const totals = await transactionsRepository.sumByTypeForMonth(userId, month);
+      const objectives = await objectivesService.list(userId);
+      const activeObjectives = objectives.filter((o) => !o.achieved && !o.overdue);
+      const monthlyTarget = activeObjectives.reduce((sum, o) => sum + o.requiredMonthlyAmount, 0);
+      if (monthlyTarget <= 0) return "Você não tem nenhuma meta ativa agora.";
+
+      const totals = await transactionsRepository.sumByTypeForMonth(userId, currentMonth());
       const saldo = totals.entradas - totals.saidas;
-      const progress = (saldo / goal.target_amount) * 100;
-      return `Sua meta de ${month} é ${formatCurrency(goal.target_amount)}. Você já atingiu ${Math.max(progress, 0).toFixed(0)}%.`;
+      const progress = (saldo / monthlyTarget) * 100;
+      return `Suas metas ativas precisam de ${formatCurrency(monthlyTarget)} guardados por mês. Você já guardou ${Math.max(progress, 0).toFixed(0)}% disso em ${currentMonth()}.`;
     }
 
     if (/(score|pontuação|nota financeira)/.test(q)) {

@@ -222,6 +222,8 @@ describe("Perfil -- preferências de notificação", () => {
       category_budget_exceeded: true,
       onboarding_pending: true,
       debt_due_date: true,
+      debt_paid_off: true,
+      net_worth_positive: true,
     });
 
     await cleanupUser(user.userId);
@@ -291,11 +293,9 @@ describe("Perfil -- perfil financeiro", () => {
     expect(update.body.profile.priorities).toEqual(["reserva_emergencia", "investir"]);
 
     const ids = update.body.profile.recommendations.map((r: { id: string }) => r.id);
-    // iniciante -> trilha fundamentos; prioriza reserva sem ter objetivo de reserva -> criar reserva;
-    // prioriza investir -> trilha investimentos; sem meta do mês -> definir meta mensal
-    expect(ids).toEqual(
-      expect.arrayContaining(["trilha-fundamentos", "criar-reserva", "trilha-investimentos", "definir-meta-mensal"])
-    );
+    // prioriza reserva sem ter objetivo de reserva -> criar reserva; nenhum objetivo cadastrado -> criar primeira meta
+    // (recomendação de trilha saiu daqui -- agora é a Trilha Estratégica na própria Educação Financeira, ver strategicPlan.ts no frontend)
+    expect(ids).toEqual(expect.arrayContaining(["criar-reserva", "criar-primeira-meta"]));
 
     await cleanupUser(user.userId);
   });

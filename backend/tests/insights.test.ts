@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { pool } from "../src/config/db";
@@ -11,7 +11,16 @@ async function backdateCreatedAt(objectiveId: number, mysqlDateTime: string) {
 describe("Insights: objetivos de alta prioridade", () => {
   const users: TestUser[] = [];
 
+  // Mesmos fixtures (e mesmo motivo) de objectives.test.ts: metas com alvo
+  // em 2026-12/2026-01 e objetivo "criado" em 2026-06-15 só fazem sentido
+  // com "hoje" travado em agosto/2026 -- ver o comentário completo lá.
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-15T12:00:00Z"));
+  });
+
   afterAll(async () => {
+    vi.useRealTimers();
     await Promise.all(users.map((u) => cleanupUser(u.userId)));
   });
 

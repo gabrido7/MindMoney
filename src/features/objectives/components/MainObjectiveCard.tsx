@@ -1,7 +1,7 @@
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
 import Icon from "../../../components/ui/Icon";
-import ScoreArc from "../../../components/ui/ScoreArc";
+import Dial from "../../../components/ui/Dial";
 import { formatCurrency, formatMonthBR } from "../../../utils/formatters";
 import { CATEGORY_BY_VALUE } from "../data/categoryPresets";
 import { PRIORITY_BY_VALUE } from "../data/priorityPresets";
@@ -44,11 +44,7 @@ export default function MainObjectiveCard({
       </div>
 
       <div className="mt-4 grid grid-cols-[auto_1fr] gap-4 items-center">
-        <ScoreArc value={objective.progressPercent} color={arcColor} size="md">
-          <span className="font-data text-lg font-bold text-ink">
-            {objective.progressPercent.toFixed(0)}%
-          </span>
-        </ScoreArc>
+        <Dial value={objective.progressPercent} color={arcColor} size="md" center={`${objective.progressPercent.toFixed(0)}%`} />
 
         <div className="flex flex-col gap-1">
           <span className="text-sm text-ink-soft font-data">
