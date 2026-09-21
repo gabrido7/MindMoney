@@ -12,6 +12,7 @@ export interface DebtRow extends RowDataPacket {
   interest_rate: string | null;
   installments_count: number | null;
   due_day: number | null;
+  paid_off_notified_at: string | null;
   created_at: string;
 }
 
@@ -34,16 +35,28 @@ export interface DebtPaymentWithDebtNameRow extends DebtPaymentRow {
 }
 
 export const debtsRepository = {
-  /** Uma query só (LEFT JOIN + agregação), nunca N+1 buscando pagamentos separadamente por dívida. */
-  async listByUser(userId: number): Promise<DebtWithPaidRow[]> {
+  /**
+   * Uma query só (LEFT JOIN + agregação), nunca N+1 buscando pagamentos
+   * separadamente por dívida. `p.paid_at <= ?` no próprio JOIN (não WHERE)
+   * de propósito -- filtra só o que entra na soma, sem derrubar a linha da
+   * dívida quando todos os pagamentos dela são parcelas futuras (LEFT JOIN +
+   * COALESCE ainda devolve paid_amount=0 nesse caso). Parcela agendada pro
+   * futuro (ver installmentDueDates) ainda não é dinheiro pago de verdade --
+   * mesmo raciocínio já usado em totalRemainingAsOf. `asOfDate` é um
+   * parâmetro (não CURDATE() direto no SQL) pelo mesmo motivo de
+   * totalRemainingAsOf: quem decide "o que é hoje" é a camada de aplicação
+   * (utils/month.todayISO), não o relógio do servidor MySQL -- testável com
+   * vi.setSystemTime, já que o MySQL não tem como ser "congelado" junto.
+   */
+  async listByUser(userId: number, asOfDate: string): Promise<DebtWithPaidRow[]> {
     const [rows] = await pool.query<DebtWithPaidRow[]>(
       `SELECT d.*, COALESCE(SUM(p.amount), 0) AS paid_amount
        FROM debts d
-       LEFT JOIN debt_payments p ON p.debt_id = d.id
+       LEFT JOIN debt_payments p ON p.debt_id = d.id AND p.paid_at <= ?
        WHERE d.user_id = ?
        GROUP BY d.id
        ORDER BY d.created_at DESC`,
-      [userId]
+      [asOfDate, userId]
     );
     return rows;
   },
@@ -94,10 +107,11 @@ export const debtsRepository = {
     return result.affectedRows > 0;
   },
 
-  async paidAmount(debtId: number): Promise<number> {
+  /** Só pagamentos já realizados (paid_at <= asOfDate) -- parcela agendada pro futuro não conta como paga ainda, ver listByUser. */
+  async paidAmount(debtId: number, asOfDate: string): Promise<number> {
     const [rows] = await pool.query<RowDataPacket[]>(
-      "SELECT COALESCE(SUM(amount), 0) AS total FROM debt_payments WHERE debt_id = ?",
-      [debtId]
+      "SELECT COALESCE(SUM(amount), 0) AS total FROM debt_payments WHERE debt_id = ? AND paid_at <= ?",
+      [debtId, asOfDate]
     );
     return Number(rows[0]?.total ?? 0);
   },
@@ -178,28 +192,69 @@ export const debtsRepository = {
    * hoje com a de meses atrás (tendência real, não só o snapshot atual).
    */
   async totalRemainingAsOf(userId: number, dateISO: string): Promise<number> {
+    // DATE(d.created_at) de propósito -- d.created_at é TIMESTAMP (tem hora
+    // real), e comparar direto "TIMESTAMP <= '2026-09-02'" MySQL trata como
+    // "<= 2026-09-02 00:00:00", excluindo qualquer dívida criada mais tarde
+    // no PRÓPRIO dia (confirmado: NOW() <= CURDATE() é falso). O que
+    // queremos é "criada até esse dia civil", não até esse instante exato.
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT COALESCE(SUM(GREATEST(d.total_amount - COALESCE(paid.amount, 0), 0)), 0) AS remaining
        FROM debts d
        LEFT JOIN (
          SELECT debt_id, SUM(amount) AS amount FROM debt_payments WHERE paid_at <= ? GROUP BY debt_id
        ) paid ON paid.debt_id = d.id
-       WHERE d.user_id = ? AND d.created_at <= ?`,
+       WHERE d.user_id = ? AND DATE(d.created_at) <= ?`,
       [dateISO, userId, dateISO]
     );
     return Number(rows[0]?.remaining ?? 0);
   },
 
-  /** Data do pagamento mais recente de cada dívida do usuário (null se a dívida nunca recebeu pagamento) -- base da regra de consistência de pagamento (ver debtAdvice.service). LEFT JOIN de propósito: dívida sem nenhum pagamento ainda precisa aparecer, com last_paid_at nulo. */
-  async lastPaymentDates(userId: number): Promise<{ debtId: number; lastPaidAt: string | null }[]> {
+  /**
+   * Data do pagamento REALIZADO mais recente de cada dívida do usuário (null
+   * se a dívida nunca recebeu pagamento) -- base da regra de "atrasada"
+   * (ver debts.service.computeStatus) e de debtAdvice.service. Parcela
+   * agendada pro futuro não conta aqui: se contasse, uma dívida com 12
+   * parcelas pré-geradas pareceria "em dia" por causa de um pagamento que
+   * ainda nem aconteceu. LEFT JOIN de propósito: dívida sem nenhum
+   * pagamento realizado ainda precisa aparecer, com last_paid_at nulo.
+   */
+  async lastPaymentDates(userId: number, asOfDate: string): Promise<{ debtId: number; lastPaidAt: string | null }[]> {
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT d.id AS debt_id, MAX(p.paid_at) AS last_paid_at
        FROM debts d
-       LEFT JOIN debt_payments p ON p.debt_id = d.id
+       LEFT JOIN debt_payments p ON p.debt_id = d.id AND p.paid_at <= ?
        WHERE d.user_id = ?
        GROUP BY d.id`,
-      [userId]
+      [asOfDate, userId]
     );
     return rows.map((r) => ({ debtId: r.debt_id, lastPaidAt: r.last_paid_at ?? null }));
+  },
+
+  /** Mesma coisa que lastPaymentDates, mas pra uma única dívida -- usado nos caminhos que já têm o id (create/addPayment/etc.), evitando buscar a lista inteira do usuário só pra recalcular o status de uma dívida. */
+  async lastPaymentDate(debtId: number, asOfDate: string): Promise<string | null> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      "SELECT MAX(paid_at) AS last_paid_at FROM debt_payments WHERE debt_id = ? AND paid_at <= ?",
+      [debtId, asOfDate]
+    );
+    return rows[0]?.last_paid_at ?? null;
+  },
+
+  /**
+   * IDs das transações ligadas a parcelas ainda não realizadas (paid_at no
+   * futuro) -- usado por remove() pra apagar só o que ainda não é dinheiro
+   * gasto de verdade. Pagamento passado nunca entra aqui (mesmo princípio
+   * de sempre: histórico financeiro real não é reescrito).
+   */
+  async futurePaymentTransactionIds(debtId: number, asOfDate: string): Promise<number[]> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      "SELECT transaction_id FROM debt_payments WHERE debt_id = ? AND paid_at > ? AND transaction_id IS NOT NULL",
+      [debtId, asOfDate]
+    );
+    return rows.map((r) => r.transaction_id as number);
+  },
+
+  /** Marca que a comemoração de quitação (XP + notificação) já disparou pra essa dívida -- evita disparar de novo a cada list() (ver debts.service.list). */
+  async markPaidOffNotified(debtId: number): Promise<void> {
+    await pool.query("UPDATE debts SET paid_off_notified_at = NOW() WHERE id = ?", [debtId]);
   },
 };

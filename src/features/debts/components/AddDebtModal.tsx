@@ -3,6 +3,8 @@ import Modal from "../../../components/ui/Modal";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import Button from "../../../components/ui/Button";
+import Switch from "../../../components/ui/Switch";
+import { formatCurrency } from "../../../utils/formatters";
 import type { DebtInput, DebtType } from "../../../types/api";
 
 const DEBT_TYPE_LABELS: Record<DebtType, string> = {
@@ -13,6 +15,9 @@ const DEBT_TYPE_LABELS: Record<DebtType, string> = {
   parcelamento: "Parcelamento",
   outro: "Outro",
 };
+
+/** Tipos onde "lançar uma compra parcelada agora" é o caso de uso comum -- o checkbox de gerar parcelas automaticamente já nasce marcado. Empréstimo/financiamento costumam ser dívida já existente sendo só acompanhada, não uma compra nova. */
+const AUTO_GENERATE_DEFAULT_TYPES: DebtType[] = ["parcelamento", "cartao_credito"];
 
 export default function AddDebtModal({
   onSubmit,
@@ -29,8 +34,16 @@ export default function AddDebtModal({
   const [interestRate, setInterestRate] = useState("");
   const [installmentsCount, setInstallmentsCount] = useState("");
   const [dueDay, setDueDay] = useState("");
+  const [autoGenerate, setAutoGenerate] = useState(() => AUTO_GENERATE_DEFAULT_TYPES.includes("cartao_credito"));
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const handleTypeChange = (next: DebtType) => {
+    setType(next);
+    setAutoGenerate(AUTO_GENERATE_DEFAULT_TYPES.includes(next));
+  };
+
+  const canAutoGenerate = Boolean(Number(installmentAmount) > 0 && Number(installmentsCount) > 0 && Number(dueDay) > 0);
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -54,6 +67,7 @@ export default function AddDebtModal({
         interestRate: interestRate ? Number(interestRate) : null,
         installmentsCount: installmentsCount ? Number(installmentsCount) : null,
         dueDay: dueDay ? Number(dueDay) : null,
+        autoGenerateInstallments: canAutoGenerate && autoGenerate,
       });
       onClose();
     } catch (err) {
@@ -73,7 +87,7 @@ export default function AddDebtModal({
             id="debt-form-type"
             label="Tipo"
             value={type}
-            onChange={(e) => setType(e.target.value as DebtType)}
+            onChange={(e) => handleTypeChange(e.target.value as DebtType)}
             className="min-w-[160px] flex-1"
           >
             {Object.entries(DEBT_TYPE_LABELS).map(([value, label]) => (
@@ -160,6 +174,20 @@ export default function AddDebtModal({
               onChange={(e) => setDueDay(e.target.value)}
               className="w-28"
             />
+          </div>
+        )}
+
+        {showDetails && canAutoGenerate && (
+          <div className="flex items-start gap-3 rounded-xl border border-line bg-surface-alt p-3">
+            <Switch checked={autoGenerate} onChange={setAutoGenerate} label="Já lançar as parcelas futuras como transações" />
+            <div className="min-w-0 flex-1 text-xs text-ink-soft">
+              <p className="font-medium text-ink">Já lançar as parcelas futuras como transações</p>
+              <p className="mt-0.5">
+                {autoGenerate
+                  ? `Isso vai criar ${installmentsCount} transações de ${formatCurrency(Number(installmentAmount))}, uma por mês, começando no dia ${dueDay}. Sem isso marcado, você registra cada parcela manualmente depois.`
+                  : "Deixe marcado se essa é uma compra nova sendo parcelada agora -- as parcelas futuras entram como transações reais de uma vez, sem precisar registrar mês a mês."}
+              </p>
+            </div>
           </div>
         )}
 

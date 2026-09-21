@@ -80,11 +80,11 @@ export default function DebtSimulator({ debt }: { debt: Debt }) {
             {result.insufficientPayment ? (
               <p>⚠️ Esse valor nem cobre os juros do mês -- nesse ritmo, a dívida nunca seria quitada.</p>
             ) : result.tooFar ? (
-              <p>🔮 Nesse ritmo, levaria muito tempo pra quitar -- talvez valha pagar um pouco mais por mês.</p>
+              <p>🔮 Projeção: nesse ritmo, levaria muito tempo pra quitar -- talvez valha pagar um pouco mais por mês.</p>
             ) : (
               <>
                 <p>
-                  🔮 Nesse ritmo, você quita em{" "}
+                  🔮 Projeção: nesse ritmo, você quita em{" "}
                   <strong>
                     {result.monthsNeeded} {result.monthsNeeded === 1 ? "mês" : "meses"}
                   </strong>
@@ -97,6 +97,9 @@ export default function DebtSimulator({ debt }: { debt: Debt }) {
                       : `Isso é ${Math.abs(deltaMonths)} ${Math.abs(deltaMonths) === 1 ? "mês" : "meses"} a mais que no ritmo atual.`}
                   </p>
                 )}
+                <p className="mt-2 text-[11px] italic text-ink-soft">
+                  Valor aproximado, recalculado a partir dos seus dados atuais -- não é uma garantia.
+                </p>
               </>
             )}
           </div>

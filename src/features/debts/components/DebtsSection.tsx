@@ -9,6 +9,9 @@ import { debtsService } from "../../../services/debtsService";
 import { errorMessage } from "../../../services/api";
 import { invalidateFinancialData } from "../../../lib/invalidateFinancialData";
 import { formatCurrency } from "../../../utils/formatters";
+import { useGamification } from "../../gamification/hooks/useGamification";
+import { useToast } from "../../../hooks/useToast";
+import { debtMilestoneMessage } from "../utils/debtMilestoneMessage";
 import DebtPaymentModal from "./DebtPaymentModal";
 import DebtSimulator from "./DebtSimulator";
 import type { Debt, DebtPayment, DebtType } from "../../../types/api";
@@ -24,10 +27,18 @@ const DEBT_TYPE_LABELS: Record<DebtType, string> = {
 
 function DebtRow({ debt, onRemove }: { debt: Debt; onRemove: (id: number) => void }) {
   const queryClient = useQueryClient();
+  const { celebrate } = useGamification();
+  const { showToast } = useToast();
   const [showPayments, setShowPayments] = useState(false);
   const [showSimulator, setShowSimulator] = useState(false);
   const [paymentModal, setPaymentModal] = useState<"add" | DebtPayment | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
+
+  // Parcela com paidAt no futuro ainda não é dinheiro pago de verdade (ver
+  // generateInstallments no backend) -- "Agendada" deixa isso claro na lista
+  // de pagamentos, que agora pode misturar parcela já realizada com parcela
+  // futura pré-lançada.
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   const details = [
     debt.installmentsCount && debt.installmentAmount
@@ -60,7 +71,15 @@ function DebtRow({ debt, onRemove }: { debt: Debt; onRemove: (id: number) => voi
 
   const addPaymentMutation = useMutation({
     mutationFn: (input: Parameters<typeof debtsService.addPayment>[1]) => debtsService.addPayment(debt.id, input),
-    onSuccess: invalidateAfterPayment,
+    onSuccess: ({ milestoneReached, gamification }) => {
+      invalidateAfterPayment();
+      if (milestoneReached !== null) {
+        showToast(debtMilestoneMessage(milestoneReached, debt.name), "celebration");
+      } else {
+        showToast("✓ Pagamento registrado com sucesso.");
+      }
+      celebrate(gamification);
+    },
   });
 
   const updatePaymentMutation = useMutation({
@@ -79,7 +98,7 @@ function DebtRow({ debt, onRemove }: { debt: Debt; onRemove: (id: number) => voi
   });
 
   return (
-    <li className="rounded-2xl border border-line bg-surface p-4">
+    <li className="py-4 first:pt-0 last:pb-0">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-ink">{debt.name}</p>
@@ -94,7 +113,14 @@ function DebtRow({ debt, onRemove }: { debt: Debt; onRemove: (id: number) => voi
               Quitada 🎉
             </span>
           ) : (
-            <span className="font-data text-sm text-ink">{formatCurrency(debt.remainingAmount)} restantes</span>
+            <>
+              {debt.status === "atrasada" && (
+                <span className="rounded-full bg-negative-soft px-2.5 py-1 text-xs font-semibold text-negative">
+                  Atrasada
+                </span>
+              )}
+              <span className="font-data text-sm text-ink">{formatCurrency(debt.remainingAmount)} restantes</span>
+            </>
           )}
           <button
             type="button"
@@ -164,12 +190,17 @@ function DebtRow({ debt, onRemove }: { debt: Debt; onRemove: (id: number) => voi
             <p className="text-xs text-ink-soft">Nenhum pagamento registrado ainda.</p>
           )}
           {data && data.payments.length > 0 && (
-            <ul className="flex flex-col gap-2">
+            <ul className="flex max-h-48 flex-col gap-2 overflow-y-auto pr-1">
               {data.payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between text-sm">
                   <span className="font-data text-ink-soft">
                     {p.paidAt.split("-").reverse().join("/")} · {formatCurrency(p.amount)}
                     {p.note ? ` · ${p.note}` : ""}
+                    {p.paidAt > todayISO && (
+                      <span className="ml-1.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning">
+                        Agendada
+                      </span>
+                    )}
                   </span>
                   <span className="flex shrink-0 items-center gap-1">
                     <button
@@ -233,7 +264,7 @@ export default function DebtsSection({
       )}
 
       {debts.length > 0 && (
-        <ul className="flex max-h-[36rem] flex-col gap-3 overflow-y-auto pr-1">
+        <ul className="flex max-h-[36rem] flex-col divide-y divide-line overflow-y-auto pr-1">
           {debts.map((debt) => (
             <DebtRow key={debt.id} debt={debt} onRemove={onRemove} />
           ))}

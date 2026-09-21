@@ -3,7 +3,7 @@ import request from "supertest";
 import { app } from "../src/app";
 import { pool } from "../src/config/db";
 import { currentMonth, getPreviousMonth } from "../src/utils/month";
-import { registerTestUser, cleanupUser, authHeader, getCategoryId } from "./helpers";
+import { registerTestUser, cleanupUser, authHeader, getCategoryId, getAccountId } from "./helpers";
 
 /** Dias-corridos atrás como 'YYYY-MM-DD' -- pra testar o limiar de 45 dias de consistência de pagamento sem depender de meses de calendário. */
 function isoDaysAgo(days: number): string {
@@ -82,11 +82,12 @@ describe("Conselhos sobre dívidas", () => {
   it("comprometimento de renda acima de 50% gera alerta crítico com o percentual real", async () => {
     const user = await registerTestUser("debtadvice-ratio");
     const salarioId = await getCategoryId(user.token, "Salário");
+    const accountId = await getAccountId(user.token);
 
     await request(app)
       .post("/api/transactions")
       .set(authHeader(user.token))
-      .send({ categoryId: salarioId, description: "Salário", amount: 2000, type: "entrada", transactionDate: new Date().toISOString().slice(0, 10) });
+      .send({ accountId, categoryId: salarioId, description: "Salário", amount: 2000, type: "entrada", transactionDate: new Date().toISOString().slice(0, 10) });
 
     await request(app)
       .post("/api/debts")
@@ -279,5 +280,46 @@ describe("Conselhos sobre dívidas", () => {
 
     await cleanupUser(userA.userId);
     await cleanupUser(userB.userId);
+  });
+
+  it("celebra o progresso real quando pelo menos 20% do valor original já foi pago", async () => {
+    const user = await registerTestUser("debtadvice-progress");
+
+    const debt = await request(app)
+      .post("/api/debts")
+      .set(authHeader(user.token))
+      .send({ type: "emprestimo", name: "Empréstimo em dia", totalAmount: 1000, installmentAmount: 500, interestRate: 1 });
+
+    await request(app)
+      .post(`/api/debts/${debt.body.debt.id}/payments`)
+      .set(authHeader(user.token))
+      .send({ amount: 300, paidAt: new Date().toISOString().slice(0, 10) }); // 30% do valor original
+
+    const res = await request(app).get("/api/debt-advice").set(authHeader(user.token));
+    const progress = res.body.advice.find((a: { id: string }) => a.id === "progresso-pago");
+
+    expect(progress).toMatchObject({ severity: "success" });
+    expect(progress.title).toContain("30%");
+
+    await cleanupUser(user.userId);
+  });
+
+  it("não celebra progresso abaixo de 20% -- evita ruído logo no início", async () => {
+    const user = await registerTestUser("debtadvice-progress-low");
+
+    const debt = await request(app)
+      .post("/api/debts")
+      .set(authHeader(user.token))
+      .send({ type: "emprestimo", name: "Início recente", totalAmount: 1000, installmentAmount: 500, interestRate: 1 });
+
+    await request(app)
+      .post(`/api/debts/${debt.body.debt.id}/payments`)
+      .set(authHeader(user.token))
+      .send({ amount: 50, paidAt: new Date().toISOString().slice(0, 10) }); // só 5%
+
+    const res = await request(app).get("/api/debt-advice").set(authHeader(user.token));
+    expect(res.body.advice.some((a: { id: string }) => a.id === "progresso-pago")).toBe(false);
+
+    await cleanupUser(user.userId);
   });
 });

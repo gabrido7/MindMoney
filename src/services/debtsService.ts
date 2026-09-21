@@ -1,5 +1,5 @@
 import { apiRequest } from "./api";
-import type { Debt, DebtInput, DebtPayment, DebtPaymentInput, DebtPaymentWithDebtName } from "../types/api";
+import type { Debt, DebtInput, DebtPayment, DebtPaymentInput, DebtPaymentWithDebtName, GamificationResult } from "../types/api";
 
 export const debtsService = {
   list: () => apiRequest<{ debts: Debt[] }>("/debts"),
@@ -14,7 +14,10 @@ export const debtsService = {
     apiRequest<{ payments: DebtPayment[] }>(`/debts/${debtId}/payments`),
 
   addPayment: (debtId: number, input: DebtPaymentInput) =>
-    apiRequest<{ debt: Debt }>(`/debts/${debtId}/payments`, { method: "POST", body: input }),
+    apiRequest<{ debt: Debt; milestoneReached: number | null; gamification: GamificationResult | null }>(
+      `/debts/${debtId}/payments`,
+      { method: "POST", body: input }
+    ),
 
   updatePayment: (debtId: number, paymentId: number, input: DebtPaymentInput) =>
     apiRequest<{ debt: Debt }>(`/debts/${debtId}/payments/${paymentId}`, { method: "PUT", body: input }),

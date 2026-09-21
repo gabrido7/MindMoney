@@ -356,3 +356,133 @@ describe("Gamificação: XP, nível e conquistas", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("Gamificação financeira: dívidas quitadas e patrimônio positivo", () => {
+  it("quitar uma dívida por completo dá XP, desbloqueia a conquista e notifica de verdade", async () => {
+    const user = await registerTestUser("gami-debt-paidoff");
+
+    const debt = await request(app)
+      .post("/api/debts")
+      .set(authHeader(user.token))
+      .send({ type: "outro", name: "Dívida Pequena", totalAmount: 100 });
+
+    const payment = await request(app)
+      .post(`/api/debts/${debt.body.debt.id}/payments`)
+      .set(authHeader(user.token))
+      .send({ amount: 100, paidAt: new Date().toISOString().slice(0, 10) });
+
+    expect(payment.status).toBe(201);
+    expect(payment.body.milestoneReached).toBe(100);
+    expect(payment.body.gamification.xpAwarded).toBe(105); // 80 (debt_paid_off) + 25 (conquista)
+    expect(
+      payment.body.gamification.newAchievements.some((a: { id: string }) => a.id === "primeira-divida-quitada")
+    ).toBe(true);
+
+    const notifRes = await request(app).get("/api/notifications").set(authHeader(user.token));
+    expect(notifRes.body.notifications.some((n: { type: string }) => n.type === "debt_paid_off")).toBe(true);
+
+    await cleanupUser(user.userId);
+  });
+
+  it("quitar uma segunda dívida dá XP de novo, mas não desbloqueia 'primeira-divida-quitada' outra vez", async () => {
+    const user = await registerTestUser("gami-debt-paidoff-twice");
+    const today = new Date().toISOString().slice(0, 10);
+
+    const debt1 = await request(app)
+      .post("/api/debts")
+      .set(authHeader(user.token))
+      .send({ type: "outro", name: "Dívida 1", totalAmount: 50 });
+    await request(app)
+      .post(`/api/debts/${debt1.body.debt.id}/payments`)
+      .set(authHeader(user.token))
+      .send({ amount: 50, paidAt: today });
+
+    const debt2 = await request(app)
+      .post("/api/debts")
+      .set(authHeader(user.token))
+      .send({ type: "outro", name: "Dívida 2", totalAmount: 80 });
+    const payment2 = await request(app)
+      .post(`/api/debts/${debt2.body.debt.id}/payments`)
+      .set(authHeader(user.token))
+      .send({ amount: 80, paidAt: today });
+
+    expect(payment2.body.milestoneReached).toBe(100);
+    expect(payment2.body.gamification.xpAwarded).toBe(80); // só o XP do evento, sem bônus de conquista de novo
+    expect(
+      payment2.body.gamification.newAchievements.some((a: { id: string }) => a.id === "primeira-divida-quitada")
+    ).toBe(false);
+
+    await cleanupUser(user.userId);
+  });
+
+  it("patrimônio líquido virando positivo desbloqueia 'patrimonio-no-azul' e notifica -- só depois de já ter dívida registrada", async () => {
+    const user = await registerTestUser("gami-networth");
+    const today = new Date().toISOString().slice(0, 10);
+
+    await request(app)
+      .post("/api/debts")
+      .set(authHeader(user.token))
+      .send({ type: "outro", name: "Dívida Grande", totalAmount: 1000 });
+
+    const asset = await request(app)
+      .post("/api/assets")
+      .set(authHeader(user.token))
+      .send({ type: "investimento", name: "Poupança", initialValue: 500, valuedAt: today });
+
+    // ainda negativo (500 em ativos contra 1000 de dívida) -- não desbloqueia ainda
+    expect(
+      asset.body.gamification.newAchievements.some((a: { id: string }) => a.id === "patrimonio-no-azul")
+    ).toBe(false);
+
+    const update = await request(app)
+      .post(`/api/assets/${asset.body.asset.id}/updates`)
+      .set(authHeader(user.token))
+      .send({ value: 1500, valuedAt: today });
+
+    expect(
+      update.body.gamification.newAchievements.some((a: { id: string }) => a.id === "patrimonio-no-azul")
+    ).toBe(true);
+
+    const notifRes = await request(app).get("/api/notifications").set(authHeader(user.token));
+    expect(notifRes.body.notifications.some((n: { type: string }) => n.type === "net_worth_positive")).toBe(true);
+
+    await cleanupUser(user.userId);
+  });
+
+  it("sem nenhuma dívida registrada, ter só um ativo positivo NÃO desbloqueia 'patrimonio-no-azul'", async () => {
+    const user = await registerTestUser("gami-networth-no-debt");
+
+    const asset = await request(app)
+      .post("/api/assets")
+      .set(authHeader(user.token))
+      .send({ type: "investimento", name: "Poupança", initialValue: 500, valuedAt: new Date().toISOString().slice(0, 10) });
+
+    expect(
+      asset.body.gamification.newAchievements.some((a: { id: string }) => a.id === "patrimonio-no-azul")
+    ).toBe(false);
+    expect(asset.body.gamification.xpAwarded).toBe(0);
+
+    await cleanupUser(user.userId);
+  });
+
+  it("checar conquistas financeiras sem cruzar nenhum marco novo não gera XP fantasma", async () => {
+    const user = await registerTestUser("gami-no-phantom-xp");
+    const today = new Date().toISOString().slice(0, 10);
+
+    const asset = await request(app)
+      .post("/api/assets")
+      .set(authHeader(user.token))
+      .send({ type: "investimento", name: "Poupança", initialValue: 100, valuedAt: today });
+    expect(asset.body.gamification.xpAwarded).toBe(0);
+
+    // atualizar de novo, ainda sem nenhuma dívida registrada -- continua sem XP/conquista nova
+    const update = await request(app)
+      .post(`/api/assets/${asset.body.asset.id}/updates`)
+      .set(authHeader(user.token))
+      .send({ value: 200, valuedAt: today });
+    expect(update.body.gamification.xpAwarded).toBe(0);
+    expect(update.body.gamification.newAchievements).toEqual([]);
+
+    await cleanupUser(user.userId);
+  });
+});

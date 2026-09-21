@@ -9,6 +9,7 @@ export const XP_AMOUNTS = {
   course_completed: 50,
   trail_completed: 200,
   goal_achieved: 100,
+  debt_paid_off: 80, // quitar uma dívida de verdade -- peso parecido com bater uma meta
   streak_bonus: 0, // varia por marco, ver STREAK_MILESTONES
   achievement: 25, // bônus fixo por conquista desbloqueada, além do XP do evento que a disparou
 } as const;
@@ -197,6 +198,18 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: "Complete todas as aulas da trilha Aposentadoria e independência financeira.",
   },
   { id: "sequencia-3-dias", title: "Sequência de 3 dias", emoji: "🔥", description: "Estude 3 dias seguidos." },
+  {
+    id: "primeira-divida-quitada",
+    title: "Primeira dívida quitada",
+    emoji: "🎉",
+    description: "Quite uma dívida por completo.",
+  },
+  {
+    id: "patrimonio-no-azul",
+    title: "Patrimônio no azul",
+    emoji: "💎",
+    description: "Faça seu patrimônio líquido (ativos menos dívidas) ficar positivo.",
+  },
 ];
 
 /**

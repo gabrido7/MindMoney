@@ -3,7 +3,7 @@ import { debtsRepository } from "../debts/debts.repository";
 import { financialProfileService } from "../financialProfile/financialProfile.service";
 import { transactionsRepository } from "../transactions/transactions.repository";
 import { objectivesRepository } from "../objectives/objectives.repository";
-import { currentMonth, getPreviousMonth } from "../../utils/month";
+import { currentMonth, getPreviousMonth, endOfMonthISO, todayISO } from "../../utils/month";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { simulatePayoff } from "./debtAdvice.math";
 import { simulateCascade } from "./debtAdvice.cascade";
@@ -15,9 +15,8 @@ const REVOLVING_CARD_RATE_THRESHOLD = 10; // % ao mês
 const VARIABLE_INCOME_RISK_RATIO = 0.4;
 const DISCRETIONARY_CATEGORY_MIN_RATIO = 0.15; // % da renda média pra uma categoria "valer a pena" citar
 const DISCRETIONARY_REDIRECT_RATIO = 0.3; // fração do valor da categoria que se propõe redirecionar
-const PAYMENT_CONSISTENCY_DAYS = 45; // margem sobre 1 mês -- dá folga sem deixar de pegar inação real
+const PAID_PROGRESS_CELEBRATION_THRESHOLD = 20; // % mínimo já quitado pra virar uma regra de reforço positivo
 const SEVERITY_RANK: Record<AdviceSeverity, number> = { critical: 0, warning: 1, success: 2 };
-const DAY_MS = 1000 * 60 * 60 * 24;
 
 function pct(value: number): string {
   return `${value.toFixed(0)}%`;
@@ -25,12 +24,6 @@ function pct(value: number): string {
 
 function formatDateBR(dateISO: string): string {
   return dateISO.split("-").reverse().join("/");
-}
-
-/** Último dia do mês (YYYY-MM) como 'YYYY-MM-DD' -- mesmo truque "dia 0 do mês seguinte" de nextDueDate em utils/month.ts. */
-function endOfMonthISO(yyyyMm: string): string {
-  const [year, month] = yyyyMm.split("-").map(Number);
-  return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
 }
 
 /** 'MM/YYYY' daqui a N meses -- usado pra dar uma data aproximada de "livre de dívidas" na projeção. */
@@ -52,7 +45,7 @@ export const debtAdviceService = {
   async generate(userId: number): Promise<DebtAdvice[]> {
     const advice: DebtAdvice[] = [];
     const month = currentMonth();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayISO();
 
     const [debts, profile, incomeByMonth, breakdown, objectives, remainingByOffset, lastPayments] = await Promise.all([
       debtsService.list(userId),
@@ -77,7 +70,7 @@ export const debtAdviceService = {
           return debtsRepository.totalRemainingAsOf(userId, endOfMonthISO(m));
         })
       ),
-      debtsRepository.lastPaymentDates(userId),
+      debtsRepository.lastPaymentDates(userId, today),
     ]);
 
     const activeDebts = debts.filter((d) => !d.paidOff);
@@ -137,26 +130,36 @@ export const debtAdviceService = {
     };
 
     // consistência de pagamento -- detecta inação real (ninguém registrando
-    // pagamento), não só números ruins. Só avalia dívida com parcela
-    // definida e criada há mais de PAYMENT_CONSISTENCY_DAYS dias -- dívida
-    // recém-criada não pode ser cobrada de um pagamento que ainda nem venceu.
+    // pagamento), não só números ruins. "atrasada" já é calculado uma vez só
+    // em debts.service.ts (mesmo limiar PAYMENT_CONSISTENCY_DAYS) -- lê o
+    // status em vez de recalcular a mesma coisa aqui, fonte única de verdade.
     const lastPaymentByDebt = new Map(lastPayments.map((p) => [p.debtId, p.lastPaidAt]));
-    const nowMs = Date.now();
     for (const debt of activeDebts) {
-      if (!debt.installmentAmount) continue;
-      const ageDays = (nowMs - new Date(debt.createdAt).getTime()) / DAY_MS;
-      if (ageDays < PAYMENT_CONSISTENCY_DAYS) continue;
-
+      if (debt.status !== "atrasada") continue;
       const lastPaidAt = lastPaymentByDebt.get(debt.id) ?? null;
-      const daysSincePayment = lastPaidAt ? (nowMs - new Date(lastPaidAt).getTime()) / DAY_MS : Infinity;
-      if (daysSincePayment >= PAYMENT_CONSISTENCY_DAYS) {
+      advice.push({
+        id: `consistencia-${debt.id}`,
+        severity: "critical",
+        title: `Nenhum pagamento recente em "${debt.name}"`,
+        message: lastPaidAt
+          ? `O último pagamento registrado foi em ${formatDateBR(lastPaidAt)}, há mais de um mês. Parcelas puladas fazem os juros corroerem o progresso -- registre o pagamento assim que possível, mesmo que atrasado.`
+          : `Essa dívida nunca teve um pagamento registrado, mesmo já tendo parcela definida. Registrar os pagamentos reais é o que faz o restante desses conselhos ficarem precisos.`,
+      });
+    }
+
+    // % já quitado do valor original (inclui dívidas já quitadas -- reflete
+    // o progresso real acumulado, não só o que ainda está em aberto). Só
+    // aparece a partir de um progresso que realmente vale comemorar.
+    const totalOriginal = debts.reduce((sum, d) => sum + d.totalAmount, 0);
+    const totalPaidAllTime = debts.reduce((sum, d) => sum + d.paidAmount, 0);
+    if (totalOriginal > 0) {
+      const paidPercent = (totalPaidAllTime / totalOriginal) * 100;
+      if (paidPercent >= PAID_PROGRESS_CELEBRATION_THRESHOLD) {
         advice.push({
-          id: `consistencia-${debt.id}`,
-          severity: "critical",
-          title: `Nenhum pagamento recente em "${debt.name}"`,
-          message: lastPaidAt
-            ? `O último pagamento registrado foi em ${formatDateBR(lastPaidAt)}, há mais de um mês. Parcelas puladas fazem os juros corroerem o progresso -- registre o pagamento assim que possível, mesmo que atrasado.`
-            : `Essa dívida nunca teve um pagamento registrado, mesmo já tendo parcela definida. Registrar os pagamentos reais é o que faz o restante desses conselhos ficarem precisos.`,
+          id: "progresso-pago",
+          severity: "success",
+          title: `Você já quitou ${pct(paidPercent)} do valor original das suas dívidas`,
+          message: `De ${formatCurrency(totalOriginal)} tomados no total, ${formatCurrency(totalPaidAllTime)} já foram pagos. Continue no ritmo atual pra manter essa evolução.`,
         });
       }
     }

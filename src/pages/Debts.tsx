@@ -1,8 +1,9 @@
 import { useState } from "react";
-import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Icon from "../components/ui/Icon";
+import InstrumentStrip from "../components/ui/InstrumentStrip";
 import { useDebts } from "../features/debts/hooks/useDebts";
+import DebtHealthCard from "../features/debts/components/DebtHealthCard";
 import DebtAdviceCard from "../features/debts/components/DebtAdviceCard";
 import DebtStrategyInfo from "../features/debts/components/DebtStrategyInfo";
 import DebtStrategySelector from "../features/debts/components/DebtStrategySelector";
@@ -17,8 +18,7 @@ export default function Debts() {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const activeDebts = debts.filter((d) => !d.paidOff);
-  const totalOwed = activeDebts.reduce((sum, d) => sum + d.remainingAmount, 0);
-  const totalPaid = debts.reduce((sum, d) => sum + d.paidAmount, 0);
+  const monthlyInstallment = activeDebts.reduce((sum, d) => sum + (d.installmentAmount ?? 0), 0);
   const projectedInterest = activeDebts.reduce((sum, d) => {
     if (!d.installmentAmount) return sum;
     const result = simulatePayoff(d.remainingAmount, d.interestRate ?? 0, d.installmentAmount);
@@ -48,26 +48,15 @@ export default function Debts() {
 
       {!isLoading && (
         <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Card>
-              <h3 className="text-sm text-ink-soft">Total devido</h3>
-              <p className="font-data text-xl font-bold text-negative">{formatCurrency(totalOwed)}</p>
-            </Card>
-            <Card>
-              <h3 className="text-sm text-ink-soft">Total pago</h3>
-              <p className="font-data text-xl font-bold text-brand">{formatCurrency(totalPaid)}</p>
-            </Card>
-            <Card>
-              <h3 className="text-sm text-ink-soft">Dívidas ativas</h3>
-              <p className="font-data text-xl font-bold text-ink">{activeDebts.length}</p>
-            </Card>
-            <Card>
-              <h3 className="text-sm text-ink-soft">Projeção de juros</h3>
-              <p className="font-data text-xl font-bold text-ink">
-                {hasProjection ? formatCurrency(projectedInterest) : "—"}
-              </p>
-            </Card>
-          </div>
+          <DebtHealthCard debts={debts} />
+
+          <InstrumentStrip
+            items={[
+              { label: "Dívidas ativas", value: activeDebts.length },
+              { label: "Parcela mensal", value: monthlyInstallment > 0 ? formatCurrency(monthlyInstallment) : "—" },
+              { label: "Projeção de juros", value: hasProjection ? formatCurrency(projectedInterest) : "—" },
+            ]}
+          />
 
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
             <div className="flex min-w-0 flex-1 flex-col gap-6">

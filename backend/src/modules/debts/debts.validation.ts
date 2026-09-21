@@ -17,6 +17,7 @@ export const createDebtSchema = z.object({
   interestRate: z.coerce.number().min(0).max(999.99).nullable().optional(),
   installmentsCount: z.coerce.number().int().positive().max(999).nullable().optional(),
   dueDay: z.coerce.number().int().min(1).max(31).nullable().optional(),
+  autoGenerateInstallments: z.boolean().optional().default(false),
 });
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;

@@ -31,8 +31,8 @@ export const debtsController = {
 
   async addPayment(req: Request, res: Response) {
     const debtId = Number(req.params.id);
-    const debt = await debtsService.addPayment(req.userId!, debtId, req.body);
-    res.status(201).json({ debt });
+    const result = await debtsService.addPayment(req.userId!, debtId, req.body);
+    res.status(201).json(result);
   },
 
   async removePayment(req: Request, res: Response) {

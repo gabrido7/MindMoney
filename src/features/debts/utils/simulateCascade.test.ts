@@ -17,6 +17,7 @@ const makeDebt = (overrides: Partial<Debt>): Debt => ({
   remainingAmount: 1000,
   progressPercent: 0,
   paidOff: false,
+  status: "ativa",
   daysUntilDue: null,
   ...overrides,
 });

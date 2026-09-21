@@ -1,24 +1,57 @@
 import { AppError } from "../../utils/AppError";
 import { debtsRepository, type DebtRow, type DebtWithPaidRow, type DebtPaymentRow, type DebtPaymentWithDebtNameRow } from "./debts.repository";
 import { categoriesRepository } from "../categories/categories.repository";
+import { accountsRepository } from "../accounts/accounts.repository";
 import { transactionsRepository } from "../transactions/transactions.repository";
 import { notificationsService } from "../notifications/notifications.service";
-import { daysUntilNextDueDay, nextDueDateISO } from "../../utils/month";
+import { gamificationService, type GamificationResult } from "../gamification/gamification.service";
+import { currentMonth, daysUntilNextDueDay, installmentDueDates, nextDueDateISO, todayISO } from "../../utils/month";
+import { computeMilestone } from "../../utils/milestones";
 import { DEBT_DUE_MILESTONES, DEBT_PAYMENT_CATEGORY_NAME } from "../../config/rules";
 import type { CreateDebtInput, DebtPaymentBodyInput } from "./debts.validation";
 
-function enrich(row: DebtRow, paidAmount: number) {
+const PAYMENT_CONSISTENCY_DAYS = 45; // mesmo limiar de debtAdvice.service.ts -- fonte única de verdade agora
+const DAY_MS = 1000 * 60 * 60 * 24;
+
+/**
+ * "atrasada" não é o simples "dueDay já passou" -- daysUntilNextDueDay
+ * sempre aponta pra frente (rola pro mês seguinte automaticamente), então
+ * não existe um jeito de ler "venceu e não foi pago" só olhando a próxima
+ * data. O sinal real é comportamental: dívida com parcela esperada (não
+ * importa se tem dueDay definido ou não -- installmentAmount já basta pra
+ * saber que existe um ciclo de pagamento esperado), madura o bastante pra
+ * já ter passado por um ciclo (>= PAYMENT_CONSISTENCY_DAYS desde que foi
+ * criada), sem nenhum pagamento nesse mesmo intervalo.
+ */
+function computeStatus(
+  paidOff: boolean,
+  installmentAmount: number | null,
+  createdAt: string,
+  lastPaidAt: string | null
+): "ativa" | "atrasada" | "quitada" {
+  if (paidOff) return "quitada";
+  if (installmentAmount === null) return "ativa";
+
+  const ageDays = (Date.now() - new Date(createdAt).getTime()) / DAY_MS;
+  if (ageDays < PAYMENT_CONSISTENCY_DAYS) return "ativa";
+
+  const daysSincePayment = lastPaidAt ? (Date.now() - new Date(lastPaidAt).getTime()) / DAY_MS : Infinity;
+  return daysSincePayment >= PAYMENT_CONSISTENCY_DAYS ? "atrasada" : "ativa";
+}
+
+function enrich(row: DebtRow, paidAmount: number, lastPaidAt: string | null) {
   const totalAmount = Number(row.total_amount);
   const remainingAmount = Math.max(0, totalAmount - paidAmount);
   const progressPercent = totalAmount > 0 ? Math.min(100, (paidAmount / totalAmount) * 100) : 0;
   const paidOff = remainingAmount <= 0;
+  const installmentAmount = row.installment_amount !== null ? Number(row.installment_amount) : null;
 
   return {
     id: row.id,
     type: row.type,
     name: row.name,
     totalAmount,
-    installmentAmount: row.installment_amount !== null ? Number(row.installment_amount) : null,
+    installmentAmount,
     interestRate: row.interest_rate !== null ? Number(row.interest_rate) : null,
     installmentsCount: row.installments_count,
     dueDay: row.due_day,
@@ -27,13 +60,14 @@ function enrich(row: DebtRow, paidAmount: number) {
     remainingAmount,
     progressPercent,
     paidOff,
+    status: computeStatus(paidOff, installmentAmount, row.created_at, lastPaidAt),
     // Só faz sentido "dias até o vencimento" pra dívida com dia definido e ainda em aberto.
     daysUntilDue: row.due_day !== null && !paidOff ? daysUntilNextDueDay(row.due_day) : null,
   };
 }
 
-function enrichWithPaid(row: DebtWithPaidRow) {
-  return enrich(row, Number(row.paid_amount));
+function enrichWithPaid(row: DebtWithPaidRow, lastPaidAt: string | null) {
+  return enrich(row, Number(row.paid_amount), lastPaidAt);
 }
 
 function enrichPayment(row: DebtPaymentRow) {
@@ -58,8 +92,12 @@ export type EnrichedDebtPaymentWithDebtName = ReturnType<typeof enrichPaymentWit
 async function getEnriched(debtId: number, userId: number): Promise<EnrichedDebt> {
   const row = await debtsRepository.findByIdAndUser(debtId, userId);
   if (!row) throw AppError.notFound("Dívida não encontrada.");
-  const paidAmount = await debtsRepository.paidAmount(debtId);
-  return enrich(row, paidAmount);
+  const asOfDate = todayISO();
+  const [paidAmount, lastPaidAt] = await Promise.all([
+    debtsRepository.paidAmount(debtId, asOfDate),
+    debtsRepository.lastPaymentDate(debtId, asOfDate),
+  ]);
+  return enrich(row, paidAmount, lastPaidAt);
 }
 
 /**
@@ -85,11 +123,86 @@ async function checkDueDates(userId: number, debts: EnrichedDebt[]): Promise<voi
   }
 }
 
+/**
+ * Quitação de uma dívida com parcelas pré-agendadas (ver generateInstallments)
+ * acontece só porque o tempo passou -- nenhuma mutação dispara isso, ao
+ * contrário de addPayment. Reavaliado a cada list() (mesmo padrão de
+ * checkDueDates), com o mesmo dedupe "marca primeiro, só notifica se era
+ * novo": paid_off_notified_at evita comemorar (XP + notificação) a mesma
+ * quitação duas vezes -- addPayment também marca essa coluna quando é ELE
+ * quem cruza 100%, então os dois caminhos nunca se pisam.
+ */
+async function checkNaturalPayoffs(userId: number, rows: DebtWithPaidRow[], debts: EnrichedDebt[]): Promise<void> {
+  const notifiedAtByDebt = new Map(rows.map((r) => [r.id, r.paid_off_notified_at]));
+  for (const debt of debts) {
+    if (!debt.paidOff || notifiedAtByDebt.get(debt.id)) continue;
+
+    await debtsRepository.markPaidOffNotified(debt.id);
+    await gamificationService.processDebtPaidOff(userId, debt.id);
+    await notificationsService.notifyDebtPaidOff(userId, debt.name);
+  }
+}
+
+/**
+ * Gera de uma vez as N parcelas futuras de uma compra parcelada -- cada uma
+ * vira uma transação real (mesmo mecanismo de addPayment: categoria
+ * "Dívidas") e uma linha de debt_payments já ligada a ela, datada no
+ * vencimento daquele mês (installmentDueDates, clamp de fim de mês
+ * independente por parcela). checkAndNotify só roda pro mês corrente, se
+ * alguma parcela cair nele -- reavaliar limite/orçamento de meses que ainda
+ * nem chegaram na hora do cadastro não faz sentido.
+ */
+async function generateInstallments(
+  userId: number,
+  debtId: number,
+  debtName: string,
+  installmentAmount: number,
+  installmentsCount: number,
+  dueDay: number
+): Promise<void> {
+  const dates = installmentDueDates(dueDay, installmentsCount);
+  const [category, account] = await Promise.all([
+    categoriesRepository.findByNameAndUser(DEBT_PAYMENT_CATEGORY_NAME, userId),
+    accountsRepository.findDefaultForUser(userId),
+  ]);
+
+  let notifiedCurrentMonth = false;
+  for (let i = 0; i < dates.length; i++) {
+    const paidAt = dates[i];
+    const label = `Parcela ${i + 1}/${installmentsCount}`;
+
+    let transactionId: number | null = null;
+    if (category && account) {
+      transactionId = await transactionsRepository.create(userId, {
+        accountId: account.id,
+        categoryId: category.id,
+        description: `${label} — ${debtName}`,
+        amount: installmentAmount,
+        type: "saida",
+        transactionDate: paidAt,
+      });
+    }
+
+    await debtsRepository.createPayment(debtId, { amount: installmentAmount, paidAt, note: label }, transactionId);
+
+    if (category && !notifiedCurrentMonth && paidAt.slice(0, 7) === currentMonth()) {
+      notifiedCurrentMonth = true;
+      await notificationsService.checkAndNotify(userId, paidAt.slice(0, 7));
+    }
+  }
+}
+
 export const debtsService = {
   async list(userId: number): Promise<EnrichedDebt[]> {
-    const rows = await debtsRepository.listByUser(userId);
-    const debts = rows.map(enrichWithPaid);
+    const asOfDate = todayISO();
+    const [rows, lastPayments] = await Promise.all([
+      debtsRepository.listByUser(userId, asOfDate),
+      debtsRepository.lastPaymentDates(userId, asOfDate),
+    ]);
+    const lastPaidByDebt = new Map(lastPayments.map((p) => [p.debtId, p.lastPaidAt]));
+    const debts = rows.map((row) => enrichWithPaid(row, lastPaidByDebt.get(row.id) ?? null));
     await checkDueDates(userId, debts);
+    await checkNaturalPayoffs(userId, rows, debts);
     return debts;
   },
 
@@ -103,16 +216,37 @@ export const debtsService = {
       installmentsCount: input.installmentsCount ?? null,
       dueDay: input.dueDay ?? null,
     });
-    const row = await debtsRepository.findByIdAndUser(id, userId);
-    return enrich(row!, 0);
+
+    if (input.autoGenerateInstallments && input.installmentAmount && input.installmentsCount && input.dueDay) {
+      await generateInstallments(
+        userId,
+        id,
+        input.name,
+        input.installmentAmount,
+        input.installmentsCount,
+        input.dueDay
+      );
+    }
+
+    return getEnriched(id, userId);
   },
 
   async remove(userId: number, id: number): Promise<void> {
-    // De propósito: não apaga as transações já geradas pelos pagamentos dessa
-    // dívida -- o dinheiro foi gasto de verdade, parar de rastrear a dívida
-    // não deveria reescrever o histórico financeiro real do usuário.
-    const removed = await debtsRepository.remove(id, userId);
-    if (!removed) throw AppError.notFound("Dívida não encontrada.");
+    const debt = await debtsRepository.findByIdAndUser(id, userId);
+    if (!debt) throw AppError.notFound("Dívida não encontrada.");
+
+    // Pagamento passado não é apagado, de propósito: o dinheiro foi gasto de
+    // verdade, parar de rastrear a dívida não deveria reescrever o histórico
+    // financeiro real do usuário. Parcela FUTURA (pré-agendada, ver
+    // generateInstallments) é diferente -- ainda não é dinheiro gasto de
+    // verdade, então some junto com a dívida (debt_payments em si já
+    // cascateia via FK ao apagar debts).
+    const futureTransactionIds = await debtsRepository.futurePaymentTransactionIds(id, todayISO());
+    for (const transactionId of futureTransactionIds) {
+      await transactionsRepository.delete(transactionId, userId);
+    }
+
+    await debtsRepository.remove(id, userId);
   },
 
   async listPayments(userId: number, debtId: number): Promise<EnrichedDebtPayment[]> {
@@ -138,14 +272,37 @@ export const debtsService = {
    * migration), o pagamento ainda é salvo, só sem transação vinculada --
    * não falha a operação por causa disso.
    */
-  async addPayment(userId: number, debtId: number, input: DebtPaymentBodyInput): Promise<EnrichedDebt> {
+  /**
+   * Além de registrar o pagamento (ver doc acima), detecta se ELE PRÓPRIO
+   * fez o progresso da dívida cruzar um marco (25/50/75/100%) -- mesmo
+   * padrão de objectivesService.addContribution, incluindo o motivo de só
+   * comparar antes/depois (senão uma dívida já em 80% "comemoraria" 25%/50%
+   * de novo a cada pagamento). Só ao cruzar 100% (quitada de vez) é que
+   * ganha XP + roda as checagens de conquista; qualquer outro pagamento
+   * ainda roda as checagens de conquista sem XP novo (checkFinancialAchievements),
+   * porque "patrimônio no azul" pode passar a valer em QUALQUER pagamento
+   * que reduza a dívida o suficiente, não só num que quite ela inteira.
+   */
+  async addPayment(
+    userId: number,
+    debtId: number,
+    input: DebtPaymentBodyInput
+  ): Promise<{ debt: EnrichedDebt; milestoneReached: number | null; gamification: GamificationResult | null }> {
     const debt = await debtsRepository.findByIdAndUser(debtId, userId);
     if (!debt) throw AppError.notFound("Dívida não encontrada.");
 
+    const totalAmount = Number(debt.total_amount);
+    const previousPaidAmount = await debtsRepository.paidAmount(debtId, todayISO());
+    const previousProgressPercent = totalAmount > 0 ? Math.min(100, (previousPaidAmount / totalAmount) * 100) : 0;
+
     let transactionId: number | null = null;
-    const category = await categoriesRepository.findByNameAndUser(DEBT_PAYMENT_CATEGORY_NAME, userId);
-    if (category) {
+    const [category, account] = await Promise.all([
+      categoriesRepository.findByNameAndUser(DEBT_PAYMENT_CATEGORY_NAME, userId),
+      accountsRepository.findDefaultForUser(userId),
+    ]);
+    if (category && account) {
       transactionId = await transactionsRepository.create(userId, {
+        accountId: account.id,
         categoryId: category.id,
         description: `Pagamento — ${debt.name}`,
         amount: input.amount,
@@ -156,7 +313,27 @@ export const debtsService = {
     }
 
     await debtsRepository.createPayment(debtId, input, transactionId);
-    return getEnriched(debtId, userId);
+    const enriched = await getEnriched(debtId, userId);
+
+    const milestoneReached = computeMilestone(previousProgressPercent, enriched.progressPercent);
+    const gamification =
+      milestoneReached === 100
+        ? await gamificationService.processDebtPaidOff(userId, debtId)
+        : await gamificationService.checkFinancialAchievements(userId);
+
+    if (milestoneReached === 100) {
+      await notificationsService.notifyDebtPaidOff(userId, debt.name);
+      // Marca aqui também -- se essa dívida tiver parcelas futuras pré-agendadas
+      // que nunca vão ser lançadas (quitada antes da hora por este pagamento
+      // extra), checkNaturalPayoffs não pode comemorar de novo quando o list()
+      // seguinte reavaliar.
+      await debtsRepository.markPaidOffNotified(debtId);
+    }
+    if (gamification.newAchievements.some((a) => a.id === "patrimonio-no-azul")) {
+      await notificationsService.notifyNetWorthPositive(userId);
+    }
+
+    return { debt: enriched, milestoneReached, gamification };
   },
 
   async removePayment(userId: number, debtId: number, paymentId: number): Promise<EnrichedDebt> {
@@ -193,9 +370,13 @@ export const debtsService = {
     if (!payment) throw AppError.notFound("Pagamento não encontrado.");
 
     if (payment.transaction_id) {
-      const category = await categoriesRepository.findByNameAndUser(DEBT_PAYMENT_CATEGORY_NAME, userId);
-      if (category) {
+      const [category, existingTransaction] = await Promise.all([
+        categoriesRepository.findByNameAndUser(DEBT_PAYMENT_CATEGORY_NAME, userId),
+        transactionsRepository.findByIdAndUser(payment.transaction_id, userId),
+      ]);
+      if (category && existingTransaction) {
         await transactionsRepository.update(payment.transaction_id, userId, {
+          accountId: existingTransaction.account_id,
           categoryId: category.id,
           description: `Pagamento — ${debt.name}`,
           amount: input.amount,

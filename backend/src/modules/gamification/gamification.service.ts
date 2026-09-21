@@ -1,4 +1,8 @@
 import { gamificationRepository } from "./gamification.repository";
+import { debtsRepository } from "../debts/debts.repository";
+import { assetsRepository } from "../assets/assets.repository";
+import { accountsRepository } from "../accounts/accounts.repository";
+import { todayISO } from "../../utils/month";
 import {
   ACHIEVEMENTS,
   COURSE_LESSON_SETS,
@@ -106,6 +110,26 @@ async function evaluateAchievement(userId: number, achievementId: string): Promi
         gamificationRepository.today(),
       ]);
       return calculateStreak(dates, today) >= 3;
+    }
+    case "primeira-divida-quitada": {
+      const rows = await debtsRepository.listByUser(userId, todayISO());
+      return rows.some((r) => Number(r.paid_amount) >= Number(r.total_amount));
+    }
+    case "patrimonio-no-azul": {
+      // Exige ter registrado pelo menos uma dívida (ativa ou já quitada) --
+      // sem essa condição, qualquer usuário sem dívida nenhuma desbloquearia
+      // isso trivialmente ao cadastrar o primeiro ativo, o que esvaziaria o
+      // sentido de "seu patrimônio virou positivo" como conquista real.
+      // Patrimônio = contas + ativos - dívidas, mesma fórmula de netWorthService.
+      const today = todayISO();
+      const [debts, totalAssets, totalAccounts, totalDebts] = await Promise.all([
+        debtsRepository.listByUser(userId, today),
+        assetsRepository.totalValueAsOf(userId, today),
+        accountsRepository.totalBalanceAsOf(userId, today),
+        debtsRepository.totalRemainingAsOf(userId, today),
+      ]);
+      const totalPatrimony = totalAssets + totalAccounts;
+      return debts.length > 0 && totalPatrimony > 0 && totalPatrimony > totalDebts;
     }
     default:
       return false;
@@ -226,5 +250,23 @@ export const gamificationService = {
     return processEvents(userId, [
       { amount: XP_AMOUNTS.goal_achieved, reason: "goal_achieved", referenceId: String(objectiveId) },
     ]);
+  },
+
+  async processDebtPaidOff(userId: number, debtId: number): Promise<GamificationResult> {
+    return processEvents(userId, [
+      { amount: XP_AMOUNTS.debt_paid_off, reason: "debt_paid_off", referenceId: String(debtId) },
+    ]);
+  },
+
+  /**
+   * Roda só as checagens de conquista, sem nenhum evento de XP novo --
+   * usado depois de mutações que não têm um "marco" próprio (atualizar o
+   * valor de um ativo, por exemplo) mas que podem ter feito uma conquista
+   * baseada em estado (como "patrimônio no azul") passar a valer agora.
+   * unlockAchievement já é idempotente, então chamar isso sem necessidade
+   * não desbloqueia nada de novo nem dá XP fantasma.
+   */
+  async checkFinancialAchievements(userId: number): Promise<GamificationResult> {
+    return processEvents(userId, []);
   },
 };
