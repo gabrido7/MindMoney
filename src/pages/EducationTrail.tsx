@@ -40,48 +40,69 @@ export default function EducationTrail() {
         </Card>
       )}
 
-      <div className="flex flex-col gap-3">
-        {statuses.map(({ course, status, completedCount, totalCount, hasContent }) => (
-          <Link key={course.id} to={`/educacao-financeira/${trail.id}/${course.id}`}>
-            <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-lg cursor-pointer">
-              <div className="flex items-center gap-3">
+      {/*
+        Caminho da trilha, não lista de cards -- os cursos já têm uma ordem e um
+        estado real (concluído / atual / a seguir, ver courseStatuses), então o
+        formato certo é um percurso com nós conectados, não cartões soltos
+        empilhados. A cor de cada nó/linha é a cor da própria trilha
+        (TRAIL_COLOR_HEX), reforçando a identidade visual que hoje só aparece
+        no emoji do topo.
+      */}
+      <ol className="flex flex-col">
+        {statuses.map(({ course, status, completedCount, totalCount, hasContent }, index) => {
+          const isLast = index === statuses.length - 1;
+          const trailColor = TRAIL_COLOR_HEX[trail.color];
+
+          return (
+            <li key={course.id} className="relative flex gap-4">
+              {!isLast && (
                 <span
-                  className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                    status === "completed"
-                      ? "bg-brand-soft text-brand-deep"
-                      : status === "current"
-                        ? ""
-                        : "bg-surface-alt text-ink-soft"
-                  }`}
-                  style={
-                    status === "current"
-                      ? { backgroundColor: `${TRAIL_COLOR_HEX[trail.color]}1a`, color: TRAIL_COLOR_HEX[trail.color] }
-                      : undefined
-                  }
-                >
-                  {status === "completed" ? <Icon name="check" size={14} /> : status === "current" ? "→" : "○"}
-                </span>
-                <span className="text-xl shrink-0">{course.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-ink truncate">{course.title}</p>
-                  <p className="text-xs text-ink-soft truncate">{course.description}</p>
+                  aria-hidden="true"
+                  className="absolute left-4 top-9 h-[calc(100%-1.25rem)] w-0.5 -translate-x-1/2"
+                  style={{ backgroundColor: status === "completed" ? trailColor : "var(--line)" }}
+                />
+              )}
+
+              <span
+                className="relative z-10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold"
+                style={
+                  status === "completed"
+                    ? { backgroundColor: trailColor, borderColor: trailColor, color: "#fff" }
+                    : status === "current"
+                      ? { backgroundColor: `${trailColor}1a`, borderColor: trailColor, color: trailColor }
+                      : { backgroundColor: "var(--surface-alt)", borderColor: "var(--line)", color: "var(--ink-soft)" }
+                }
+              >
+                {status === "completed" ? <Icon name="check" size={14} /> : status === "current" ? "→" : "○"}
+              </span>
+
+              <Link
+                to={`/educacao-financeira/${trail.id}/${course.id}`}
+                className="mb-3 min-w-0 flex-1 rounded-xl px-3 py-2 transition-colors hover:bg-surface-alt"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl shrink-0">{course.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-ink truncate">{course.title}</p>
+                    <p className="text-xs text-ink-soft truncate">{course.description}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {hasContent ? (
+                      <span className="font-data text-xs text-ink-soft">
+                        {completedCount}/{totalCount} aulas
+                      </span>
+                    ) : (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-surface-alt text-ink-soft">
+                        Em construção
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right shrink-0">
-                  {hasContent ? (
-                    <span className="font-data text-xs text-ink-soft">
-                      {completedCount}/{totalCount} aulas
-                    </span>
-                  ) : (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-surface-alt text-ink-soft">
-                      Em construção
-                    </span>
-                  )}
-                </div>
-              </div>
-            </Card>
-          </Link>
-        ))}
-      </div>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Button from "../../../components/ui/Button";
 import Icon from "../../../components/ui/Icon";
-import ScoreArc from "../../../components/ui/ScoreArc";
+import Dial from "../../../components/ui/Dial";
 import type { QuizQuestion } from "../types";
 
 export default function LessonQuiz({
@@ -75,11 +75,7 @@ export default function LessonQuiz({
         </Button>
       ) : (
         <div className="flex items-center gap-4">
-          <ScoreArc value={score} max={questions.length} size="sm" color="var(--brand)">
-            <span className="font-data text-sm font-bold text-ink">
-              {score}/{questions.length}
-            </span>
-          </ScoreArc>
+          <Dial value={score} max={questions.length} size="sm" color="var(--brand)" center={`${score}/${questions.length}`} />
           <p className="font-semibold text-ink">
             Você acertou {score} de {questions.length} {questions.length === 1 ? "pergunta" : "perguntas"}.
           </p>

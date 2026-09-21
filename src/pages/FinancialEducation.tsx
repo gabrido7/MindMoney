@@ -9,6 +9,7 @@ import { useGamification } from "../features/gamification/hooks/useGamification"
 import LevelCard from "../features/gamification/components/LevelCard";
 import AchievementsGrid from "../features/gamification/components/AchievementsGrid";
 import SmartSearch from "../features/search/components/SmartSearch";
+import StrategicPlanCard from "../features/education/components/StrategicPlanCard";
 
 export default function FinancialEducation() {
   const { progress, isLoading, error } = useEducationProgress();
@@ -25,6 +26,8 @@ export default function FinancialEducation() {
 
       <SmartSearch />
 
+      <StrategicPlanCard />
+
       {gamificationSummary && (
         <div className="grid md:grid-cols-2 gap-4">
           <LevelCard summary={gamificationSummary} />
@@ -36,7 +39,7 @@ export default function FinancialEducation() {
       {error && <p className="text-negative">Não foi possível carregar seu progresso agora.</p>}
 
       {!isLoading && (
-        <div className="flex flex-col gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           {TRAILS.map((trail) => {
             const total = trailLessonCount(trail);
             const completed = trailCompletedCount(trail, progress);
