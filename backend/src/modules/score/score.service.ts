@@ -1,5 +1,6 @@
 import { transactionsRepository } from "../transactions/transactions.repository";
-import { goalsRepository } from "../goals/goals.repository";
+import { objectivesRepository } from "../objectives/objectives.repository";
+import { monthlySavingsTarget } from "../objectives/objectiveMath";
 import { scoreRepository } from "./score.repository";
 import { currentMonth, getPreviousMonth } from "../../utils/month";
 import { ALERT_PERCENT, SAVINGS_RATE_FULL_SCORE } from "../../config/rules";
@@ -26,11 +27,14 @@ const levelFor = (score: number): ScoreLevel => {
  *
  *  1) Controle de gastos (0-40): quanto menor a % das entradas gasta no
  *     mês, maior a pontuação. 0% gasto = 40 pts; 100%+ gasto = 0 pts.
- *  2) Capacidade de economia (0-30): se há meta definida no mês, usa o
- *     progresso da meta (saldo/meta). Sem meta, usa uma taxa de poupança
- *     genérica: guardar 20% ou mais das entradas já vale os 30 pontos
- *     cheios (referência comum de educação financeira), 0% ou negativo
- *     vale 0.
+ *  2) Capacidade de economia (0-30): se há objetivo(s) financeiro(s) ativos
+ *     (não atingidos, não atrasados) no mês corrente, usa o progresso contra
+ *     a soma do "quanto precisa guardar por mês" de cada um
+ *     (monthlySavingsTarget, ver objectiveMath.ts) -- não existe tabela
+ *     própria de "meta mensal", ela é derivada dos objetivos reais do
+ *     usuário. Sem objetivo ativo, usa uma taxa de poupança genérica:
+ *     guardar 20% ou mais das entradas já vale os 30 pontos cheios
+ *     (referência comum de educação financeira), 0% ou negativo vale 0.
  *  3) Evolução financeira (0-15): compara o saldo deste mês com o do mês
  *     anterior, normalizado pelas entradas do mês. Sem variação = 7-8 pts
  *     (neutro); melhora de 50%+ das entradas = 15 pts; piora equivalente
@@ -43,10 +47,18 @@ export const scoreService = {
   async calculate(userId: number, month: string = currentMonth()) {
     const previousMonth = getPreviousMonth(month);
 
-    const [totals, previousTotals, goal, last3Months] = await Promise.all([
+    // requiredMonthlyAmount é sempre "quanto falta guardar por mês a partir de
+    // HOJE" (objectives.service deriva isso de currentMonth(), não do `month`
+    // sendo pontuado) -- não existe um jeito honesto de reconstruir qual era
+    // essa meta num mês passado, então só entra na conta quando `month` é o
+    // mês corrente. Meses passados (recalculados por history()) sempre caem
+    // no fallback genérico -- mesmo comportamento de "sem meta" de antes.
+    const isCurrentMonth = month === currentMonth();
+
+    const [totals, previousTotals, objectiveRows, last3Months] = await Promise.all([
       transactionsRepository.sumByTypeForMonth(userId, month),
       transactionsRepository.sumByTypeForMonth(userId, previousMonth),
-      goalsRepository.findByMonth(userId, month),
+      isCurrentMonth ? objectivesRepository.listByUser(userId) : Promise.resolve([]),
       Promise.all(
         [0, 1, 2].map((offset) => {
           let m = month;
@@ -64,10 +76,14 @@ export const scoreService = {
     const spendingControl =
       totals.entradas > 0 ? Math.round(clamp(40 * (1 - gastoPercentual / 100), 0, 40)) : 0;
 
-    // 2) capacidade de economia / metas
+    // 2) capacidade de economia / metas: meta do mês = soma do que falta
+    // guardar por mês em cada objetivo ativo (não atingido, não atrasado).
+    const monthlyTarget = monthlySavingsTarget(objectiveRows);
+    const hasGoal = monthlyTarget > 0;
+
     let savingsCapacity: number;
-    if (goal) {
-      savingsCapacity = Math.round(clamp(30 * (saldo / goal.target_amount), 0, 30));
+    if (hasGoal) {
+      savingsCapacity = Math.round(clamp(30 * (saldo / monthlyTarget), 0, 30));
     } else {
       const savingsRate = totals.entradas > 0 ? saldo / totals.entradas : 0;
       savingsCapacity = Math.round(clamp(30 * (savingsRate / SAVINGS_RATE_FULL_SCORE), 0, 30));
@@ -93,7 +109,7 @@ export const scoreService = {
       savingsCapacity,
       evolution,
       consistency,
-      hasGoal: Boolean(goal),
+      hasGoal,
       gastoPercentual: Number(gastoPercentual.toFixed(1)),
       monthsWithinLimit,
     };
