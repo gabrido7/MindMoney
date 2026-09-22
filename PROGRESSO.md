@@ -31,15 +31,6 @@ de outras escolas que não são da área de TI. A apresentação terá slides
 
 ## Pendências
 
-- [ ] **Bloquear usuários específicos por e-mail** — pedido em 21/09. Ainda não
-  existe no projeto; precisa ser criado no backend (recusar cadastro e login
-  de e-mails bloqueados). Aguardando o(s) e-mail(s) a bloquear. Mexe no fluxo
-  de login: fazer com calma e testar bem, não em cima da apresentação.
-- [ ] **Proteger o código contra cópia** — o repositório no GitHub está
-  **público**. Recomendado: (1) deixá-lo privado, o que exige reconectar o
-  Render com autorização do GitHub (o Vercel já tem acesso autorizado);
-  (2) adicionar um arquivo de licença "todos os direitos reservados".
-  Aguardando decisão.
 - [ ] Definir um "congelamento" antes da apresentação (ex.: quinta à noite),
   depois do qual nada mais é alterado no site.
 
