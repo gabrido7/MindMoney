@@ -67,6 +67,26 @@ o score é uma fórmula determinística recalculada na leitura
 100% baseado em regras. **Não existe API de IA configurada — não invente uma
 chave** (ver `SECURITY.md`).
 
+## Convenções que já causaram bugs
+
+- **Não use `CURDATE()`/`NOW()` no SQL dos repositories** para regras de data:
+  receba um `asOfDate: string` vindo de `todayISO()`. `vi.setSystemTime` não
+  altera o relógio do MySQL, então SQL com data embutida não é testável.
+- Em testes que avançam o relógio com `vi.setSystemTime`, faça login de novo
+  depois do salto — o token obtido antes aparece expirado.
+- Toda transação exige `accountId` (contas/carteiras múltiplas). Nos testes do
+  backend use o helper `getAccountId(token)` de `backend/tests/helpers.ts`, e
+  sempre confira o status da criação (`expect(res.status).toBe(201)`) para o
+  teste não passar pelo motivo errado.
+- O frontend no Vercel precisa de `VITE_API_URL` **absoluto** apontando para o
+  Render (frontend e backend estão em domínios diferentes); caminho relativo
+  (`/api`) só funciona com os dois no mesmo domínio.
+
+## Preferências de trabalho
+
+- Pesquise o código diretamente (Read/Grep), sem disparar subagentes em
+  paralelo — o usuário já recusou isso.
+
 ## Produção (nuvem, plano gratuito)
 
 - **Frontend:** Vercel, projeto `mindmoney-frontend` →
