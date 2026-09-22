@@ -1,33 +1,96 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guia para o Claude Code trabalhar neste repositório. Contém só o que vale
+para sempre. **Antes de começar qualquer tarefa, leia o `PROGRESSO.md`** para
+ver o estado atual, o que falta fazer e os pontos de atenção.
 
-## Commands
+Ao terminar uma tarefa grande: atualize o `PROGRESSO.md`; só mexa neste
+arquivo se surgir uma decisão permanente (e mantenha-o curto).
 
-Frontend (repo root):
-- `npm run dev` — Vite dev server (default `http://localhost:5173`)
-- `npm run build` — type-check (`tsc -b`) then production-build with Vite
-- `npm run lint` — ESLint over the whole project
-- `npm test` — Vitest unit tests (`src/**/*.test.ts`, pure calculation functions only)
-- `npm run preview` — serve the production build locally
+## Comandos
+
+Frontend (raiz do projeto):
+- `npm run dev` — Vite (`http://localhost:5173`)
+- `npm run build` — type-check (`tsc -b`) + build de produção
+- `npm run lint` — ESLint
+- `npm test` — Vitest (`src/**/*.test.ts`, só funções puras de cálculo)
 
 Backend (`backend/`):
-- `npm run dev` — `tsx watch src/server.ts`, API on `http://localhost:3001`
-- `npm run build` — `tsc -p tsconfig.json`
-- `npm test` — Vitest + Supertest integration tests (`backend/tests/*.test.ts`), hit the real dev MySQL database directly (no mocking); each test creates its own throwaway user(s) and cleans up after itself
+- `npm run dev` — `tsx watch src/server.ts`, API em `http://localhost:3001`
+- `npm run build` — `tsc -p tsconfig.json` (gera `dist/`)
+- `npm start` — `node dist/server.js` (usado no Render)
+- `npm test` — Vitest + Supertest, testes de integração contra o MySQL de dev
+  real (sem mock); cada teste cria e apaga seus próprios usuários
 
-Database (`database/`): `schema.sql` + `seed.sql` are the base; `migrations/*.sql` are applied in order on top. Apply with `mysql -u root --default-character-set=utf8mb4 < file.sql` (use `Get-Content -Raw -Encoding UTF8 | mysql ...` on Windows/PowerShell — plain piping without `-Encoding UTF8` has corrupted accented characters before).
+Banco (`database/`): `schema.sql` + `seed.sql` são a base;
+`migrations/NNN_*.sql` são aplicadas em ordem por cima. No Windows/PowerShell,
+sempre `Get-Content -Raw -Encoding UTF8 arquivo.sql | mysql ...` com
+`--default-character-set=utf8mb4` — sem isso os acentos das categorias
+corrompem e quebram as UNIQUE KEYs silenciosamente.
 
-## Architecture
+## Arquitetura
 
-Three parts: React+TypeScript+Vite frontend (`src/`), Node+Express+TypeScript backend (`backend/`), MySQL/MariaDB database (`database/`). No mocks, no fake data anywhere — every feature is wired to the real API and real database.
+Três partes: frontend React+TypeScript+Vite (`src/`), backend
+Node+Express+TypeScript (`backend/`), banco MySQL/MariaDB (`database/`).
+**Sem mock e sem dado falso em nenhuma camada** — toda funcionalidade usa a API
+e o banco reais.
 
-**Frontend** — routed SPA (`react-router-dom`), `App.tsx` wires `AuthLayout` (login/cadastro) and `AppLayout` (protected pages, top nav) via `ProtectedRoute`. `AuthContext` holds the session; `services/*.ts` are thin typed wrappers around each backend module, all going through the shared `services/api.ts` (base URL from `VITE_API_URL`, Bearer token attached automatically, 401 anywhere clears the session). Pages: Dashboard (the original, most-developed page — preserved intentionally across the localStorage→API migration, same UI/behavior, different data source), Perfil, Metas, Relatórios, Educação Financeira (static content, no backend needed), Login/Cadastro. `src/types/index.ts` is the domain model the Dashboard's calculation utils operate on; `src/types/api.ts` is the literal API response shape (different, e.g. API includes joined `category_name`) — hooks in `src/features/*/hooks` adapt between the two.
+**Frontend** — SPA com `react-router-dom` (rotas em `App.tsx`: landing
+pública, `AuthLayout` para login/cadastro, `AppLayout` + `ProtectedRoute` para
+as páginas logadas). Estado de servidor via TanStack Query
+(`lib/queryClient.ts`, invalidação em `lib/invalidateFinancialData.ts`).
+`services/*.ts` são wrappers tipados por módulo do backend, todos passando por
+`services/api.ts` (base `VITE_API_URL`, Bearer token automático, refresh
+token silencioso). Cada funcionalidade vive em `src/features/<nome>/`
+(`components`, `hooks`, `utils` com testes). `src/types/api.ts` é o formato
+literal da API; `src/types/index.ts` é o modelo de domínio — os hooks adaptam
+um no outro.
 
-**Backend** — layered per module (`backend/src/modules/<name>/{routes,controller,service,repository,validation}.ts`): routes wire `requireAuth` + zod `validate()` + controller; service holds business rules and ownership checks; repository is the only layer that touches SQL (always parameterized). Every query is scoped by `user_id` from the JWT — never trust an id from the request body. `config/db.ts` connects as `mindmoney_app` (least-privilege MySQL user, not root). `middlewares/rateLimit.ts` guards `/api/auth/*` (skipped when `NODE_ENV=test`).
+**Backend** — um módulo por domínio em
+`backend/src/modules/<nome>/{routes,controller,service,repository,validation}.ts`:
+routes ligam `requireAuth` + `validate()` (zod) + controller; service tem as
+regras de negócio e checagem de dono; repository é a única camada que toca SQL
+(sempre parametrizado). **Toda query é filtrada pelo `user_id` do JWT — nunca
+confie em id vindo do corpo da requisição.** O backend conecta como
+`mindmoney_app` (usuário MySQL de privilégio mínimo, nunca root).
+Access token curto (15 min) + refresh token (30 dias). `middlewares/rateLimit.ts`
+protege `/api/auth/*` (desligado com `NODE_ENV=test`).
 
-**Database** — MySQL/MariaDB, InnoDB, utf8mb4, normalized. `categories`/`subcategories` are per-user (not global) with soft-delete (`archived_at`) so deleting a category never breaks old transactions' history; `category_templates`/`subcategory_templates` are the dealer's-choice defaults copied into a new user's own categories at registration via the `sp_seed_user_categories` stored procedure. `transactions.category_id` is `ON DELETE RESTRICT` on purpose — deleting a user account requires deleting their transactions first, then the rest cascades (see `database/README.md`). `financial_score_history` is a cache that gets recalculated (upserted) every time that month's score is requested, not an immutable ledger.
+**Banco** — InnoDB, utf8mb4, normalizado. Categorias são por usuário, com
+soft-delete (`archived_at`), copiadas dos templates no cadastro pela procedure
+`sp_seed_user_categories`. `transactions.category_id` é `ON DELETE RESTRICT`
+de propósito. Detalhes e raciocínio em `database/README.md`.
 
-**Score, insights and notifications are computed, not stored as "the truth"**: financial score (`backend/src/modules/score`) is a 4-component deterministic formula recalculated on read; the "assistant" (`backend/src/modules/insights`) is 100% rule-based (no AI API key is configured in this project — don't invent one; see `SECURITY.md` for the reasoning) with a small pattern-matched Q&A that admits when it doesn't understand a question instead of fabricating an answer; notifications are a real side effect of transaction/goal mutations (limit exceeded, goal achieved), not manually created.
+**Score, insights e notificações são calculados, não "a verdade" gravada**:
+o score é uma fórmula determinística recalculada na leitura
+(`financial_score_history` é só cache); o "assistente" (`modules/insights`) é
+100% baseado em regras. **Não existe API de IA configurada — não invente uma
+chave** (ver `SECURITY.md`).
 
-See `SECURITY.md` for the security audit and its findings/fixes, and `database/README.md` for schema design rationale.
+## Produção (nuvem, plano gratuito)
+
+- **Frontend:** Vercel, projeto `mindmoney-frontend` →
+  https://mindmoney-frontend.vercel.app
+- **Backend:** Render, serviço `mindmoney-backend` (config em `render.yaml`) →
+  https://mindmoney-backend.onrender.com (health check em `/health`)
+- **Banco:** MySQL gerenciado no Aiven (exige TLS: `DB_SSL_CA` no Render)
+- Repositório: `github.com/gabrido7/MindMoney`, branch `master`
+
+**Todo `git push` na `master` publica sozinho** no Vercel e no Render. Então:
+rode `npm run build` e `npm test` (frontend e backend) antes de qualquer push —
+um erro vai direto para o site no ar.
+
+**Migrations não são aplicadas automaticamente no Aiven.** Ao criar uma
+migration nova, ela precisa ser rodada manualmente no banco de produção, e o
+`database/deploy_all.sql` (consolidado de schema + seed + migrations 001..022)
+deve ser atualizado para incluí-la.
+
+Segredos (senhas do banco, `JWT_SECRET`) ficam só nos painéis do Render/Aiven
+e nos `.env` locais — nunca no repositório.
+
+## Outros documentos
+
+- `DOCUMENTATION.md` — arquitetura completa, endpoints, regras de negócio
+- `SECURITY.md` — auditoria de segurança
+- `database/README.md` — schema e decisões de design
+- `COMO-ABRIR-EM-OUTRO-PC.txt` — como rodar localmente em outro computador
