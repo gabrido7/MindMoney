@@ -33,6 +33,14 @@ import { favoritesRouter } from "./modules/favorites/favorites.routes";
 
 export const app = express();
 
+// No Render, toda requisição chega pelo balanceador de carga deles. Sem isso,
+// req.ip é o IP do balanceador e o rate limit trata todos os visitantes como
+// um só. Confia só no proxy imediato (1 salto), que não pode ser forjado pelo
+// cliente.
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 if (process.env.NODE_ENV !== "test") {
   app.use(requestLogger);
 }

@@ -20,6 +20,11 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default("15m"),
   REFRESH_TOKEN_DAYS: z.coerce.number().default(30),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  // Limites por IP a cada 15 min (middlewares/rateLimit.ts). Dimensionados
+  // para um laboratório inteiro (~20 PCs) saindo pelo mesmo IP público da
+  // escola; ajustáveis no painel do Render sem mexer no código.
+  RATE_LIMIT_API_MAX: z.coerce.number().int().positive().default(6000),
+  RATE_LIMIT_AUTH_MAX: z.coerce.number().int().positive().default(200),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -100,6 +100,18 @@ chave** (ver `SECURITY.md`).
 rode `npm run build` e `npm test` (frontend e backend) antes de qualquer push —
 um erro vai direto para o site no ar.
 
+**Rate limit** (`middlewares/rateLimit.ts`): por IP, a cada 15 min, com padrão
+de 6000 ações de API e 200 de login/cadastro — dimensionado para um laboratório
+de ~20 PCs saindo pelo mesmo IP da escola. Ajustável sem código pelas variáveis
+`RATE_LIMIT_API_MAX` / `RATE_LIMIT_AUTH_MAX` no Render. Em produção o app usa
+`trust proxy = 1` (balanceador do Render); sem isso todos os visitantes viram
+um IP só.
+
+**Keep-alive** (`.github/workflows/keep-alive.yml`): o GitHub Actions visita o
+`/health` a cada 10 min. Isso impede o Aiven gratuito de desligar o banco por
+inatividade (aconteceu em 22/09) e evita o Render "dormindo". Se o banco
+cair, o servidor nem sobe (`server.ts` exige o banco antes de escutar).
+
 **Migrations não são aplicadas automaticamente no Aiven.** Ao criar uma
 migration nova, ela precisa ser rodada manualmente no banco de produção, e o
 `database/deploy_all.sql` (consolidado de schema + seed + migrations 001..022)
