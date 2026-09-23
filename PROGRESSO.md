@@ -4,7 +4,7 @@ Estado atual do projeto. Atualize ao fim de cada tarefa grande: mova o que
 foi feito para "Feito recentemente", ajuste "Pendências" e apague o que ficou
 velho (histórico completo fica no `git log`).
 
-*Última atualização: 23/09/2026*
+*Última atualização: 23/09/2026 (noite)*
 
 ## Contexto atual
 
@@ -14,6 +14,15 @@ e o site aberto em **~20 computadores de um laboratório** para os visitantes
 testarem com as próprias mãos, cada PC logado numa conta de demonstração.
 
 ## Feito recentemente
+
+- **25 contas de demonstração criadas em produção (23/09)** pelo
+  `backend/scripts/seed-demo.ts`, rodado pelo usuário: `lab01`–`lab25@mindmoney.demo`,
+  mesma senha, lista em Downloads/contas-demonstracao.txt (fora do repo).
+  lab01–lab20 nos PCs do laboratório, lab21–lab25 de reserva. Mais contas:
+  rodar o script com outro `--prefix`.
+- **Remote Control ativado** na sessão do Claude Code, para pedir ajuda pelo
+  celular na sexta (PC de casa ligado, sem suspensão, app aberto). Folha de
+  emergência para celular: Downloads/Emergencia-MindMoney.pdf.
 
 - **Preparação para o laboratório (23/09):** `trust proxy` em produção e rate
   limit configurável por env, com padrão de 6000 ações e 200 logins a cada
@@ -38,9 +47,6 @@ testarem com as próprias mãos, cada PC logado numa conta de demonstração.
 
 ## Pendências
 
-- [ ] Equipe cria as contas de demonstração (1 por PC + 3 ou 4 reservas) e
-  importa em cada uma o `MindMoney-dados-demonstracao.csv` (Dashboard →
-  importar CSV).
 - [ ] Congelamento na quinta à noite: nada mais é alterado no site.
 - [ ] Opcional, depois da apresentação: conectar o Render à GitHub App para ter
   deploy automático.
