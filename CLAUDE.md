@@ -96,9 +96,12 @@ chave** (ver `SECURITY.md`).
 - **Banco:** MySQL gerenciado no Aiven (exige TLS: `DB_SSL_CA` no Render)
 - Repositório: `github.com/gabrido7/MindMoney`, branch `master`
 
-**Todo `git push` na `master` publica sozinho** no Vercel e no Render. Então:
-rode `npm run build` e `npm test` (frontend e backend) antes de qualquer push —
-um erro vai direto para o site no ar.
+**Publicação:** todo `git push` na `master` publica o **frontend** sozinho no
+Vercel. O **Render NÃO publica sozinho** (conectado como repositório público,
+sem a GitHub App): mudança no backend só vai ao ar depois de alguém clicar em
+**Manual Deploy → Deploy latest commit** no painel do Render. Confirme em
+produção (ex.: cabeçalho `RateLimit-Policy` ou `/health`). Rode `npm run build`
+e `npm test` (frontend e backend) antes de qualquer push.
 
 **Rate limit** (`middlewares/rateLimit.ts`): por IP, a cada 15 min, com padrão
 de 6000 ações de API e 200 de login/cadastro — dimensionado para um laboratório
