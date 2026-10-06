@@ -87,7 +87,13 @@ chave** (ver `SECURITY.md`).
 - Pesquise o código diretamente (Read/Grep), sem disparar subagentes em
   paralelo — o usuário já recusou isso.
 
-## Produção (nuvem, plano gratuito)
+## Produção (nuvem, plano gratuito) — desativada
+
+**Desde 06/10/2026 o projeto está sendo tirado do ar** (a banca do TCC será
+apresentada rodando localmente no notebook). O keep-alive foi removido e os
+serviços abaixo devem ser apagados/suspensos nos painéis. O que segue
+descreve como era, para republicar se precisar: a configuração continua em
+`render.yaml`, `vercel.json` e `database/deploy_all.sql`.
 
 - **Frontend:** Vercel, projeto `mindmoney-frontend` →
   https://mindmoney-frontend.vercel.app
@@ -110,10 +116,12 @@ de ~20 PCs saindo pelo mesmo IP da escola. Ajustável sem código pelas variáve
 `trust proxy = 1` (balanceador do Render); sem isso todos os visitantes viram
 um IP só.
 
-**Keep-alive** (`.github/workflows/keep-alive.yml`): o GitHub Actions visita o
-`/health` a cada 10 min. Isso impede o Aiven gratuito de desligar o banco por
-inatividade (aconteceu em 22/09) e evita o Render "dormindo". Se o banco
-cair, o servidor nem sobe (`server.ts` exige o banco antes de escutar).
+**Keep-alive** (removido em 06/10; recuperável pelo `git log`): era um
+workflow do GitHub Actions que visitava o `/health` a cada 10 min, porque o
+Aiven gratuito desliga o banco por inatividade (aconteceu em 22/09). Se
+republicar, recrie-o: sem banco o servidor nem sobe (`server.ts` exige o
+banco antes de escutar). Em produção, `PASSWORD_RESET_DEMO` fica desligado
+por padrão (o token de redefinição não é devolvido na resposta).
 
 **Migrations não são aplicadas automaticamente no Aiven.** Ao criar uma
 migration nova, ela precisa ser rodada manualmente no banco de produção, e o
