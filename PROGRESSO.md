@@ -9,18 +9,15 @@ velho (histórico completo fica no `git log`).
 ## Contexto atual
 
 A apresentação na escola (25/09) já passou. Próximo marco: **banca do TCC,
-prevista para o fim de novembro/2026**, apresentada **rodando localmente** no
-notebook, com a tela na TV (os avaliadores não usam o site). Por isso a
-produção está sendo desativada (06/10). Revisão comparativa com a auditoria
-de 25/08 (06/10):
+prevista para o fim de novembro/2026**, apresentada com a tela do notebook na TV. **Decisão de 06/10: o site continua
+no ar em produção até depois da banca** (a ideia de desativar foi revertida).
+Revisão comparativa com a auditoria de 25/08 (06/10):
 https://claude.ai/artifact/K3saGQbTGks3dtkfBZUfQW
 
 ## Feito recentemente
 
-- **06/10: tirando do ar.** Keep-alive removido do repositório. Falta fazer
-  nos painéis (usuário): apagar o MySQL no Aiven (some com os dados dos
-  visitantes), suspender/apagar o `mindmoney-backend` no Render e
-  apagar/pausar o `mindmoney-frontend` no Vercel.
+- **06/10:** keep-alive removido e restaurado no mesmo dia (decisão de manter
+  o site no ar até a banca).
 - **06/10:** a redefinição de senha não devolve mais o token em produção
   (`PASSWORD_RESET_DEMO`, desligado por padrão com `NODE_ENV=production`).
   Antes, qualquer um trocava a senha de qualquer conta sabendo o e-mail.
@@ -59,13 +56,16 @@ https://claude.ai/artifact/K3saGQbTGks3dtkfBZUfQW
 
 ## Pendências
 
-- [ ] Apagar/suspender Aiven, Render e Vercel nos painéis (ver acima).
-- [ ] Antes da banca: no notebook da apresentação, conferir MySQL do XAMPP,
-  backend e frontend locais, e rodar `backend/scripts/seed-demo.ts` contra o
-  banco local para ter uma conta de demonstração com dados.
-- [ ] Se republicar no futuro: avatares fora do disco do Render, cabeçalhos
-  de segurança no `vercel.json`, termos de uso/privacidade, recriar o
-  keep-alive.
+- [ ] **Manual Deploy no Render** para publicar a correção da redefinição de
+  senha (commit 91ecf8f). Enquanto isso não for feito, a falha segue no ar.
+- [ ] Antes da banca: conferir que o Aiven está "Running", que o `/health`
+  mostra `"status":"ok"` e ter um ensaio rodando local como plano B.
+- [ ] Até a banca: avatares fora do disco do Render (o disco é apagado a cada
+  deploy), cabeçalhos de segurança no `vercel.json`, termos de uso/privacidade
+  com aceite no cadastro (ou fechar o cadastro público) e apagar dados de
+  visitantes do laboratório.
+- [ ] Depois da banca: decidir se o site sai do ar.
+- [ ] Opcional: conectar o Render à GitHub App para ter deploy automático.
 
 ## Pontos de atenção
 
