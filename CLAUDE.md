@@ -122,6 +122,9 @@ migration nova, ela precisa ser rodada manualmente no banco de produção, e o
 `database/deploy_all.sql` (consolidado de schema + seed + migrations 001..023)
 deve ser atualizado para incluí-la.
 
+O `vercel.json` manda uma CSP que lista a URL do backend no Render
+(`connect-src` e `img-src`): se o backend mudar de endereço, atualize lá também.
+
 Segredos (senhas do banco, `JWT_SECRET`) ficam só nos painéis do Render/Aiven
 e nos `.env` locais — nunca no repositório.
 

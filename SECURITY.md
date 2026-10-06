@@ -53,6 +53,22 @@ Cada item abaixo foi verificado no código, não presumido.
 - **Dependência desnecessária**: `@types/react-router-dom` (pacote de
   tipos para a v5 da lib) removida — a v7, já em uso, tem tipos próprios.
 
+- **Redefinição de senha devolvia o token na resposta (06/10/2026)**: sem
+  serviço de e-mail, o token ia direto na resposta de `forgot-password`, e
+  qualquer pessoa trocava a senha de qualquer conta só sabendo o e-mail. Agora
+  o modo demonstração (`PASSWORD_RESET_DEMO`) fica desligado por padrão em
+  produção, a rota não gera token e responde igual para qualquer e-mail.
+- **Foto de perfil validada só pelo Content-Type declarado (06/10/2026)**: o
+  upload agora confere a assinatura real do arquivo (PNG/JPEG/WEBP) e as fotos
+  ficam no MySQL (`user_avatars`), servidas com `nosniff`.
+- **Frontend sem cabeçalhos de segurança (06/10/2026)**: o `vercel.json` passou
+  a mandar CSP (`script-src 'self'`, `connect-src`/`img-src` só para o
+  backend), `X-Frame-Options`, `nosniff`, `Referrer-Policy`,
+  `Permissions-Policy` e HSTS. Testado em Chrome real navegando pelas páginas
+  logadas e enviando foto: zero violações. **Se a URL do backend mudar, troque
+  também no `connect-src`/`img-src` do `vercel.json`**, senão o app para de
+  falar com a API.
+
 ## Decisão consciente (não é uma falha, é um trade-off documentado)
 
 - **Token JWT em localStorage, não em cookie httpOnly**: localStorage é
