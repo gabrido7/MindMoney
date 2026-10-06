@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { pool } from "../src/config/db";
+import { env } from "../src/config/env";
 import { uniqueEmail, cleanupUser } from "./helpers";
 
 describe("Redefinição de senha (modo demonstração)", () => {
@@ -104,5 +105,41 @@ describe("Redefinição de senha (modo demonstração)", () => {
       .post("/api/auth/reset-password")
       .send({ token: forgot.body.token, password: "senhaNova123" });
     expect(reset.status).toBe(400);
+  });
+});
+
+describe("Redefinição de senha com modo demonstração desligado (produção)", () => {
+  const createdUserIds: number[] = [];
+
+  afterEach(async () => {
+    env.PASSWORD_RESET_DEMO = true;
+    while (createdUserIds.length) {
+      await cleanupUser(createdUserIds.pop()!);
+    }
+  });
+
+  it("não devolve token e responde igual para e-mail cadastrado e desconhecido", async () => {
+    env.PASSWORD_RESET_DEMO = false;
+    const email = uniqueEmail("reset-prod");
+    const reg = await request(app)
+      .post("/api/auth/register")
+      .send({ name: "Teste Reset Prod", email, password: "senhaAntiga1" });
+    expect(reg.status).toBe(201);
+    createdUserIds.push(reg.body.user.id);
+
+    const known = await request(app).post("/api/auth/forgot-password").send({ email });
+    const unknown = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: uniqueEmail("naoexiste-reset-prod") });
+
+    expect(known.status).toBe(200);
+    expect(known.body.token).toBeUndefined();
+    expect(known.body.expiresAt).toBeUndefined();
+    expect(known.body).toEqual(unknown.body);
+
+    const [rows] = await pool.query("SELECT COUNT(*) AS total FROM password_reset_tokens WHERE user_id = ?", [
+      reg.body.user.id,
+    ]);
+    expect((rows as { total: number }[])[0].total).toBe(0);
   });
 });

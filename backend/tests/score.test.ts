@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { registerTestUser, cleanupUser, authHeader, getCategoryId, getAccountId, type TestUser } from "./helpers";
@@ -7,12 +7,18 @@ describe("Score financeiro", () => {
   let user: TestUser;
   let accountId: number;
 
+  // O score só usa os objetivos quando o mês consultado é o mês atual, e os
+  // fixtures usam 2026-09 -- então "hoje" fica travado em setembro/2026.
+  // Sem isso o último teste começou a falhar sozinho em outubro.
   beforeAll(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-15T12:00:00Z"));
     user = await registerTestUser("score");
     accountId = await getAccountId(user.token);
   });
 
   afterAll(async () => {
+    vi.useRealTimers();
     await cleanupUser(user.userId);
   });
 

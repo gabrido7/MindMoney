@@ -1,3 +1,4 @@
+import { env } from "../../config/env";
 import { AppError } from "../../utils/AppError";
 import { hashPassword, comparePassword } from "../../utils/password";
 import { signToken } from "../../utils/jwt";
@@ -125,10 +126,21 @@ export const authService = {
    * expira em 30min, uso único) — só a entrega é em "modo demonstração",
    * devolvida direto na resposta em vez de por e-mail. Não revela se o
    * e-mail existe: resposta genérica quando o usuário não é encontrado.
+   *
+   * Com PASSWORD_RESET_DEMO desligado (padrão em produção), nenhum token é
+   * gerado e a resposta é idêntica para qualquer e-mail.
    */
   async forgotPassword(
     input: ForgotPasswordInput
   ): Promise<{ message: string; demoMode: boolean; token?: string; expiresAt?: string }> {
+    if (!env.PASSWORD_RESET_DEMO) {
+      return {
+        demoMode: false,
+        message:
+          "A redefinição de senha por e-mail ainda não está disponível nesta versão. Fale com a equipe do Mind Money para recuperar o acesso.",
+      };
+    }
+
     const user = await usersRepository.findByEmail(input.email);
     if (!user) {
       return {

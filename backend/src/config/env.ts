@@ -25,6 +25,14 @@ const envSchema = z.object({
   // escola; ajustáveis no painel do Render sem mexer no código.
   RATE_LIMIT_API_MAX: z.coerce.number().int().positive().default(6000),
   RATE_LIMIT_AUTH_MAX: z.coerce.number().int().positive().default(200),
+  // "Modo demonstração" da redefinição de senha: devolve o token na resposta
+  // em vez de mandar por e-mail (não há serviço de e-mail). Em produção isso
+  // deixaria qualquer um trocar a senha de qualquer conta só sabendo o
+  // e-mail, então o padrão é desligado com NODE_ENV=production.
+  PASSWORD_RESET_DEMO: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? process.env.NODE_ENV !== "production" : v === "true")),
 });
 
 const parsed = envSchema.safeParse(process.env);
