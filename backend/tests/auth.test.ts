@@ -1,6 +1,8 @@
 import { describe, it, expect, afterEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
+import { pool } from "../src/config/db";
+import { TERMS_VERSION } from "../src/config/rules";
 import { uniqueEmail, cleanupUser, authHeader } from "./helpers";
 
 describe("Autenticação (cadastro, login, /me)", () => {
@@ -12,11 +14,42 @@ describe("Autenticação (cadastro, login, /me)", () => {
     }
   });
 
+  it("grava a data e a versão dos termos aceitos no cadastro", async () => {
+    const email = uniqueEmail("termos");
+    const res = await request(app)
+      .post("/api/auth/register")
+      .send({ name: "Aceita Termos", email, password: "senha12345", acceptTerms: true });
+    expect(res.status).toBe(201);
+    createdUserIds.push(res.body.user.id);
+
+    const [rows] = await pool.query("SELECT terms_accepted_at, terms_version FROM users WHERE id = ?", [res.body.user.id]);
+    const row = (rows as { terms_accepted_at: string | null; terms_version: string | null }[])[0];
+    expect(row.terms_accepted_at).not.toBeNull();
+    expect(row.terms_version).toBe(TERMS_VERSION);
+  });
+
+  it.each([
+    ["sem o campo acceptTerms", undefined],
+    ["com acceptTerms false", false],
+    ["com acceptTerms como texto", "true"],
+  ])("recusa o cadastro %s e não cria a conta", async (_label, value) => {
+    const email = uniqueEmail("sem-termos");
+    const body: Record<string, unknown> = { name: "Sem Termos", email, password: "senha12345" };
+    if (value !== undefined) body.acceptTerms = value;
+
+    const res = await request(app).post("/api/auth/register").send(body);
+
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/Termos de Uso/);
+    const [rows] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
+    expect((rows as unknown[]).length).toBe(0);
+  });
+
   it("cadastra um usuário novo e já semeia as categorias padrão", async () => {
     const email = uniqueEmail("cadastro");
     const res = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Novo Usuário", email, password: "senha12345" });
+      .send({ name: "Novo Usuário", email, password: "senha12345", acceptTerms: true });
 
     expect(res.status).toBe(201);
     expect(res.body.token).toBeTruthy();
@@ -34,12 +67,12 @@ describe("Autenticação (cadastro, login, /me)", () => {
     const email = uniqueEmail("duplicado");
     const first = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Primeiro", email, password: "senha12345" });
+      .send({ name: "Primeiro", email, password: "senha12345", acceptTerms: true });
     createdUserIds.push(first.body.user.id);
 
     const second = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Segundo", email, password: "outrasenha123" });
+      .send({ name: "Segundo", email, password: "outrasenha123", acceptTerms: true });
 
     expect(second.status).toBe(409);
   });
@@ -47,7 +80,7 @@ describe("Autenticação (cadastro, login, /me)", () => {
   it("rejeita cadastro com senha curta (400, validação do backend)", async () => {
     const res = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Senha Curta", email: uniqueEmail("curta"), password: "123" });
+      .send({ name: "Senha Curta", email: uniqueEmail("curta"), password: "123", acceptTerms: true });
 
     expect(res.status).toBe(400);
   });
@@ -56,7 +89,7 @@ describe("Autenticação (cadastro, login, /me)", () => {
     const email = uniqueEmail("login");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Login Teste", email, password: "senha12345" });
+      .send({ name: "Login Teste", email, password: "senha12345", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const login = await request(app).post("/api/auth/login").send({ email, password: "senha12345" });
@@ -68,7 +101,7 @@ describe("Autenticação (cadastro, login, /me)", () => {
     const email = uniqueEmail("senhaerrada");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste", email, password: "senha12345" });
+      .send({ name: "Teste", email, password: "senha12345", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const login = await request(app).post("/api/auth/login").send({ email, password: "outraSenha1" });
@@ -90,7 +123,7 @@ describe("Autenticação (cadastro, login, /me)", () => {
     const email = uniqueEmail("me");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Me", email, password: "senha12345" });
+      .send({ name: "Teste Me", email, password: "senha12345", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const me = await request(app).get("/api/users/me").set(authHeader(reg.body.token));

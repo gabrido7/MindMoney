@@ -85,6 +85,14 @@ export default function NewsletterFooter() {
               {error}
             </p>
           )}
+
+          <p className="mt-4 text-xs text-ink-soft">
+            Usamos seu nome e e-mail só para enviar novidades do projeto. Veja a{" "}
+            <Link to="/privacidade" className="underline underline-offset-2 hover:text-brand-deep">
+              Política de Privacidade
+            </Link>
+            .
+          </p>
         </div>
       </Reveal>
 
@@ -156,6 +164,14 @@ export default function NewsletterFooter() {
 
       <div className="mx-auto mt-10 flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-line pt-6 text-xs text-ink-soft sm:flex-row">
         <p>&copy; {new Date().getFullYear()} Mind Money. Todos os direitos reservados.</p>
+        <nav aria-label="Documentos legais" className="flex items-center gap-4">
+          <Link to="/termos" className="transition-colors hover:text-brand-deep">
+            Termos de Uso
+          </Link>
+          <Link to="/privacidade" className="transition-colors hover:text-brand-deep">
+            Política de Privacidade
+          </Link>
+        </nav>
         <p>Projeto acadêmico de conclusão de curso.</p>
       </div>
     </footer>

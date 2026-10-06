@@ -18,7 +18,7 @@ describe("Redefinição de senha (modo demonstração)", () => {
     const email = uniqueEmail("reset");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Reset", email, password: "senhaAntiga1" });
+      .send({ name: "Teste Reset", email, password: "senhaAntiga1", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const forgot = await request(app).post("/api/auth/forgot-password").send({ email });
@@ -51,7 +51,7 @@ describe("Redefinição de senha (modo demonstração)", () => {
     const email = uniqueEmail("reset-reuso");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Reuso", email, password: "senhaAntiga1" });
+      .send({ name: "Teste Reuso", email, password: "senhaAntiga1", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const forgot = await request(app).post("/api/auth/forgot-password").send({ email });
@@ -77,7 +77,7 @@ describe("Redefinição de senha (modo demonstração)", () => {
     const email = uniqueEmail("reset-invalida");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Invalida", email, password: "senhaAntiga1" });
+      .send({ name: "Teste Invalida", email, password: "senhaAntiga1", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const firstRequest = await request(app).post("/api/auth/forgot-password").send({ email });
@@ -93,7 +93,7 @@ describe("Redefinição de senha (modo demonstração)", () => {
     const email = uniqueEmail("reset-expirado");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Expirado", email, password: "senhaAntiga1" });
+      .send({ name: "Teste Expirado", email, password: "senhaAntiga1", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const forgot = await request(app).post("/api/auth/forgot-password").send({ email });
@@ -123,7 +123,7 @@ describe("Redefinição de senha com modo demonstração desligado (produção)"
     const email = uniqueEmail("reset-prod");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Reset Prod", email, password: "senhaAntiga1" });
+      .send({ name: "Teste Reset Prod", email, password: "senhaAntiga1", acceptTerms: true });
     expect(reg.status).toBe(201);
     createdUserIds.push(reg.body.user.id);
 

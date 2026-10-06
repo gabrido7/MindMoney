@@ -29,6 +29,8 @@ const EducationLesson = lazy(() => import("./pages/EducationLesson"));
 const FinancialTools = lazy(() => import("./pages/FinancialTools"));
 const FinancialToolDetail = lazy(() => import("./pages/FinancialToolDetail"));
 const Favorites = lazy(() => import("./pages/Favorites"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
 
 function RouteFallback() {
   return (
@@ -44,6 +46,8 @@ function App() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/termos" element={<Terms />} />
+          <Route path="/privacidade" element={<Privacy />} />
 
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />

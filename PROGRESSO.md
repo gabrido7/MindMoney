@@ -22,6 +22,13 @@ https://claude.ai/artifact/K3saGQbTGks3dtkfBZUfQW
   (`PASSWORD_RESET_DEMO`, desligado por padrão com `NODE_ENV=production`).
   Antes, qualquer um trocava a senha de qualquer conta sabendo o e-mail.
   Corrigido também o `score.test.ts`, que falhava sozinho fora de setembro.
+- **06/10 (segurança do site no ar):** fotos de perfil no MySQL com checagem dos
+  bytes reais do arquivo (migration 023); cabeçalhos de segurança no Vercel
+  (CSP etc., testados em Chrome real e confirmados em produção); Termos de Uso
+  e Política de Privacidade em `/termos` e `/privacidade`, com caixa
+  obrigatória no cadastro e aceite gravado (migration 024). Textos escritos
+  pela equipe técnica a partir do que o sistema realmente guarda: vale uma
+  leitura do orientador antes da banca.
 - **06/10 (UI):** sidebar fixa ao rolar, rolagem interna nas listas, card do
   Assistente removido do Dashboard, Educação Financeira em 2º na sidebar.
 - **25 contas de demonstração criadas em produção (23/09)** pelo
@@ -56,16 +63,22 @@ https://claude.ai/artifact/K3saGQbTGks3dtkfBZUfQW
 
 ## Pendências
 
-- [ ] **Manual Deploy no Render** para publicar a correção da redefinição de
-  senha (commit 91ecf8f). Enquanto isso não for feito, a falha segue no ar.
+- [ ] **ORDEM OBRIGATÓRIA para publicar o backend** (2 migrations novas, o
+  código novo quebra cadastro e foto sem elas): 1) no Aiven, rodar
+  `database/migrations/023_user_avatars.sql` e depois
+  `024_terms_acceptance.sql` (HeidiSQL, com utf8mb4); 2) só então clicar em
+  **Manual Deploy → Deploy latest commit** no Render; 3) conferir no site:
+  "esqueci minha senha" não mostra mais o link, o cadastro exige a caixa dos
+  termos e a foto de perfil sobe e persiste. O frontend (Vercel) já está no ar
+  e é compatível com o backend antigo.
+- [ ] Apagar no banco de produção os dados de visitantes do laboratório que
+  não forem mais necessários (contas fora de `lab01`–`lab25`); decisão do
+  usuário, nada foi apagado.
 - [ ] Antes da banca: conferir que o Aiven está "Running", que o `/health`
   mostra `"status":"ok"` e ter um ensaio rodando local como plano B.
-- [ ] Até a banca: avatares fora do disco do Render (o disco é apagado a cada
-  deploy), cabeçalhos de segurança no `vercel.json`, termos de uso/privacidade
-  com aceite no cadastro (ou fechar o cadastro público) e apagar dados de
-  visitantes do laboratório.
 - [ ] Depois da banca: decidir se o site sai do ar.
-- [ ] Opcional: conectar o Render à GitHub App para ter deploy automático.
+- [ ] Opcional: conectar o Render à GitHub App para ter deploy automático;
+  incluir um e-mail de contato nos termos (hoje o contato é o GitHub Issues).
 
 ## Pontos de atenção
 

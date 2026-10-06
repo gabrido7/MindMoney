@@ -2,7 +2,7 @@ import { apiRequest } from "./api";
 import type { AuthResponse, PublicUser } from "../types/api";
 
 export const authService = {
-  register: (input: { name: string; email: string; password: string }) =>
+  register: (input: { name: string; email: string; password: string; acceptTerms: boolean }) =>
     apiRequest<AuthResponse>("/auth/register", { method: "POST", body: input }),
 
   login: (input: { email: string; password: string }) =>

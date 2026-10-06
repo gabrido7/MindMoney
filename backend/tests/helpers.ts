@@ -22,6 +22,7 @@ export async function registerTestUser(label: string): Promise<TestUser> {
     name: `Teste ${label}`,
     email,
     password: "senha12345",
+    acceptTerms: true,
   });
 
   if (res.status !== 201) {

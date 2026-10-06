@@ -119,7 +119,7 @@ redefinição não é devolvido na resposta).
 
 **Migrations não são aplicadas automaticamente no Aiven.** Ao criar uma
 migration nova, ela precisa ser rodada manualmente no banco de produção, e o
-`database/deploy_all.sql` (consolidado de schema + seed + migrations 001..023)
+`database/deploy_all.sql` (consolidado de schema + seed + migrations 001..024)
 deve ser atualizado para incluí-la.
 
 O `vercel.json` manda uma CSP que lista a URL do backend no Render

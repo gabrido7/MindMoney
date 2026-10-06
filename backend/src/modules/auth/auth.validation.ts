@@ -4,6 +4,12 @@ export const registerSchema = z.object({
   name: z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres").max(120),
   email: z.string().trim().toLowerCase().email("E-mail inválido").max(255),
   password: z.string().min(8, "Senha deve ter pelo menos 8 caracteres").max(72),
+  // Só `true` passa: ausente, false ou qualquer outro valor é recusado. Sem
+  // isso o aceite seria só uma caixa na tela, que qualquer chamada direta à
+  // API contornaria.
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: "É preciso aceitar os Termos de Uso e a Política de Privacidade." }),
+  }),
 });
 
 export const loginSchema = z.object({

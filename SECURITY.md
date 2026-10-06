@@ -69,6 +69,14 @@ Cada item abaixo foi verificado no código, não presumido.
   também no `connect-src`/`img-src` do `vercel.json`**, senão o app para de
   falar com a API.
 
+- **Sem Termos de Uso, Política de Privacidade nem consentimento (06/10/2026)**:
+  o cadastro público guardava dados financeiros sem nenhum aceite. Agora há as
+  páginas `/termos` e `/privacidade`, uma caixa obrigatória no cadastro e a
+  API recusa `register` sem `acceptTerms: true`, gravando data e versão do
+  aceite (`users.terms_accepted_at`/`terms_version`). Ao mudar os textos,
+  atualize `TERMS_VERSION` no backend (`config/rules.ts`) e no frontend
+  (`features/legal/legalInfo.ts`) juntos.
+
 ## Decisão consciente (não é uma falha, é um trade-off documentado)
 
 - **Token JWT em localStorage, não em cookie httpOnly**: localStorage é

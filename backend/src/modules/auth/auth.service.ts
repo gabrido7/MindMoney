@@ -1,4 +1,5 @@
 import { env } from "../../config/env";
+import { TERMS_VERSION } from "../../config/rules";
 import { AppError } from "../../utils/AppError";
 import { hashPassword, comparePassword } from "../../utils/password";
 import { signToken } from "../../utils/jwt";
@@ -50,6 +51,7 @@ export const authService = {
       name: input.name,
       email: input.email,
       passwordHash,
+      termsVersion: TERMS_VERSION,
     });
 
     // Cada conta nova começa com as categorias/subcategorias padrão

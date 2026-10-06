@@ -118,7 +118,8 @@ async function seedAccount(n: number) {
 
   let auth: { token: string };
   try {
-    auth = await call("POST", "/auth/register", undefined, { name, email, password: PASSWORD });
+    // contas de demonstração criadas pela própria equipe (não por um visitante): o aceite fica registrado em nome da equipe
+    auth = await call("POST", "/auth/register", undefined, { name, email, password: PASSWORD, acceptTerms: true });
   } catch (err) {
     if (err instanceof ApiError && err.status === 409) return { email, status: "já existia (pulada)" };
     throw err;

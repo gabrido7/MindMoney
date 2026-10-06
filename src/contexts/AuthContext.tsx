@@ -37,8 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    const result = await authService.register({ name, email, password });
+  const register = async (name: string, email: string, password: string, acceptTerms: boolean) => {
+    const result = await authService.register({ name, email, password, acceptTerms });
     setToken(result.token);
     setRefreshToken(result.refreshToken);
     setUser(result.user);

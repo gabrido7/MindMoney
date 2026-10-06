@@ -27,3 +27,10 @@ export const DEBT_DUE_MILESTONES = [30, 15, 7, 3, 0];
 
 /** Nome fixo da categoria de sistema usada pra registrar pagamentos de dívida como transação real (ver migration 016). */
 export const DEBT_PAYMENT_CATEGORY_NAME = "Dívidas";
+
+/**
+ * Versão dos Termos de Uso e da Política de Privacidade (a data da última
+ * atualização dos textos). Gravada em users.terms_version no cadastro. Ao
+ * mudar os textos, mude aqui e em src/config/rules.ts (frontend) juntos.
+ */
+export const TERMS_VERSION = "2026-10-06";

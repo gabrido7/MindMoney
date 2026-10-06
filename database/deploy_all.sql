@@ -1,6 +1,6 @@
 -- ============================================================
 -- MindMoney — script consolidado para provisionar o banco na nuvem
--- Gerado a partir de schema.sql + seed.sql + migrations/001..023
+-- Gerado a partir de schema.sql + seed.sql + migrations/001..024
 -- Uso (PowerShell, evita corromper acentos -- ver CLAUDE.md):
 --   Get-Content -Raw -Encoding UTF8 deploy_all.sql | mysql -h <host> -P <port> -u <user> -p --ssl-mode=REQUIRED
 -- ============================================================
@@ -1106,3 +1106,24 @@ CREATE TABLE user_avatars (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 UPDATE users SET avatar_path = NULL WHERE avatar_path IS NOT NULL;
+
+-- ===== migrations/024_terms_acceptance.sql =====
+-- Migration 024: registro do aceite dos Termos de Uso e da Política de
+-- Privacidade no cadastro (LGPD: consentimento comprovável, não só uma caixa
+-- marcada na tela).
+--
+-- terms_accepted_at: quando a pessoa aceitou. terms_version: qual versão dos
+-- textos ela viu (data da última atualização, ex.: '2026-10-06'), para saber o
+-- que valia na época se os textos mudarem.
+--
+-- Contas criadas antes desta migration ficam com NULL nas duas colunas: elas
+-- se cadastraram antes de existirem os textos, e fingir um aceite que não
+-- aconteceu seria pior do que deixar em branco.
+--
+-- Uso: mysql -u root --default-character-set=utf8mb4 mindmoney < database/migrations/024_terms_acceptance.sql
+
+USE mindmoney;
+
+ALTER TABLE users
+  ADD COLUMN terms_accepted_at TIMESTAMP NULL DEFAULT NULL AFTER onboarding_skipped_steps,
+  ADD COLUMN terms_version VARCHAR(20) NULL DEFAULT NULL AFTER terms_accepted_at;

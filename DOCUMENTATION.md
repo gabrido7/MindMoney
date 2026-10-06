@@ -53,7 +53,7 @@ evolução em `database/migrations/001` a `011`, aplicadas em ordem:
 
 | Tabela | Papel |
 |---|---|
-| `users` | Autenticação — inclui `avatar_path` (chave da foto em `user_avatars`) e `password_changed_at` (null até a primeira troca de senha) |
+| `users` | Autenticação — inclui `avatar_path` (chave da foto em `user_avatars`), `password_changed_at` (null até a primeira troca de senha) e `terms_accepted_at`/`terms_version` (aceite dos termos no cadastro; null nas contas anteriores à migration 024) |
 | `user_avatars` | Foto de perfil guardada no banco (`MEDIUMBLOB`, até 2 MB), servida em `/uploads/avatars/<chave>` — o disco do Render é apagado a cada deploy (migration 023) |
 | `category_templates` / `subcategory_templates` | Padrões copiados para cada usuário novo no cadastro (`sp_seed_user_categories`) |
 | `categories` / `subcategories` | Por usuário, soft-delete via `archived_at` |
@@ -91,7 +91,7 @@ requisição.
 
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/api/auth/register` | Cria conta, semeia categorias padrão, devolve token + refresh token |
+| POST | `/api/auth/register` | Cria conta, semeia categorias padrão, devolve token + refresh token. Exige `acceptTerms: true` (Termos de Uso e Política de Privacidade); grava `terms_accepted_at` e `terms_version` |
 | POST | `/api/auth/login` | Autentica, devolve token + refresh token |
 | POST | `/api/auth/refresh` | Rotaciona o refresh token, emite novo access token |
 | POST | `/api/auth/logout` | Revoga o refresh token |

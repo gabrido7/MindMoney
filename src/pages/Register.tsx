@@ -14,6 +14,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,9 +35,14 @@ export default function Register() {
       return;
     }
 
+    if (!acceptTerms) {
+      setError("Para criar a conta, aceite os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
+
     setLoading(true);
     try {
-      await register(name, email, password);
+      await register(name, email, password, acceptTerms);
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível criar a conta.");
@@ -98,6 +104,28 @@ export default function Register() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
+
+        <div className="flex items-start gap-3">
+          <input
+            id="acceptTerms"
+            type="checkbox"
+            required
+            checked={acceptTerms}
+            onChange={(e) => setAcceptTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-white/20 bg-neutral-800 accent-[#22c55e] focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-neutral-950"
+          />
+          <label htmlFor="acceptTerms" className="text-sm leading-snug text-neutral-300">
+            Li e concordo com os{" "}
+            <Link to="/termos" target="_blank" className="font-medium text-brand hover:underline">
+              Termos de Uso
+            </Link>{" "}
+            e com a{" "}
+            <Link to="/privacidade" target="_blank" className="font-medium text-brand hover:underline">
+              Política de Privacidade
+            </Link>
+            .
+          </label>
+        </div>
 
         <button
           type="submit"

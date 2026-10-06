@@ -8,6 +8,8 @@ export interface UserRow extends RowDataPacket {
   password_hash: string;
   avatar_path: string | null;
   password_changed_at: string | null;
+  terms_accepted_at: string | null;
+  terms_version: string | null;
   onboarding_completed_at: string | null;
   onboarding_skipped_steps: string | null;
   created_at: string;
@@ -25,10 +27,10 @@ export const usersRepository = {
     return rows[0] ?? null;
   },
 
-  async create(data: { name: string; email: string; passwordHash: string }): Promise<number> {
+  async create(data: { name: string; email: string; passwordHash: string; termsVersion: string }): Promise<number> {
     const [result] = await pool.query<ResultSetHeader>(
-      "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
-      [data.name, data.email, data.passwordHash]
+      "INSERT INTO users (name, email, password_hash, terms_accepted_at, terms_version) VALUES (?, ?, ?, NOW(), ?)",
+      [data.name, data.email, data.passwordHash, data.termsVersion]
     );
     return result.insertId;
   },

@@ -16,7 +16,7 @@ describe("Refresh token (renovação de sessão)", () => {
     const email = uniqueEmail("refresh-issue");
     const res = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Refresh", email, password: "senha12345" });
+      .send({ name: "Teste Refresh", email, password: "senha12345", acceptTerms: true });
     createdUserIds.push(res.body.user.id);
 
     expect(res.body.token).toBeTruthy();
@@ -30,7 +30,7 @@ describe("Refresh token (renovação de sessão)", () => {
     const email = uniqueEmail("refresh-use");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Refresh", email, password: "senha12345" });
+      .send({ name: "Teste Refresh", email, password: "senha12345", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const refreshed = await request(app)
@@ -51,7 +51,7 @@ describe("Refresh token (renovação de sessão)", () => {
     const email = uniqueEmail("refresh-rotate");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Rotação", email, password: "senha12345" });
+      .send({ name: "Teste Rotação", email, password: "senha12345", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const first = await request(app).post("/api/auth/refresh").send({ refreshToken: reg.body.refreshToken });
@@ -78,7 +78,7 @@ describe("Refresh token (renovação de sessão)", () => {
     const email = uniqueEmail("logout");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Logout", email, password: "senha12345" });
+      .send({ name: "Teste Logout", email, password: "senha12345", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const logout = await request(app).post("/api/auth/logout").send({ refreshToken: reg.body.refreshToken });
@@ -94,7 +94,7 @@ describe("Refresh token (renovação de sessão)", () => {
     const email = uniqueEmail("refresh-revoke-pw");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Revoga", email, password: "senhaAntiga1" });
+      .send({ name: "Teste Revoga", email, password: "senhaAntiga1", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     await request(app)
@@ -112,7 +112,7 @@ describe("Refresh token (renovação de sessão)", () => {
     const email = uniqueEmail("refresh-revoke-reset");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Revoga Reset", email, password: "senhaAntiga1" });
+      .send({ name: "Teste Revoga Reset", email, password: "senhaAntiga1", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
 
     const forgot = await request(app).post("/api/auth/forgot-password").send({ email });

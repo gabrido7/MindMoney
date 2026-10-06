@@ -60,7 +60,7 @@ describe("Perfil (editar dados, trocar senha, excluir conta)", () => {
     const email = uniqueEmail("perfil-senha");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Senha", email, password: "senhaAntiga1" });
+      .send({ name: "Teste Senha", email, password: "senhaAntiga1", acceptTerms: true });
     createdUserIds.push(reg.body.user.id);
     const token = reg.body.token;
 
@@ -97,7 +97,7 @@ describe("Perfil (editar dados, trocar senha, excluir conta)", () => {
     const email = uniqueEmail("perfil-excluir");
     const reg = await request(app)
       .post("/api/auth/register")
-      .send({ name: "Teste Excluir", email, password: "senha12345" });
+      .send({ name: "Teste Excluir", email, password: "senha12345", acceptTerms: true });
     const token = reg.body.token;
     const userId = reg.body.user.id;
 
