@@ -25,7 +25,6 @@ import NetWorthCard from "../features/dashboard/components/NetWorthCard";
 import MonthComparisonCard from "../features/dashboard/components/MonthComparisonCard";
 import InsightsCard from "../features/dashboard/components/InsightsCard";
 import ScoreCard from "../features/dashboard/components/ScoreCard";
-import AssistantCard from "../features/dashboard/components/AssistantCard";
 import CategoryBudgetsCard from "../features/dashboard/components/CategoryBudgetsCard";
 
 
@@ -302,14 +301,11 @@ export default function Dashboard() {
 
         <CategoryBudgetsCard month={selectedMonth} categories={categories} />
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <InsightsCard
-            biggestIncrease={biggestIncrease}
-            biggestDecrease={biggestDecrease}
-            top3Increases={top3Increases}
-          />
-          <AssistantCard month={selectedMonth} />
-        </div>
+        <InsightsCard
+          biggestIncrease={biggestIncrease}
+          biggestDecrease={biggestDecrease}
+          top3Increases={top3Increases}
+        />
 
         <div className="grid lg:grid-cols-2 gap-6">
           <EvolutionChart data={evolutionData} />

@@ -29,7 +29,7 @@ export default function TransactionList({
 
   return (
     <div className="flex flex-col gap-4">
-      <Ledger>
+      <Ledger className="max-h-[36rem] overflow-y-auto pr-1">
         {transactions.map((t) => (
           <LedgerRow
             key={t.id}

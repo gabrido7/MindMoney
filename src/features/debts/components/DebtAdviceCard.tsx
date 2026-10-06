@@ -38,7 +38,7 @@ export default function DebtAdviceCard() {
       )}
 
       {!isLoading && !error && advice.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex max-h-96 flex-col gap-3 overflow-y-auto pr-1">
           {advice.map((item) => (
             <li key={item.id} className="flex gap-3">
               <span className="mt-0.5 shrink-0" style={{ color: SEVERITY_COLOR[item.severity] }}>

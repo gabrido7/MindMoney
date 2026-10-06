@@ -13,11 +13,11 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: "home" },
+  { to: "/educacao-financeira", label: "Educação Financeira", icon: "book" },
   { to: "/metas", label: "Metas", icon: "target" },
   { to: "/ativos", label: "Ativos", icon: "trendUp" },
   { to: "/dividas", label: "Dívidas", icon: "creditCard" },
   { to: "/relatorios", label: "Relatórios", icon: "chart" },
-  { to: "/educacao-financeira", label: "Educação Financeira", icon: "book" },
   { to: "/ferramentas", label: "Ferramentas", icon: "wallet" },
 ];
 
@@ -145,7 +145,7 @@ export default function AppSidebar() {
       </div>
 
       <aside
-        className={`hidden shrink-0 border-r border-line bg-surface-alt transition-[width] duration-200 md:flex md:flex-col ${
+        className={`hidden shrink-0 border-r border-line bg-surface-alt transition-[width] duration-200 md:sticky md:top-0 md:flex md:h-screen md:flex-col md:overflow-y-auto ${
           collapsed ? "md:w-20" : "md:w-64"
         }`}
       >

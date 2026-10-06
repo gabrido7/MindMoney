@@ -131,9 +131,9 @@ export default function Reports() {
               </BarChart>
             </ResponsiveContainer>
 
-            <div className="overflow-x-auto mt-4">
+            <div className="mt-4 max-h-96 overflow-auto">
               <table className="w-full text-sm">
-                <thead>
+                <thead className="sticky top-0 bg-surface">
                   <tr className="text-left text-ink-soft border-b border-line">
                     <th className="py-2 pr-4">Mês</th>
                     <th className="py-2 pr-4">Entradas</th>

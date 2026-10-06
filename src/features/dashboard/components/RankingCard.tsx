@@ -11,7 +11,7 @@ export default function RankingCard({ ranking }: { ranking: CategoryTotal[] }) {
       {ranking.length === 0 ? (
         <EmptyState message="Sem dados" />
       ) : (
-        <ul className="space-y-3">
+        <ul className="max-h-96 space-y-3 overflow-y-auto pr-1">
           {ranking.map((item, index) => (
             <li key={item.name} className="flex justify-between">
               <span className="text-ink-soft">

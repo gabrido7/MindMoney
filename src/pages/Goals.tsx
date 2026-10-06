@@ -235,7 +235,7 @@ export default function Goals() {
                 <EmptyState message="Nenhuma meta encontrada para esse filtro." />
               </Card>
             ) : (
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid max-h-[48rem] gap-4 overflow-y-auto pr-1 md:grid-cols-2">
                 {filteredObjectives.map((objective) => (
                   <ObjectiveCard
                     key={objective.id}
