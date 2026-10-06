@@ -1,24 +1,22 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import request from "supertest";
-import fs from "node:fs";
-import path from "node:path";
 import { app } from "../src/app";
+import { pool } from "../src/config/db";
 import { registerTestUser, cleanupUser, authHeader } from "./helpers";
 
-const AVATAR_DIR = path.join(__dirname, "..", "uploads", "avatars");
-const uploadedFiles: string[] = [];
+// Cabeçalhos reais de cada formato (o upload confere os bytes, não o
+// Content-Type declarado), seguidos de lixo para parecer um arquivo de verdade.
+const PNG_HEADER = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const PNG = Buffer.concat([PNG_HEADER, Buffer.from("png-body")]);
+const PNG_2 = Buffer.concat([PNG_HEADER, Buffer.from("outra-foto")]);
+const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.from("jpeg-body")]);
+const WEBP = Buffer.concat([Buffer.from("RIFF"), Buffer.from([0x10, 0, 0, 0]), Buffer.from("WEBPVP8 body")]);
 
-afterEach(() => {
-  for (const filename of uploadedFiles.splice(0)) {
-    try {
-      fs.unlinkSync(path.join(AVATAR_DIR, filename));
-    } catch {
-      // já removido pelo próprio endpoint (setAvatar/removeAvatar) -- ok
-    }
-  }
-});
-
-const filenameFromUrl = (url: string) => url.split("/").pop()!;
+const keyFromUrl = (url: string) => url.split("/").pop()!;
+const avatarRows = async (userId: number) => {
+  const [rows] = await pool.query("SELECT file_key FROM user_avatars WHERE user_id = ?", [userId]);
+  return (rows as { file_key: string }[]).length;
+};
 
 describe("Perfil -- foto", () => {
   it("usuário novo não tem avatar", async () => {
@@ -28,18 +26,48 @@ describe("Perfil -- foto", () => {
     await cleanupUser(user.userId);
   });
 
-  it("envia uma foto e ela aparece no perfil", async () => {
+  it("envia uma foto, ela aparece no perfil e é servida pelo banco", async () => {
     const user = await registerTestUser("avatar-upload");
 
     const res = await request(app)
       .post("/api/users/me/avatar")
       .set(authHeader(user.token))
-      .attach("avatar", Buffer.from("fake-png-bytes"), { filename: "foto.png", contentType: "image/png" });
+      .attach("avatar", PNG, { filename: "foto.png", contentType: "image/png" });
 
     expect(res.status).toBe(200);
-    expect(res.body.user.avatarUrl).toMatch(/^\/uploads\/avatars\//);
-    uploadedFiles.push(filenameFromUrl(res.body.user.avatarUrl));
+    expect(res.body.user.avatarUrl).toMatch(/^\/uploads\/avatars\/[0-9a-f-]{36}$/);
 
+    // a imagem é pública (o <img> não manda token) e volta byte a byte igual
+    const img = await request(app)
+      .get(res.body.user.avatarUrl)
+      .buffer(true)
+      .parse((r, cb) => {
+        const chunks: Buffer[] = [];
+        r.on("data", (c: Buffer) => chunks.push(c));
+        r.on("end", () => cb(null, Buffer.concat(chunks)));
+      });
+    expect(img.status).toBe(200);
+    expect(img.headers["content-type"]).toBe("image/png");
+    expect(img.headers["cross-origin-resource-policy"]).toBe("cross-origin");
+    expect(img.headers["x-content-type-options"]).toBe("nosniff");
+    expect(Buffer.compare(img.body as Buffer, PNG)).toBe(0);
+
+    await cleanupUser(user.userId);
+  });
+
+  it.each([
+    ["jpeg", JPEG, "image/jpeg"],
+    ["webp", WEBP, "image/webp"],
+  ])("aceita %s e guarda o tipo real", async (_name, bytes, mime) => {
+    const user = await registerTestUser("avatar-types");
+    const res = await request(app)
+      .post("/api/users/me/avatar")
+      .set(authHeader(user.token))
+      .attach("avatar", bytes, { filename: "foto", contentType: mime });
+    expect(res.status).toBe(200);
+
+    const img = await request(app).get(res.body.user.avatarUrl);
+    expect(img.headers["content-type"]).toBe(mime);
     await cleanupUser(user.userId);
   });
 
@@ -55,25 +83,53 @@ describe("Perfil -- foto", () => {
     await cleanupUser(user.userId);
   });
 
-  it("enviar uma nova foto substitui a antiga (apaga o arquivo anterior do disco)", async () => {
+  it("rejeita arquivo que declara image/png mas não é uma imagem de verdade", async () => {
+    const user = await registerTestUser("avatar-fake");
+
+    const res = await request(app)
+      .post("/api/users/me/avatar")
+      .set(authHeader(user.token))
+      .attach("avatar", Buffer.from("<script>alert(1)</script>"), { filename: "foto.png", contentType: "image/png" });
+
+    expect(res.status).toBe(400);
+    expect(await avatarRows(user.userId)).toBe(0);
+    const me = await request(app).get("/api/users/me").set(authHeader(user.token));
+    expect(me.body.user.avatarUrl).toBeNull();
+    await cleanupUser(user.userId);
+  });
+
+  it("rejeita arquivo maior que 2MB", async () => {
+    const user = await registerTestUser("avatar-big");
+    const big = Buffer.concat([PNG, Buffer.alloc(2 * 1024 * 1024 + 10)]);
+    const res = await request(app)
+      .post("/api/users/me/avatar")
+      .set(authHeader(user.token))
+      .attach("avatar", big, { filename: "grande.png", contentType: "image/png" });
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toBeLessThan(500);
+    expect(await avatarRows(user.userId)).toBe(0);
+    await cleanupUser(user.userId);
+  });
+
+  it("enviar uma nova foto substitui a antiga (apaga a anterior do banco)", async () => {
     const user = await registerTestUser("avatar-replace");
 
     const first = await request(app)
       .post("/api/users/me/avatar")
       .set(authHeader(user.token))
-      .attach("avatar", Buffer.from("primeira-foto"), { filename: "a.png", contentType: "image/png" });
-    const firstFilename = filenameFromUrl(first.body.user.avatarUrl);
+      .attach("avatar", PNG, { filename: "a.png", contentType: "image/png" });
+    const firstKey = keyFromUrl(first.body.user.avatarUrl);
 
     const second = await request(app)
       .post("/api/users/me/avatar")
       .set(authHeader(user.token))
-      .attach("avatar", Buffer.from("segunda-foto"), { filename: "b.png", contentType: "image/png" });
-    const secondFilename = filenameFromUrl(second.body.user.avatarUrl);
-    uploadedFiles.push(secondFilename);
+      .attach("avatar", PNG_2, { filename: "b.png", contentType: "image/png" });
+    const secondKey = keyFromUrl(second.body.user.avatarUrl);
 
-    expect(secondFilename).not.toBe(firstFilename);
-    expect(fs.existsSync(path.join(AVATAR_DIR, firstFilename))).toBe(false);
-    expect(fs.existsSync(path.join(AVATAR_DIR, secondFilename))).toBe(true);
+    expect(secondKey).not.toBe(firstKey);
+    expect(await avatarRows(user.userId)).toBe(1);
+    expect((await request(app).get(`/uploads/avatars/${firstKey}`)).status).toBe(404);
+    expect((await request(app).get(`/uploads/avatars/${secondKey}`)).status).toBe(200);
 
     await cleanupUser(user.userId);
   });
@@ -84,15 +140,34 @@ describe("Perfil -- foto", () => {
     const upload = await request(app)
       .post("/api/users/me/avatar")
       .set(authHeader(user.token))
-      .attach("avatar", Buffer.from("foto"), { filename: "foto.png", contentType: "image/png" });
-    const filename = filenameFromUrl(upload.body.user.avatarUrl);
+      .attach("avatar", PNG, { filename: "foto.png", contentType: "image/png" });
+    const key = keyFromUrl(upload.body.user.avatarUrl);
 
     const remove = await request(app).delete("/api/users/me/avatar").set(authHeader(user.token));
     expect(remove.status).toBe(200);
     expect(remove.body.user.avatarUrl).toBeNull();
-    expect(fs.existsSync(path.join(AVATAR_DIR, filename))).toBe(false);
+    expect(await avatarRows(user.userId)).toBe(0);
+    expect((await request(app).get(`/uploads/avatars/${key}`)).status).toBe(404);
 
     await cleanupUser(user.userId);
+  });
+
+  it("excluir a conta apaga a foto junto", async () => {
+    const user = await registerTestUser("avatar-delete-account");
+    const upload = await request(app)
+      .post("/api/users/me/avatar")
+      .set(authHeader(user.token))
+      .attach("avatar", PNG, { filename: "foto.png", contentType: "image/png" });
+    const key = keyFromUrl(upload.body.user.avatarUrl);
+
+    const del = await request(app).delete("/api/users/me").set(authHeader(user.token)).send({ password: "senha12345" });
+    expect(del.status).toBe(204);
+    expect((await request(app).get(`/uploads/avatars/${key}`)).status).toBe(404);
+  });
+
+  it("chave fora do formato (inclusive nomes de arquivo antigos) devolve 404", async () => {
+    expect((await request(app).get("/uploads/avatars/abc.png")).status).toBe(404);
+    expect((await request(app).get("/uploads/avatars/00000000-0000-0000-0000-000000000000")).status).toBe(404);
   });
 });
 

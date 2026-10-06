@@ -53,7 +53,8 @@ evolução em `database/migrations/001` a `011`, aplicadas em ordem:
 
 | Tabela | Papel |
 |---|---|
-| `users` | Autenticação — inclui `avatar_path` (arquivo em disco, nunca binário no banco) e `password_changed_at` (null até a primeira troca de senha) |
+| `users` | Autenticação — inclui `avatar_path` (chave da foto em `user_avatars`) e `password_changed_at` (null até a primeira troca de senha) |
+| `user_avatars` | Foto de perfil guardada no banco (`MEDIUMBLOB`, até 2 MB), servida em `/uploads/avatars/<chave>` — o disco do Render é apagado a cada deploy (migration 023) |
 | `category_templates` / `subcategory_templates` | Padrões copiados para cada usuário novo no cadastro (`sp_seed_user_categories`) |
 | `categories` / `subcategories` | Por usuário, soft-delete via `archived_at` |
 | `transactions` | Lançamentos financeiros |
@@ -100,7 +101,7 @@ requisição.
 | PUT | `/api/users/me` | Atualiza perfil |
 | PUT | `/api/users/me/password` | Troca de senha |
 | DELETE | `/api/users/me` | Exclui a conta (e os dados, na ordem correta) |
-| POST | `/api/users/me/avatar` | Envia foto de perfil (`multipart/form-data`, PNG/JPG/WEBP até 2MB) — substitui e apaga a anterior do disco |
+| POST | `/api/users/me/avatar` | Envia foto de perfil (`multipart/form-data`, PNG/JPG/WEBP até 2MB) — o formato é conferido pelos bytes do arquivo; substitui e apaga a anterior |
 | DELETE | `/api/users/me/avatar` | Remove a foto de perfil |
 | GET | `/api/users/me/sessions` | Lista sessões ativas (refresh tokens válidos) — `X-Refresh-Token` no header identifica qual é a atual |
 | DELETE | `/api/users/me/sessions/other` | Encerra todas as outras sessões, preservando a atual |

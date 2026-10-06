@@ -13,6 +13,7 @@ import { requestLogger } from "./middlewares/requestLogger";
 
 import { authRouter } from "./modules/auth/auth.routes";
 import { usersRouter } from "./modules/users/users.routes";
+import { avatarRouter } from "./modules/users/avatar.routes";
 import { transactionsRouter } from "./modules/transactions/transactions.routes";
 import { categoriesRouter } from "./modules/categories/categories.routes";
 import { categoryBudgetsRouter } from "./modules/categoryBudgets/categoryBudgets.routes";
@@ -91,20 +92,11 @@ app.get("/health", async (_req, res) => {
   }
 });
 
-// Fotos de perfil: servidas como arquivo estático, não como binário no
-// banco. crossOriginResourcePolicy custom porque o helmet() acima já setou
-// "same-origin" por padrão, o que bloquearia o <img> do frontend (porta
-// 5173) de carregar um arquivo servido na porta 3001 -- não é uma questão
-// de CORS (imagens em <img> não passam por preflight), é esse header
-// específico que precisa liberar "cross-origin" só pra esta rota.
-app.use(
-  "/uploads",
-  (_req, res, next) => {
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-    next();
-  },
-  express.static(path.join(__dirname, "..", "uploads"))
-);
+// Fotos de perfil: ficam no MySQL (tabela user_avatars) e são servidas por
+// esta rota, com o Cross-Origin-Resource-Policy liberado só nela (ver
+// avatar.routes.ts). O caminho /uploads/avatars/<chave> foi mantido para o
+// frontend não precisar mudar.
+app.use("/uploads/avatars", avatarRouter);
 
 app.use("/api", apiRateLimit);
 

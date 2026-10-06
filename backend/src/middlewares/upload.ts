@@ -1,30 +1,16 @@
-import fs from "node:fs";
-import path from "node:path";
-import crypto from "node:crypto";
 import multer from "multer";
 import { AppError } from "../utils/AppError";
 
-export const AVATAR_UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads", "avatars");
-fs.mkdirSync(AVATAR_UPLOAD_DIR, { recursive: true });
+const ALLOWED_MIMES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
-const ALLOWED_MIME_TO_EXT: Record<string, string> = {
-  "image/png": ".png",
-  "image/jpeg": ".jpg",
-  "image/webp": ".webp",
-};
-
-const storage = multer.diskStorage({
-  destination: AVATAR_UPLOAD_DIR,
-  filename: (_req, file, cb) => {
-    cb(null, `${crypto.randomUUID()}${ALLOWED_MIME_TO_EXT[file.mimetype]}`);
-  },
-});
-
+// A foto fica na memória só até o service gravá-la no MySQL (tabela
+// user_avatars) -- nada vai para o disco, que no Render é apagado a cada
+// deploy. O tipo real é conferido pelos bytes em usersController.uploadAvatar.
 export const avatarUpload = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB -- suficiente para uma foto de perfil, não para abusar do disco
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB -- suficiente para uma foto de perfil, não para abusar do banco
   fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_MIME_TO_EXT[file.mimetype]) {
+    if (!ALLOWED_MIMES.has(file.mimetype)) {
       cb(AppError.badRequest("Formato de imagem não suportado. Envie PNG, JPG ou WEBP."));
       return;
     }

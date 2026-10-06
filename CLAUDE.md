@@ -119,7 +119,7 @@ redefinição não é devolvido na resposta).
 
 **Migrations não são aplicadas automaticamente no Aiven.** Ao criar uma
 migration nova, ela precisa ser rodada manualmente no banco de produção, e o
-`database/deploy_all.sql` (consolidado de schema + seed + migrations 001..022)
+`database/deploy_all.sql` (consolidado de schema + seed + migrations 001..023)
 deve ser atualizado para incluí-la.
 
 Segredos (senhas do banco, `JWT_SECRET`) ficam só nos painéis do Render/Aiven

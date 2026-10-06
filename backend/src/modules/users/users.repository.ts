@@ -56,8 +56,53 @@ export const usersRepository = {
     await pool.query("UPDATE users SET name = ?, email = ? WHERE id = ?", [name, email, id]);
   },
 
-  async updateAvatar(id: number, avatarPath: string | null): Promise<void> {
-    await pool.query("UPDATE users SET avatar_path = ? WHERE id = ?", [avatarPath, id]);
+  /**
+   * Troca a foto de forma atômica: apaga a antiga, grava a nova e aponta
+   * users.avatar_path para a chave nova. Sem a transação, uma falha no meio
+   * deixaria o usuário sem foto ou com a chave apontando para o nada.
+   */
+  async replaceAvatar(userId: number, fileKey: string, mimeType: string, data: Buffer): Promise<void> {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.query("DELETE FROM user_avatars WHERE user_id = ?", [userId]);
+      await conn.query("INSERT INTO user_avatars (file_key, user_id, mime_type, data) VALUES (?, ?, ?, ?)", [
+        fileKey,
+        userId,
+        mimeType,
+        data,
+      ]);
+      await conn.query("UPDATE users SET avatar_path = ? WHERE id = ?", [fileKey, userId]);
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  },
+
+  async removeAvatar(userId: number): Promise<void> {
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.query("DELETE FROM user_avatars WHERE user_id = ?", [userId]);
+      await conn.query("UPDATE users SET avatar_path = NULL WHERE id = ?", [userId]);
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  },
+
+  async findAvatarByKey(fileKey: string): Promise<{ mime_type: string; data: Buffer } | null> {
+    const [rows] = await pool.query<(RowDataPacket & { mime_type: string; data: Buffer })[]>(
+      "SELECT mime_type, data FROM user_avatars WHERE file_key = ? LIMIT 1",
+      [fileKey]
+    );
+    return rows[0] ?? null;
   },
 
   /** Idempotente de propósito -- concluir ou pular o onboarding chamam o mesmo método; repetir não é erro. */

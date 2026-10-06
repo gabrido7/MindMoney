@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { AppError } from "../../utils/AppError";
 import { hashRefreshToken } from "../../utils/refreshToken";
+import { detectImageType } from "../../utils/imageType";
 import { usersService } from "./users.service";
 import { authService } from "../auth/auth.service";
 import { notificationsService } from "../notifications/notifications.service";
@@ -34,7 +35,9 @@ export const usersController = {
 
   async uploadAvatar(req: Request, res: Response) {
     if (!req.file) throw AppError.badRequest("Nenhuma imagem enviada.");
-    const user = await usersService.setAvatar(req.userId!, req.file.filename);
+    const mimeType = detectImageType(req.file.buffer);
+    if (!mimeType) throw AppError.badRequest("O arquivo não é uma imagem PNG, JPG ou WEBP válida.");
+    const user = await usersService.setAvatar(req.userId!, req.file.buffer, mimeType);
     res.json({ user });
   },
 

@@ -1,11 +1,9 @@
-import fs from "node:fs/promises";
-import path from "node:path";
+import crypto from "node:crypto";
 import { AppError } from "../../utils/AppError";
 import { hashPassword, comparePassword } from "../../utils/password";
 import { usersRepository, type UserRow } from "./users.repository";
 import { refreshTokenRepository } from "../auth/refreshToken.repository";
 import { notificationsService } from "../notifications/notifications.service";
-import { AVATAR_UPLOAD_DIR } from "../../middlewares/upload";
 import type { ChangePasswordInput, DeleteAccountInput, UpdateProfileInput } from "./users.validation";
 
 export interface PublicUser {
@@ -27,15 +25,6 @@ export const toPublicUser = (user: UserRow): PublicUser => ({
   onboardingCompletedAt: user.onboarding_completed_at,
   createdAt: user.created_at,
 });
-
-async function deleteAvatarFile(filename: string | null): Promise<void> {
-  if (!filename) return;
-  try {
-    await fs.unlink(path.join(AVATAR_UPLOAD_DIR, filename));
-  } catch {
-    // arquivo já não existe (ou nunca existiu) -- nada a fazer, não é motivo pra falhar a request
-  }
-}
 
 export const usersService = {
   async getById(userId: number): Promise<PublicUser> {
@@ -75,13 +64,12 @@ export const usersService = {
     await refreshTokenRepository.revokeAllForUser(userId);
   },
 
-  /** Substitui a foto atual -- apaga o arquivo antigo do disco (se houver) só depois do upload novo já ter sucesso. */
-  async setAvatar(userId: number, filename: string): Promise<PublicUser> {
+  /** Substitui a foto atual: a antiga é apagada na mesma transação em que a nova é gravada. */
+  async setAvatar(userId: number, data: Buffer, mimeType: string): Promise<PublicUser> {
     const user = await usersRepository.findById(userId);
     if (!user) throw AppError.notFound("Usuário não encontrado.");
 
-    await usersRepository.updateAvatar(userId, filename);
-    await deleteAvatarFile(user.avatar_path);
+    await usersRepository.replaceAvatar(userId, crypto.randomUUID(), mimeType, data);
 
     const updated = await usersRepository.findById(userId);
     return toPublicUser(updated!);
@@ -91,8 +79,7 @@ export const usersService = {
     const user = await usersRepository.findById(userId);
     if (!user) throw AppError.notFound("Usuário não encontrado.");
 
-    await usersRepository.updateAvatar(userId, null);
-    await deleteAvatarFile(user.avatar_path);
+    await usersRepository.removeAvatar(userId);
 
     const updated = await usersRepository.findById(userId);
     return toPublicUser(updated!);
@@ -114,7 +101,7 @@ export const usersService = {
     const valid = await comparePassword(input.password, user.password_hash);
     if (!valid) throw AppError.forbidden("Senha incorreta.");
 
+    // a foto (user_avatars) some junto: ON DELETE CASCADE.
     await usersRepository.deleteAccount(userId);
-    await deleteAvatarFile(user.avatar_path);
   },
 };
